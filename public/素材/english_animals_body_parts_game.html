@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Web-Based English Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f0fdf4;
+            background-image: radial-gradient(#dcfce7 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+
+        .option-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .option-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .correct-btn {
+            background-color: #22c55e !important;
+            color: white !important;
+            border-color: #16a34a !important;
+            transform: scale(1.02);
+        }
+
+        .wrong-btn {
+            background-color: #ef4444 !important;
+            color: white !important;
+            border-color: #dc2626 !important;
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .animate-pop-in {
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        
+        .font-logo { font-family: 'Noto Sans TC', sans-serif; }
+        .font-roboto { font-family: 'Roboto', sans-serif; }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="text-slate-800 h-screen overflow-hidden flex flex-col bg-[#f0fdf4]" style="background-image: radial-gradient(#dcfce7 1px, transparent 1px); background-size: 20px 20px;">
+
+    <!-- Navbar from provided code -->
+    <nav class="bg-white shadow-sm h-20 border-b flex-shrink-0 z-50 sticky top-0 font-roboto">
+        <div class="max-w-7xl mx-auto px-4 h-full flex justify-between items-center">
+            <div class="flex items-center cursor-pointer group" onclick="window.location.href='index.html'">
+                <img src="https://i.ibb.co/CFC5v9L/Machi-Know-Logo.png" alt="Maachiiknow Logo" class="w-16 h-16 object-contain group-hover:scale-110 group-hover:rotate-6 transition-all relative -top-1 left-0 z-0" />
+                <span class="font-logo font-black text-3xl text-gray-900 tracking-tighter relative z-10 ml-0">Maachii<span class="text-orange-600">Know</span></span>
+            </div>
+            <div class="hidden md:flex items-center space-x-12">
+                <button onclick="window.location.href='index.html'" class="font-bold text-base text-gray-500 hover:text-orange-600 uppercase tracking-widest transition-colors">Home</button>
+            </div>
+            <button id="mobile-menu-btn" class="md:hidden text-gray-600 p-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div id="mobile-menu" class="hidden absolute top-20 left-0 w-full bg-white shadow-xl border-b md:hidden flex flex-col p-6 space-y-4 z-40">
+            <button onclick="window.location.href='index.html'" class="text-left font-bold text-gray-700">Home</button>
+        </div>
+    </nav>
+
+    <main class="flex-1 overflow-y-auto custom-scrollbar py-8 px-4 sm:px-6 lg:px-8 w-full">
+        <div class="max-w-4xl mx-auto space-y-8">
+            
+            <!-- Header & Requirements -->
+                        <li><strong>Input:</strong> Animal, feature, color, and part are filled by the student.</li>
+                        <li><strong>Multiple Choice:</strong> Each question provides three options <em>(extracted from the student's input above)</em>. The player selects the matching one.</li>
+                        <li><strong>Success Reward:</strong> Completing all four correctly shows a pop-up image of the animal.</li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <!-- Step 1: Student Input Area -->
+        <section id="setup-section" class="glass-panel rounded-3xl p-8 border border-slate-200">
+            <div class="text-center mb-8">
+                <span class="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">Step 1: Preparation</span>
+                <h2 class="text-2xl font-bold mt-3">Student Input Area</h2>
+                <p class="text-slate-500">Provide a list of words for each category to build the game!</p>
+            </div>
+
+            <form id="game-form" class="space-y-6">
+                <div class="mb-4 text-sm text-blue-700 bg-blue-50/50 p-4 rounded-xl border border-blue-100 flex items-start gap-3">
+                    <span class="text-xl">💡</span>
+                    <p><strong>Tip:</strong> Please enter <strong>multiple words (at least 3)</strong> in each category, separated by commas (e.g., <em>snake, seal, horse, elephant</em>). The game will randomly pick one combination!</p>
+                </div>
+                
+                <div id="form-error" class="hidden text-sm text-red-600 bg-red-50 p-4 rounded-xl border border-red-200 font-medium"></div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Animal Input (10 specific fields) -->
+                    <div class="space-y-3 md:col-span-2 bg-white/50 p-4 rounded-2xl border border-slate-200">
+                        <label class="block font-bold text-slate-800 text-lg">Animals <span class="text-sm font-normal text-slate-500">(Please fill all 10 / 必須填滿10個)</span> <span class="text-red-500">*</span></label>
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3" id="animal-inputs">
+                            <input type="text" class="animal-input w-full px-4 py-2 text-sm rounded-xl border border-slate-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all shadow-sm" placeholder="1. e.g., dog" required>
+                            <input type="text" class="animal-input w-full px-4 py-2 text-sm rounded-xl border border-slate-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all shadow-sm" placeholder="2. e.g., horse" required>
+                            <input type="text" class="animal-input w-full px-4 py-2 text-sm rounded-xl border border-slate-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all shadow-sm" placeholder="3. e.g., elephant" required>
+                            <input type="text" class="animal-input w-full px-4 py-2 text-sm rounded-xl border border-slate-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all shadow-sm" placeholder="4. e.g., lion" required>
+                            <input type="text" class="animal-input w-full px-4 py-2 text-sm rounded-xl border border-slate-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all shadow-sm" placeholder="5. e.g., snake" required>
+                            <input type="text" class="animal-input w-full px-4 py-2 text-sm rounded-xl border border-slate-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all shadow-sm" placeholder="6. e.g., human" required>
+                            <input type="text" class="animal-input w-full px-4 py-2 text-sm rounded-xl border border-slate-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all shadow-sm" placeholder="7. e.g., crow" required>
+                            <input type="text" class="animal-input w-full px-4 py-2 text-sm rounded-xl border border-slate-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all shadow-sm" placeholder="8. e.g., eagle" required>
+                            <input type="text" class="animal-input w-full px-4 py-2 text-sm rounded-xl border border-slate-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all shadow-sm" placeholder="9. e.g., whale" required>
+                            <input type="text" class="animal-input w-full px-4 py-2 text-sm rounded-xl border border-slate-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all shadow-sm" placeholder="10. e.g., seal" required>
+                        </div>
+                    </div>
+
+                    <!-- Feature Input -->
+                    <div class="space-y-2">
+                        <label for="input-feature" class="block font-semibold text-slate-700">Features <span class="text-red-500">*</span></label>
+                        <textarea id="input-feature" required rows="2" placeholder="e.g., long, short, big, tiny" 
+                            class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all shadow-sm resize-none"></textarea>
+                    </div>
+                    <!-- Color Input -->
+                    <div class="space-y-2">
+                        <label for="input-color" class="block font-semibold text-slate-700">Colors <span class="text-red-500">*</span></label>
+                        <textarea id="input-color" required rows="2" placeholder="e.g., grey, green, brown, pink" 
+                            class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all shadow-sm resize-none"></textarea>
+                    </div>
+                    <!-- Part Input -->
+                    <div class="space-y-2">
+                        <label for="input-part" class="block font-semibold text-slate-700">Body Parts <span class="text-red-500">*</span></label>
+                        <textarea id="input-part" required rows="2" placeholder="e.g., trunk, tail, flipper, ears" 
+                            class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all shadow-sm resize-none"></textarea>
+                    </div>
+                </div>
+
+                <div class="flex justify-center pt-4">
+                    <button type="submit" 
+                        class="bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center gap-2 transform hover:-translate-y-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Generate Game
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Step 2: The Game Interface (Initially Hidden) -->
+        <section id="game-section" class="hidden glass-panel rounded-3xl p-8 border border-slate-200">
+            <div class="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
+                <div>
+                    <span class="bg-purple-100 text-purple-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">Step 2: Gameplay</span>
+                    <h2 class="text-2xl font-bold mt-2">Identify the Words!</h2>
+                </div>
+                <div class="text-right">
+                    <div class="text-sm font-semibold text-slate-500 uppercase tracking-wide">Progress</div>
+                    <div class="text-2xl font-bold text-purple-600"><span id="score-display">0</span> / 4</div>
+                </div>
+            </div>
+
+            <!-- The generated sentence -->
+            <div class="bg-amber-50 rounded-2xl p-6 mb-8 border-l-4 border-amber-400">
+                <p class="text-sm text-amber-800 font-semibold mb-2">Generated Description:</p>
+                <p id="target-sentence" class="text-2xl md:text-3xl font-medium text-slate-800 leading-relaxed"></p>
+            </div>
+
+            <!-- Multiple Choice Questions Container -->
+            <div id="questions-container" class="space-y-6">
+                <!-- Questions will be injected here via JavaScript -->
+            </div>
+        </section>
+
+        <!-- Success Reward Modal (Initially Hidden) -->
+        <div id="reward-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <div class="bg-white rounded-3xl p-1 max-w-md w-full shadow-2xl animate-pop-in">
+                <div class="bg-slate-50 rounded-[1.4rem] p-8 text-center border border-slate-100">
+                    <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <h2 class="text-3xl font-bold text-slate-800 mb-2">Excellent!</h2>
+                    <p class="text-slate-600 mb-6">You successfully identified all the parts from the description.</p>
+                    
+                    <div class="relative rounded-2xl overflow-hidden shadow-md mb-6 bg-slate-200 aspect-video flex items-center justify-center">
+                        <!-- We use placehold.co to reliably generate an image based on the animal keyword, as requested in safe UI constraints -->
+                        <img id="reward-image" src="" alt="Reward Animal" class="w-full h-full object-cover">
+                        
+                        <!-- Fallback loading text underneath -->
+                        <div class="absolute inset-0 flex items-center justify-center -z-10">
+                            <span class="text-slate-400 font-medium">Loading image...</span>
+                        </div>
+                    </div>
+
+                    <button id="play-again-btn" 
+                        class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-sm">
+                        Play Again
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        </div>
+    </main>
+
+    <!-- Footer from provided code -->
+    <footer class="bg-white/80 backdrop-blur-sm border-t py-4 text-center shrink-0 font-roboto mt-auto">
+        <p class="text-[10px] text-gray-400 font-black uppercase tracking-[0.3em]">© 2026 MaachiiKnow. All rights reserved.</p>
+    </footer>
+
+    <script>
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+            // Toggle icon between Menu and X
+            if(mobileMenu.classList.contains('hidden')) {
+                mobileMenuBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>';
+            } else {
+                mobileMenuBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+            }
+        });
+
+        // State variables
+        let gameData = {
+            pools: {
+                animal: [],
+                feature: [],
+                color: [],
+                part: []
+            },
+            target: {
+                animal: '',
+                feature: '',
+                color: '',
+                part: ''
+            }
+        };
+        let correctAnswers = 0;
+
+        // DOM Elements
+        const form = document.getElementById('game-form');
+        const setupSection = document.getElementById('setup-section');
+        const gameSection = document.getElementById('game-section');
+        const questionsContainer = document.getElementById('questions-container');
+        const targetSentenceEl = document.getElementById('target-sentence');
+        const scoreDisplay = document.getElementById('score-display');
+        const rewardModal = document.getElementById('reward-modal');
+        const rewardImage = document.getElementById('reward-image');
+        const playAgainBtn = document.getElementById('play-again-btn');
+
+        // Utility: Check if word starts with a vowel for "a" or "an"
+        function getArticle(word) {
+            if (!word) return 'a';
+            const firstLetter = word.charAt(0).toLowerCase();
+            return ['a', 'e', 'i', 'o', 'u'].includes(firstLetter) ? 'an' : 'a';
+        }
+
+        // Utility: Shuffle Array
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Form Submission - Generate Game
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Helper to parse comma separated values (handles English/Chinese commas)
+            const parseAndClean = (id) => {
+                const val = document.getElementById(id).value;
+                return val.split(/[,，、]+/).map(s => s.trim().toLowerCase()).filter(s => s);
+            };
+
+            // 1. Get student inputs
+            
+            // For Animals: read from the 10 distinct inputs
+            const animalInputs = document.querySelectorAll('.animal-input');
+            gameData.pools.animal = Array.from(animalInputs).map(input => input.value.trim().toLowerCase()).filter(s => s);
+
+            // For others: read from textareas
+            gameData.pools.feature = parseAndClean('input-feature');
+            gameData.pools.color = parseAndClean('input-color');
+            gameData.pools.part = parseAndClean('input-part');
+
+            // Form Validation
+            const errorContainer = document.getElementById('form-error');
+            
+            if (gameData.pools.animal.length < 10) {
+                errorContainer.classList.remove('hidden');
+                errorContainer.textContent = "Error: Please fill in all 10 animal fields! (請確認10個動物欄位皆已填寫)";
+                return;
+            }
+
+            if (gameData.pools.feature.length < 3 || gameData.pools.color.length < 3 || gameData.pools.part.length < 3) {
+                errorContainer.classList.remove('hidden');
+                errorContainer.textContent = "Error: Please provide at least 3 valid comma-separated words for Feature, Color, and Body Part!";
+                return;
+            }
+            
+            errorContainer.classList.add('hidden'); // Clear errors
+
+            // 2. Randomly select target words for the generated sentence
+            const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+            gameData.target.animal = getRandom(gameData.pools.animal);
+            gameData.target.feature = getRandom(gameData.pools.feature);
+            gameData.target.color = getRandom(gameData.pools.color);
+            gameData.target.part = getRandom(gameData.pools.part);
+
+            // 3. Generate descriptive sentence
+            const article = getArticle(gameData.target.animal);
+            const sentence = `I see ${article} <strong>${gameData.target.animal}</strong>. It has <strong>${gameData.target.feature}</strong> <strong>${gameData.target.color}</strong> <strong>${gameData.target.part}</strong>.`;
+            targetSentenceEl.innerHTML = sentence;
+
+            // 4. Reset Score
+            correctAnswers = 0;
+            scoreDisplay.textContent = correctAnswers;
+
+            // 5. Build Questions
+            buildQuestions();
+
+            // 6. Toggle UI
+            setupSection.classList.add('hidden');
+            gameSection.classList.remove('hidden');
+            gameSection.classList.add('animate-pop-in');
+        });
+
+        function buildQuestions() {
+            questionsContainer.innerHTML = '';
+            
+            // Define the 4 questions based on requirements
+            const challenges = [
+                { id: 'q-animal', category: 'animal', label: 'Which word is the Animal?' },
+                { id: 'q-feature', category: 'feature', label: 'Which word is the Feature?' },
+                { id: 'q-color', category: 'color', label: 'Which word is the Color?' },
+                { id: 'q-part', category: 'part', label: 'Which word is the Body Part?' }
+            ];
+
+            challenges.forEach(challenge => {
+                const correctAnswer = gameData.target[challenge.category];
+                const pool = gameData.pools[challenge.category];
+                
+                // Rule: Each question provides 3 options.
+                // 1 correct answer + 2 wrong answers picked from the SAME category pool.
+                let wrongOptions = pool.filter(word => word !== correctAnswer);
+                
+                // Remove duplicates in case user entered the same word twice
+                wrongOptions = [...new Set(wrongOptions)]; 
+                // Pick 2 wrong distractors
+                wrongOptions = shuffleArray(wrongOptions).slice(0, 2);
+
+                // Combine and shuffle the 3 options
+                let options = [correctAnswer, ...wrongOptions];
+                options = shuffleArray(options);
+
+                // Create DOM elements for the question
+                const qDiv = document.createElement('div');
+                qDiv.className = 'bg-white rounded-2xl p-6 border border-slate-200 shadow-sm transition-all hover:shadow-md';
+                qDiv.innerHTML = `
+                    <h3 class="font-bold text-lg text-slate-700 mb-4">${challenge.label}</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 options-group" data-category="${challenge.category}">
+                        ${options.map(opt => `
+                            <button class="option-btn bg-slate-50 border-2 border-slate-200 text-slate-700 font-semibold py-3 px-4 rounded-xl hover:bg-slate-100 hover:border-slate-300 focus:outline-none"
+                                    onclick="handleAnswer(this, '${opt}', '${correctAnswer}')">
+                                ${opt}
+                            </button>
+                        `).join('')}
+                    </div>
+                `;
+                questionsContainer.appendChild(qDiv);
+            });
+        }
+
+        // Handle Option Click
+        window.handleAnswer = function(button, selectedWord, correctWord) {
+            const group = button.closest('.options-group');
+            const allButtons = group.querySelectorAll('button');
+
+            // Prevent clicking again in this row if already answered correctly
+            if (group.classList.contains('answered')) return;
+
+            if (selectedWord === correctWord) {
+                // Correct Answer
+                button.classList.add('correct-btn');
+                group.classList.add('answered'); // Lock this question
+                
+                // Disable other buttons in this group
+                allButtons.forEach(btn => {
+                    if (btn !== button) {
+                        btn.disabled = true;
+                        btn.classList.add('opacity-50', 'cursor-not-allowed');
+                    }
+                });
+
+                // Update score
+                correctAnswers++;
+                scoreDisplay.textContent = correctAnswers;
+
+                // Check for win condition
+                if (correctAnswers === 4) {
+                    setTimeout(triggerSuccess, 600); // slight delay for visual feedback
+                }
+            } else {
+                // Wrong Answer
+                button.classList.add('wrong-btn');
+                button.disabled = true;
+                
+                // Remove shake animation class after it completes to allow re-trigger if needed
+                setTimeout(() => {
+                    button.classList.remove('wrong-btn');
+                    button.classList.add('bg-red-50', 'border-red-200', 'text-red-400', 'opacity-50', 'cursor-not-allowed');
+                }, 400);
+            }
+        };
+
+        // Success Reward Logic
+        function triggerSuccess() {
+            // Use an external image service to grab an image of the chosen animal.
+            // Using loremflickr to safely and automatically source an image by keyword.
+            const safeAnimalKeyword = encodeURIComponent(gameData.target.animal);
+            rewardImage.src = `https://loremflickr.com/600/400/${safeAnimalKeyword}`;
+            
+            rewardModal.classList.remove('hidden');
+        }
+
+        // Play Again Logic
+        playAgainBtn.addEventListener('click', function() {
+            rewardModal.classList.add('hidden');
+            gameSection.classList.add('hidden');
+            setupSection.classList.remove('hidden');
+            setupSection.classList.add('animate-pop-in');
+            
+            // Reset form
+            form.reset();
+            
+            // Clear previous image
+            rewardImage.src = '';
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+    </script>
+</body>
+</html>

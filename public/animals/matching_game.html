@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amazing Animals - 記憶翻牌遊戲</title>
+    <!-- 引入 Noto Sans TC 字體 (補上 500 與 900 字重) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // 設定 Tailwind 使用 Noto Sans TC 作為預設無襯線字體
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans TC"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 卡片 3D 翻轉效果的 CSS 設定 */
+        .perspective {
+            perspective: 1000px;
+        }
+        .transform-style-3d {
+            transform-style: preserve-3d;
+            transition: transform 0.5s cubic-bezier(0.4, 0.2, 0.2, 1);
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+        
+        /* 避免在觸控螢幕上選取文字 */
+        .no-select {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+    </style>
+</head>
+<body class="bg-sky-100 h-[100dvh] flex flex-col font-sans overflow-hidden">
+
+    <!-- 導航欄 (Navbar) -->
+    <nav class="bg-white shadow-sm h-20 border-b flex-shrink-0 z-50 sticky top-0 w-full">
+        <div class="max-w-7xl mx-auto px-4 h-full flex justify-between items-center">
+            <!-- Logo -->
+            <div class="flex items-center cursor-pointer group" onclick="window.location.href='https://maachiiknow.pages.dev/'">
+                <img src="https://i.ibb.co/CFC5v9L/Machi-Know-Logo.png" alt="MaachiiKonw Logo" class="w-16 h-16 object-contain group-hover:scale-110 group-hover:rotate-6 transition-all relative -top-1 left-0 z-0">
+                <span class="font-black text-3xl text-gray-900 tracking-tighter relative z-10 ml-0">
+                    Maachii<span class="text-orange-600">Konw</span>
+                </span>
+            </div>
+            
+            <!-- Desktop Menu -->
+            <div class="hidden md:flex items-center space-x-12">
+                <button onclick="window.location.href='https://maachiiknow.pages.dev/'" class="font-bold text-base text-gray-500 hover:text-orange-600 uppercase tracking-widest transition-colors">
+                    Home
+                </button>
+            </div>
+
+            <!-- Mobile Menu Toggle -->
+            <button id="mobile-menu-btn" class="md:hidden text-gray-600 p-2">
+                <!-- Menu Icon -->
+                <svg id="menu-icon-open" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+                <!-- Close Icon (Hidden by default) -->
+                <svg id="menu-icon-close" class="hidden" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+        </div>
+        
+        <!-- Mobile Menu Overlay (Hidden by default) -->
+        <div id="mobile-menu" class="hidden absolute top-20 left-0 w-full bg-white shadow-xl border-b md:hidden flex-col p-6 space-y-4 z-40 transition-all">
+            <button onclick="window.location.href='https://maachiiknow.pages.dev/'" class="text-left font-bold text-gray-700">
+                Home
+            </button>
+        </div>
+    </nav>
+
+    <!-- 遊戲主體區域 Wrapper -->
+    <main class="flex-1 flex flex-col items-center py-2 sm:py-4 relative min-h-0 w-full overflow-hidden">
+        
+        <!-- 開場遊戲指南對話框 (Intro Modal) -->
+        <div id="intro-modal" class="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-[60]">
+            <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md text-center shadow-2xl transform scale-100 transition-transform mx-4">
+                <div class="text-5xl sm:text-6xl mb-4">🐾</div>
+                <h2 class="text-2xl sm:text-3xl font-bold text-sky-600 mb-4">Welcome to Amazing Animals!</h2>
+                <div class="text-base sm:text-lg text-gray-700 mb-6 text-left bg-sky-50 p-4 rounded-xl border border-sky-100">
+                    <strong>How to play:</strong><br>
+                    <ul class="list-disc pl-5 mt-2 space-y-1">
+                        <li>Click on the cards to flip them.</li>
+                        <li>Match the animal picture with its English name.</li>
+                        <li>Find all 10 pairs to win!</li>
+                    </ul>
+                </div>
+                <button id="start-btn" class="bg-amber-400 hover:bg-amber-500 text-amber-900 font-bold py-3 px-8 rounded-full shadow-lg transform transition hover:scale-105 active:scale-95 text-xl border-b-4 border-amber-600">
+                    Start Game
+                </button>
+            </div>
+        </div>
+
+        <!-- 音樂控制按鈕 -->
+        <div class="absolute top-2 right-2 sm:top-4 sm:right-4 z-40">
+            <button id="music-toggle" class="bg-white w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full shadow border-2 border-sky-200 hover:bg-sky-50 text-xl transition-colors no-select">
+                🔇
+            </button>
+        </div>
+
+        <!-- 遊戲標題與計分板 -->
+        <div class="text-center mb-2 flex-shrink-0 pt-2 sm:pt-0">
+            <h1 class="text-2xl sm:text-3xl font-bold text-amber-600 mb-1 drop-shadow-md border-b-4 border-amber-400 pb-1 inline-block">🐾 Amazing Animals 🐾</h1>
+            <div class="mt-2 flex justify-center gap-4 text-sm sm:text-base font-bold text-sky-800">
+                <div class="bg-white px-3 py-1 sm:px-4 sm:py-2 rounded-full shadow-sm border-2 border-sky-200">
+                    Moves: <span id="moves" class="text-amber-500">0</span>
+                </div>
+                <div class="bg-white px-3 py-1 sm:px-4 sm:py-2 rounded-full shadow-sm border-2 border-sky-200">
+                    Matches: <span id="matches" class="text-green-500">0</span> / 10
+                </div>
+            </div>
+        </div>
+
+        <!-- 遊戲網格 -->
+        <div id="game-board" class="grid grid-cols-4 grid-rows-5 sm:grid-cols-5 sm:grid-rows-4 gap-2 sm:gap-3 max-w-4xl w-full px-4 flex-1 min-h-0 perspective pb-2">
+            <!-- 卡片將由 JavaScript 動態生成 -->
+        </div>
+
+        <!-- 控制按鈕 -->
+        <div class="mt-2 mb-2 flex-shrink-0">
+            <button onclick="initGame()" class="bg-amber-400 hover:bg-amber-500 text-amber-900 font-bold py-2 px-6 rounded-full shadow-lg transform transition hover:scale-105 active:scale-95 text-base sm:text-lg border-b-4 border-amber-600">
+                🔄 Restart
+            </button>
+        </div>
+
+        <!-- 勝利視窗 (預設隱藏) -->
+        <div id="win-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex justify-center items-center z-50">
+            <div class="bg-white rounded-3xl p-8 max-sm text-center shadow-2xl transform scale-100 transition-transform">
+                <div class="text-6xl mb-4">🎉</div>
+                <h2 class="text-3xl font-bold text-green-600 mb-2">Great Job!</h2>
+                <p class="text-lg text-gray-700 mb-6">You found all the animals!<br>It took you <span id="final-moves" class="font-bold text-amber-500"></span> moves.</p>
+                <button onclick="initGame()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-full shadow-md transform transition hover:scale-105 active:scale-95 text-lg">
+                    Play Again
+                </button>
+            </div>
+        </div>
+
+        <!-- AI 知識小學堂 (Toast 通知區) -->
+        <div id="toast-container" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 w-[90%] max-w-md z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    </main>
+
+    <script>
+        const apiKey = ""; // 系統會自動提供金鑰
+
+        // ==========================================
+        // 🍔 導航欄手機版選單控制
+        // ==========================================
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const menuIconOpen = document.getElementById('menu-icon-open');
+        const menuIconClose = document.getElementById('menu-icon-close');
+
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+                mobileMenu.classList.toggle('flex');
+                menuIconOpen.classList.toggle('hidden');
+                menuIconClose.classList.toggle('hidden');
+            });
+        }
+
+        // ==========================================
+        // 🎵 音效與背景音樂設定
+        // ==========================================
+        let audioCtx = null;
+        let isMuted = true; // 預設靜音
+        const musicToggle = document.getElementById('music-toggle');
+        const introModal = document.getElementById('intro-modal');
+        const startBtn = document.getElementById('start-btn');
+
+        // 背景音樂連結
+        const bgMusic = new Audio('https://raw.githubusercontent.com/JOUCHUCHEN/maachiiknow/main/animals/amazing_animals_bgm.mp3');
+        bgMusic.loop = true;
+        
+        // 淡入效果與目標音量設定
+        const targetVolume = 0.2; 
+        bgMusic.volume = 0; 
+        let fadeInterval = null;
+
+        // 特效音效連結
+        const matchSound = new Audio('https://raw.githubusercontent.com/JOUCHUCHEN/englishlearning/main/correct.mp3');
+        const errorSound = new Audio('https://raw.githubusercontent.com/JOUCHUCHEN/englishlearning/main/error.mp3');
+        const winSound = new Audio('https://raw.githubusercontent.com/JOUCHUCHEN/maachiiknow/main/animals/success.mp3');
+
+        // 初始化音效引擎
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // 彈奏單音 (基礎翻牌特效音)
+        function playTone(freq, type, duration, vol) {
+            if (!audioCtx || isMuted) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        // 播放遊戲音效
+        function playSfx(type) {
+            if (isMuted) return;
+            if (type === 'flip') {
+                playTone(600, 'sine', 0.1, 0.05); 
+            } else if (type === 'match') {
+                matchSound.currentTime = 0; 
+                matchSound.play().catch(err => console.log("音效播放提示:", err.message));
+            } else if (type === 'error') {
+                errorSound.currentTime = 0;
+                errorSound.play().catch(err => console.log("音效播放提示:", err.message));
+            } else if (type === 'win') {
+                winSound.currentTime = 0;
+                winSound.play().catch(err => console.log("音效播放提示:", err.message));
+            }
+        }
+
+        // 語音朗讀功能 (TTS)
+        const speak = (text) => {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); 
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.85; 
+                window.speechSynthesis.speak(utterance);
+            }
+        };
+
+        // 背景音樂淡入
+        function playMusicWithFadeIn() {
+            bgMusic.volume = 0; 
+            const playPromise = bgMusic.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    if (fadeInterval) clearInterval(fadeInterval);
+                    let vol = 0;
+                    fadeInterval = setInterval(() => {
+                        if (isMuted) {
+                            clearInterval(fadeInterval);
+                            return;
+                        }
+                        vol += 0.025;
+                        if (vol >= targetVolume) {
+                            bgMusic.volume = targetVolume;
+                            clearInterval(fadeInterval);
+                        } else {
+                            bgMusic.volume = vol;
+                        }
+                    }, 100);
+                }).catch(err => {
+                    console.log("音樂播放提示:", err.message);
+                    musicToggle.textContent = '🔇';
+                    isMuted = true;
+                });
+            }
+        }
+
+        // 音樂開關
+        musicToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            initAudio();
+            isMuted = !isMuted;
+            if (isMuted) {
+                if (fadeInterval) clearInterval(fadeInterval);
+                bgMusic.pause();
+                musicToggle.textContent = '🔇';
+            } else {
+                playMusicWithFadeIn();
+                musicToggle.textContent = '🎵';
+            }
+        });
+
+        // 啟動按鈕
+        startBtn.addEventListener('click', () => {
+            introModal.classList.add('hidden');
+            initAudio();
+            if (isMuted) {
+                isMuted = false;
+                musicToggle.textContent = '🎵';
+                playMusicWithFadeIn();
+            }
+        });
+
+        // 動物清單
+        const animalData = [
+            { id: 'snake', name: 'Snake', icon: '🐍', imgUrl: 'https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/1f40d.svg' },
+            { id: 'crow', name: 'Crow', icon: '🐦‍⬛', imgUrl: 'https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/1f426-200d-2b1b.svg' },
+            { id: 'horse', name: 'Horse', icon: '🐴', imgUrl: 'https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/1f434.svg' },
+            { id: 'dog', name: 'Dog', icon: '🐶', imgUrl: 'https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/1f436.svg' },
+            { id: 'whale', name: 'Whale', icon: '🐳', imgUrl: 'https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/1f433.svg' },
+            { id: 'elephant', name: 'Elephant', icon: '🐘', imgUrl: 'https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/1f418.svg' },
+            { id: 'lion', name: 'Lion', icon: '🦁', imgUrl: 'https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/1f981.svg' },
+            { id: 'human', name: 'Human', icon: '👦', imgUrl: 'https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/1f466.svg' }, 
+            { id: 'seal', name: 'Seal', icon: '🦭', imgUrl: 'https://raw.githubusercontent.com/googlefonts/noto-emoji/main/svg/emoji_u1f9ad.svg' },
+            { id: 'eagle', name: 'Eagle', icon: '🦅', imgUrl: 'https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/1f985.svg' }
+        ];
+
+        let cards = [];
+        let firstCard = null;
+        let secondCard = null;
+        let lockBoard = false;
+        let moves = 0;
+        let matches = 0;
+
+        const gameBoard = document.getElementById('game-board');
+        const movesEl = document.getElementById('moves');
+        const matchesEl = document.getElementById('matches');
+        const winModal = document.getElementById('win-modal');
+        const finalMovesEl = document.getElementById('final-moves');
+        const toastContainer = document.getElementById('toast-container');
+
+        function initGame() {
+            gameBoard.innerHTML = '';
+            winModal.classList.add('hidden');
+            toastContainer.innerHTML = '';
+            moves = 0;
+            matches = 0;
+            firstCard = null;
+            secondCard = null;
+            lockBoard = false;
+            updateStats();
+
+            cards = [];
+            animalData.forEach(animal => {
+                cards.push({ id: animal.id, name: animal.name, icon: animal.icon, imgUrl: animal.imgUrl, type: 'image' });
+                cards.push({ id: animal.id, name: animal.name, icon: animal.icon, imgUrl: animal.imgUrl, type: 'text' });
+            });
+            
+            // 洗牌
+            for (let i = cards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [cards[i], cards[j]] = [cards[j], cards[i]];
+            }
+
+            cards.forEach((animal, index) => {
+                const cardElement = document.createElement('div');
+                cardElement.classList.add('relative', 'w-full', 'h-full', 'cursor-pointer', 'no-select');
+                cardElement.dataset.id = animal.id; 
+                cardElement.dataset.name = animal.name;
+
+                const innerElement = document.createElement('div');
+                innerElement.classList.add('w-full', 'h-full', 'absolute', 'transform-style-3d', 'rounded-xl', 'shadow-md');
+                
+                const cardBack = document.createElement('div');
+                cardBack.classList.add('w-full', 'h-full', 'absolute', 'backface-hidden', 'bg-gradient-to-br', 'from-emerald-400', 'to-green-600', 'rounded-xl', 'flex', 'items-center', 'justify-center', 'border-4', 'border-white', 'hover:opacity-90', 'transition-opacity');
+                cardBack.innerHTML = '<span class="text-3xl sm:text-4xl text-white opacity-50">🍃</span>';
+
+                const cardFront = document.createElement('div');
+                cardFront.classList.add('w-full', 'h-full', 'absolute', 'backface-hidden', 'rotate-y-180', 'bg-white', 'rounded-xl', 'flex', 'flex-col', 'items-center', 'justify-center', 'border-4', 'border-amber-300', 'p-1', 'sm:p-2', 'text-center');
+                
+                if (animal.type === 'image') {
+                    cardFront.innerHTML = `<img src="${animal.imgUrl}" alt="${animal.name}" class="w-12 h-12 sm:w-16 sm:h-16 drop-shadow-sm pointer-events-none" draggable="false" onerror="this.outerHTML='<span class=\\'text-4xl sm:text-5xl drop-shadow-sm\\'>${animal.icon}</span>'">`;
+                } else {
+                    cardFront.innerHTML = `<span class="text-base sm:text-xl font-bold text-slate-800 break-words w-full px-1">${animal.name}</span>`;
+                }
+
+                innerElement.appendChild(cardBack);
+                innerElement.appendChild(cardFront);
+                cardElement.appendChild(innerElement);
+                cardElement.addEventListener('click', () => flipCard(cardElement, innerElement));
+                gameBoard.appendChild(cardElement);
+            });
+        }
+
+        function flipCard(card, inner) {
+            if (lockBoard) return;
+            if (card === firstCard) return; 
+            if (card.classList.contains('matched')) return; 
+
+            playSfx('flip');
+            if (!isMuted) speak(card.dataset.name);
+            inner.classList.add('rotate-y-180');
+
+            if (!firstCard) {
+                firstCard = card;
+                return;
+            }
+
+            secondCard = card;
+            moves++;
+            updateStats();
+            checkForMatch();
+        }
+
+        function checkForMatch() {
+            let isMatch = firstCard.dataset.id === secondCard.dataset.id;
+            if (isMatch) {
+                disableCards(firstCard.dataset.name);
+            } else {
+                unflipCards();
+            }
+        }
+
+        function disableCards(animalName) {
+            firstCard.classList.add('matched');
+            secondCard.classList.add('matched');
+            const matchCard1 = firstCard;
+            const matchCard2 = secondCard;
+            
+            // 配對延遲音效 (0.5s)
+            setTimeout(() => playSfx('match'), 500);
+
+            setTimeout(() => {
+                const front1 = matchCard1.firstElementChild.children[1];
+                const front2 = matchCard2.firstElementChild.children[1];
+                front1.classList.remove('border-amber-300', 'bg-white');
+                front1.classList.add('border-green-500', 'bg-green-50');
+                front2.classList.remove('border-amber-300', 'bg-white');
+                front2.classList.add('border-green-500', 'bg-green-50');
+
+                matches++;
+                updateStats();
+                fetchAnimalFunFact(animalName);
+                
+                if (matches === animalData.length) {
+                    setTimeout(showWinModal, 500);
+                }
+            }, 300);
+            resetBoard();
+        }
+
+        function unflipCards() {
+            lockBoard = true; 
+            // 配對失敗延遲音效 (0.5s)
+            setTimeout(() => playSfx('error'), 500);
+            setTimeout(() => {
+                firstCard.firstElementChild.classList.remove('rotate-y-180');
+                secondCard.firstElementChild.classList.remove('rotate-y-180');
+                resetBoard();
+            }, 1000); 
+        }
+
+        function resetBoard() {
+            [firstCard, secondCard] = [null, null];
+            lockBoard = false;
+        }
+
+        function updateStats() {
+            movesEl.textContent = moves;
+            matchesEl.textContent = matches;
+        }
+
+        function showWinModal() {
+            finalMovesEl.textContent = moves;
+            winModal.classList.remove('hidden');
+            // 延遲 0.3 秒後播放破關音效 (更新處)
+            setTimeout(() => {
+                playSfx('win');
+            }, 300);
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-green-100 border-green-400 text-green-800' : 
+                            type === 'error' ? 'bg-red-100 border-red-400 text-red-800' : 
+                            'bg-blue-100 border-blue-400 text-blue-800';
+                            
+            toast.className = `p-4 rounded-xl shadow-lg border-2 ${bgColor} transform transition-all duration-300 translate-y-10 opacity-0 pointer-events-auto flex items-center gap-3`;
+            toast.innerHTML = `<span class="text-2xl">${type === 'success' ? '✨' : type === 'error' ? '❌' : '🤖'}</span><p class="font-bold text-sm sm:text-base">${message}</p>`;
+            
+            toastContainer.prepend(toast);
+            requestAnimationFrame(() => toast.classList.remove('translate-y-10', 'opacity-0'));
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'scale-95');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        async function fetchAnimalFunFact(animalName) {
+            if (!apiKey) {
+                showToast(`Great! You found the ${animalName}!`, 'success');
+                return;
+            }
+            showToast(`Asking the AI teacher for a fun fact about ${animalName}...`, 'info');
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const prompt = `Give a fun fact about the animal "${animalName}" for a 7-year-old child in English. Keep it under one short sentence, playful and cute, no introductory greetings.`;
+            const payload = { contents: [{ parts: [{ text: prompt }] }], systemInstruction: { parts: [{ text: "You are an animal expert who is great at interacting with kids." }] } };
+
+            let retries = 0;
+            while (retries < 5) {
+                try {
+                    const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (!response.ok) throw new Error('API Failed');
+                    const data = await response.json();
+                    const fact = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (fact) {
+                        showToast(`🤖 AI Teacher says: ${fact}`, 'success');
+                        return;
+                    }
+                } catch (error) {
+                    retries++;
+                    await new Promise(res => setTimeout(res, 1000 * Math.pow(2, retries - 1)));
+                }
+            }
+            showToast(`Oops, AI is busy. Try again later for ${animalName}!`, 'error');
+        }
+
+        window.onload = initGame;
+    </script>
+</body>
+</html>

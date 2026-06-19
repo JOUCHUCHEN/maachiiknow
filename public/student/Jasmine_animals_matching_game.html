@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文字圖片記憶配對遊戲</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script>
+        // 強制 Babel 使用 classic runtime，避免瀏覽器尋找無法解析的 react/jsx-runtime
+        Babel.registerPreset("react-classic", {
+            presets: [
+                [Babel.availablePresets["react"], { "runtime": "classic" }]
+            ]
+        });
+    </script>
+    
+    <style>
+        .perspective-1000 { perspective: 1000px; }
+        .preserve-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel" data-presets="react-classic">
+        const { useState, useEffect, useRef } = React;
+
+        const CrowSVG = () => (
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-3/4 h-3/4 drop-shadow-sm">
+            <path d="M 20 60 L 5 80 L 25 75 Z" fill="#1e293b"/>
+            <ellipse cx="50" cy="55" rx="30" ry="20" fill="#0f172a" transform="rotate(-15 50 55)"/>
+            <circle cx="75" cy="35" r="15" fill="#0f172a"/>
+            <path d="M 85 30 L 98 35 L 85 40 Z" fill="#334155"/>
+            <circle cx="75" cy="32" r="3" fill="#ffffff"/>
+            <circle cx="76" cy="32" r="1.5" fill="#000000"/>
+            <path d="M 40 50 C 60 40, 70 60, 45 70 Z" fill="#1e293b"/>
+            <path d="M 45 75 L 45 90 L 50 90 M 55 70 L 55 90 L 60 90" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round" fill="none"/>
+          </svg>
+        );
+
+        const SealSVG = () => (
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-3/4 h-3/4 drop-shadow-sm">
+            <path d="M 20 70 C 10 75, 5 85, 5 85 C 5 85, 15 80, 25 85 C 30 80, 25 70, 20 70 Z" fill="#64748b"/>
+            <path d="M 20 70 C 40 90, 70 80, 80 60 C 90 40, 80 20, 65 20 C 50 20, 40 40, 40 50 C 40 60, 20 60, 20 70 Z" fill="#94a3b8"/>
+            <path d="M 50 65 C 60 75, 55 85, 45 85 C 40 75, 45 65, 50 65 Z" fill="#64748b"/>
+            <ellipse cx="85" cy="40" rx="10" ry="8" fill="#cbd5e1"/>
+            <circle cx="90" cy="38" r="3" fill="#0f172a"/>
+            <circle cx="70" cy="32" r="4" fill="#0f172a"/>
+            <circle cx="71" cy="31" r="1.5" fill="#ffffff"/>
+            <path d="M 85 45 L 95 50 M 82 48 L 88 55 M 90 42 L 98 45" stroke="#475569" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        );
+
+        const ANIMAL_PAIRS = [
+          { word: 'Horse', image: '🐎' },
+          { word: 'Dog', image: '🐕' },
+          { word: 'Whale', image: '🐋' },
+          { word: 'Crow', image: <CrowSVG /> },
+          { word: 'Eagle', image: '🦅' },
+          { word: 'Human', image: '🧍' },
+          { word: 'Elephant', image: '🐘' },
+          { word: 'Lion', image: '🦁' },
+          { word: 'Snake', image: '🐍' },
+          { word: 'Seal', image: <SealSVG /> }
+        ];
+
+        const speakAnimal = (name) => {
+          if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const msg = new SpeechSynthesisUtterance(name);
+            msg.lang = 'en-US';
+            window.speechSynthesis.speak(msg);
+          }
+        };
+
+        // --- Custom Sound Effects Synthesizer ---
+        let audioCtx = null;
+        const getAudioCtx = () => {
+          if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          }
+          if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+          }
+          return audioCtx;
+        };
+
+        const playTone = (freq, type, duration, timeOffset = 0) => {
+          try {
+            const ctx = getAudioCtx();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, ctx.currentTime + timeOffset);
+            gain.gain.setValueAtTime(0.1, ctx.currentTime + timeOffset);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + timeOffset + duration);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(ctx.currentTime + timeOffset);
+            osc.stop(ctx.currentTime + timeOffset + duration);
+          } catch (e) {
+            console.error("Audio API error:", e);
+          }
+        };
+
+        const correctAudio = new Audio("https://cdn.jsdelivr.net/gh/LeZhiLearningCenter/jasmine@main/freesound_community-correct-6033.mp3");
+
+        const playSound = {
+          correct: () => {
+            correctAudio.currentTime = 0;
+            correctAudio.play().catch(e => console.error("Correct SFX error:", e));
+          },
+          wrong: () => {
+            playTone(200, 'square', 0.15, 0);
+            playTone(150, 'square', 0.2, 0.15);
+          },
+          win: () => {
+            playTone(523.25, 'triangle', 0.15, 0); // C5
+            playTone(659.25, 'triangle', 0.15, 0.15); // E5
+            playTone(783.99, 'triangle', 0.15, 0.3); // G5
+            playTone(1046.50, 'triangle', 0.4, 0.45); // C6
+          }
+        };
+
+        function App() {
+          const [cards, setCards] = useState([]);
+          const [flippedIndices, setFlippedIndices] = useState([]);
+          const [matchedPairs, setMatchedPairs] = useState([]);
+          const [moves, setMoves] = useState(0);
+          const [isLocked, setIsLocked] = useState(false);
+          const [gameWon, setGameWon] = useState(false);
+          const [isPlayingMusic, setIsPlayingMusic] = useState(false);
+          const [audioError, setAudioError] = useState('');
+          const [hasInteracted, setHasInteracted] = useState(false);
+          const audioRef = useRef(null);
+
+          const initializeGame = () => {
+            const newCards = [];
+            
+            ANIMAL_PAIRS.forEach((pair) => {
+              newCards.push({
+                id: Math.random().toString(36).substring(7),
+                pairId: pair.word,
+                type: 'word',
+                content: pair.word
+              });
+              newCards.push({
+                id: Math.random().toString(36).substring(7),
+                pairId: pair.word,
+                type: 'image',
+                content: pair.image
+              });
+            });
+
+            for (let i = newCards.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [newCards[i], newCards[j]] = [newCards[j], newCards[i]];
+            }
+
+            setCards(newCards);
+            setFlippedIndices([]);
+            setMatchedPairs([]);
+            setMoves(0);
+            setGameWon(false);
+            setIsLocked(false);
+          };
+
+          useEffect(() => {
+            initializeGame();
+
+            if (audioRef.current) {
+              audioRef.current.volume = 0.8; 
+              audioRef.current.play()
+                .then(() => {
+                  setIsPlayingMusic(true);
+                  setHasInteracted(true);
+                })
+                .catch(() => {
+                  console.log("Autoplay blocked. BGM will start on first click.");
+                });
+            }
+          }, []);
+
+          useEffect(() => {
+            if (flippedIndices.length === 2) {
+              setIsLocked(true);
+              const [firstIndex, secondIndex] = flippedIndices;
+              const firstCard = cards[firstIndex];
+              const secondCard = cards[secondIndex];
+
+              if (firstCard.pairId === secondCard.pairId && firstCard.type !== secondCard.type) {
+                playSound.correct();
+                setMatchedPairs((prev) => [...prev, firstCard.pairId]);
+                setFlippedIndices([]);
+                setIsLocked(false);
+                
+                if (matchedPairs.length + 1 === ANIMAL_PAIRS.length) {
+                  playSound.win();
+                  setTimeout(() => setGameWon(true), 500);
+                }
+              } else {
+                playSound.wrong();
+                setTimeout(() => {
+                  setFlippedIndices([]);
+                  setIsLocked(false);
+                }, 1000);
+              }
+              setMoves((prev) => prev + 1);
+            }
+          }, [flippedIndices, cards, matchedPairs.length]);
+
+          const handleCardClick = (index) => {
+            if (!hasInteracted) {
+              if (audioRef.current && !isPlayingMusic) {
+                audioRef.current.play()
+                  .then(() => setIsPlayingMusic(true))
+                  .catch(e => console.error("BGM play failed:", e));
+              }
+              setHasInteracted(true);
+            }
+
+            if (
+              isLocked || 
+              flippedIndices.includes(index) || 
+              matchedPairs.includes(cards[index].pairId)
+            ) {
+              return;
+            }
+
+            speakAnimal(cards[index].pairId);
+            setFlippedIndices((prev) => [...prev, index]);
+          };
+
+          const toggleMusic = () => {
+            if (!audioRef.current) return;
+
+            if (isPlayingMusic) {
+              audioRef.current.pause();
+              setIsPlayingMusic(false);
+            } else {
+              setAudioError('');
+              audioRef.current.volume = 0.8;
+              audioRef.current.play()
+                .then(() => setIsPlayingMusic(true))
+                .catch(e => {
+                  console.error("Audio play failed:", e);
+                  setIsPlayingMusic(false);
+                  setAudioError('Could not play the audio stream. Please check the file format or URL.');
+                });
+            }
+          };
+
+          return (
+            <div className="h-[100dvh] w-full bg-slate-50 flex flex-col items-center p-2 md:p-4 font-sans text-slate-800 overflow-hidden box-border">
+              <audio 
+                ref={audioRef} 
+                src="https://cdn.jsdelivr.net/gh/LeZhiLearningCenter/jasmine@main/bluelike_u-2-cherry-cute-bgm-271158.mp3" 
+                loop 
+                autoPlay
+                preload="auto"
+                onError={() => {
+                  setAudioError("Failed to load background music from GitHub.");
+                  setIsPlayingMusic(false);
+                }}
+              />
+
+              <div className="max-w-5xl w-full mb-2 md:mb-4 flex flex-col sm:flex-row items-center justify-between gap-2 shrink-0">
+                <div className="text-center sm:text-left">
+                  <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-slate-900 mb-1">
+                    記憶配對遊戲
+                  </h1>
+                  <p className="text-xs md:text-sm lg:text-base text-slate-500 font-medium hidden sm:block">
+                    將文字與對應的圖片配對。
+                  </p>
+                </div>
+                
+                <div className="flex items-center gap-3 md:gap-6 bg-white px-3 md:px-6 py-2 rounded-2xl shadow-sm border border-slate-200 shrink-0">
+                  <div className="text-center">
+                    <p className="text-[10px] md:text-xs text-slate-400 font-bold uppercase tracking-wider">步數</p>
+                    <p className="text-xl md:text-2xl font-bold text-indigo-600 leading-none mt-1">{moves}</p>
+                  </div>
+                  <div className="w-px h-8 bg-slate-200"></div>
+                  <div className="text-center">
+                    <p className="text-[10px] md:text-xs text-slate-400 font-bold uppercase tracking-wider">配對數</p>
+                    <p className="text-xl md:text-2xl font-bold text-emerald-500 leading-none mt-1">
+                      {matchedPairs.length} <span className="text-sm md:text-lg text-slate-300">/ 10</span>
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 ml-2 relative">
+                    {audioError && (
+                      <div className="absolute top-12 right-0 w-48 bg-red-50 border border-red-200 text-red-600 text-[10px] p-2 rounded-lg shadow-md z-50 leading-tight text-right animate-in fade-in slide-in-from-top-2">
+                        {audioError}
+                      </div>
+                    )}
+                    <button 
+                      onClick={toggleMusic}
+                      className={`w-10 h-10 flex items-center justify-center rounded-xl transition-colors shadow-sm ${isPlayingMusic ? 'bg-indigo-600 text-white shadow-indigo-200' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
+                      title={isPlayingMusic ? "靜音" : "播放音樂"}
+                    >
+                      {isPlayingMusic ? '🎵' : '🔇'}
+                    </button>
+                    <button 
+                      onClick={initializeGame}
+                      className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-sm md:text-base font-bold transition-colors shadow-sm"
+                    >
+                      重新開始
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="max-w-5xl w-full flex-1 min-h-0 pb-1 md:pb-2">
+                <div className="h-full w-full grid grid-cols-4 grid-rows-5 md:grid-cols-5 md:grid-rows-4 gap-2 md:gap-3">
+                  {cards.map((card, index) => {
+                    const isFlipped = flippedIndices.includes(index) || matchedPairs.includes(card.pairId);
+                    const isMatched = matchedPairs.includes(card.pairId);
+
+                    return (
+                      <div 
+                        key={card.id}
+                        className={`relative w-full h-full cursor-pointer perspective-1000 ${isMatched ? 'opacity-60' : ''}`}
+                        onClick={() => handleCardClick(index)}
+                      >
+                        <div className={`w-full h-full duration-500 preserve-3d relative ${isFlipped ? 'rotate-y-180' : ''}`}>
+                          <div className="absolute w-full h-full backface-hidden bg-indigo-600 rounded-lg border-2 border-white/20 flex items-center justify-center shadow-sm">
+                            <span className="text-white/30 font-bold text-xl">?</span>
+                          </div>
+
+                          <div className="absolute w-full h-full backface-hidden rotate-y-180 bg-white rounded-lg border-2 border-slate-200 flex flex-col items-center justify-center p-1 shadow-sm overflow-hidden">
+                            {card.type === 'image' ? (
+                              typeof card.content === 'string' ? (
+                                <span className="text-3xl sm:text-4xl md:text-5xl">{card.content}</span>
+                              ) : (
+                                card.content
+                              )
+                            ) : (
+                              <span className="text-xs sm:text-sm md:text-lg font-bold text-slate-700 tracking-tight">{card.content}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {gameWon && (
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-300">
+                  <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full text-center transform scale-100 animate-in zoom-in-95 duration-300">
+                    <div className="text-6xl mb-4">🏆</div>
+                    <h2 className="text-3xl font-extrabold text-slate-900 mb-2">恭喜過關！</h2>
+                    <p className="text-slate-500 mb-6">
+                      您用了 <strong className="text-indigo-600">{moves}</strong> 步完成 10 組配對。
+                    </p>
+                    <button
+                      onClick={initializeGame}
+                      className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-200 transition-all transform active:scale-95"
+                    >
+                      再玩一次
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

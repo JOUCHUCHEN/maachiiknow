@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Beast Creator & DIY Game</title>
+    
+    <!-- 引入字體：Noto Sans TC (Logo), Roboto (Navbar), Outfit (全站其餘部分) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Roboto:wght@400;500;700;900&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'], 
+                        logo: ['"Noto Sans TC"', 'sans-serif'],
+                        roboto: ['Roboto', 'sans-serif'], 
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 共用與 AI Creator 樣式 */
+        body { font-family: 'Outfit', sans-serif; background-color: #f8fafc; }
+        #react-creator-container .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        #react-creator-container .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        /* DIY Game 專屬樣式 */
+        .font-cute { font-family: 'Outfit', sans-serif; }
+        .cute-panel { background: rgba(255, 255, 255, 0.95); border: 4px solid #ffffff; border-radius: 2rem; box-shadow: 0 12px 25px -5px rgba(236, 72, 153, 0.1), 0 8px 10px -6px rgba(236, 72, 153, 0.1); backdrop-filter: blur(10px); }
+        .chunky-btn { transition: all 0.15s ease-in-out; border: 2px solid transparent; }
+        .chunky-btn:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 0px 0 0 transparent !important; }
+        .option-btn { background-color: white; border: 2px solid #e2e8f0; color: #475569; box-shadow: 0 5px 0 0 #cbd5e1; }
+        .option-btn:hover:not(:disabled) { background-color: #f8fafc; border-color: #cbd5e1; transform: translateY(-2px); box-shadow: 0 7px 0 0 #cbd5e1; }
+        .correct-btn { background-color: #4ade80 !important; color: white !important; border-color: #22c55e !important; box-shadow: 0 5px 0 0 #16a34a !important; transform: translateY(-2px); }
+        .wrong-btn { background-color: #f87171 !important; color: white !important; border-color: #ef4444 !important; box-shadow: 0 5px 0 0 #dc2626 !important; animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        .option-btn:disabled.opacity-50 { transform: translateY(4px); box-shadow: 0 0px 0 0 transparent !important; opacity: 0.5; }
+        
+        @keyframes shake { 
+            10%, 90% { transform: translate3d(-1px, 0, 0); } 
+            20%, 80% { transform: translate3d(2px, 0, 0); } 
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 
+            40%, 60% { transform: translate3d(4px, 0, 0); } 
+        }
+        @keyframes popIn { 
+            0% { transform: scale(0.8) translateY(20px); opacity: 0; } 
+            100% { transform: scale(1) translateY(0); opacity: 1; } 
+        }
+        @keyframes float { 
+            0% { transform: translateY(0px); } 
+            50% { transform: translateY(-10px); } 
+            100% { transform: translateY(0px); } 
+        }
+        .animate-pop-in { animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+        .font-logo { font-family: 'Noto Sans TC', sans-serif; }
+        .font-roboto { font-family: 'Roboto', sans-serif; }
+        
+        #vanilla-game-container .custom-scrollbar::-webkit-scrollbar { width: 10px; height: 10px; }
+        #vanilla-game-container .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        #vanilla-game-container .custom-scrollbar::-webkit-scrollbar-thumb { background: #fbcfe8; border-radius: 10px; border: 2px solid #fdf4ff; }
+        #vanilla-game-container .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #f472b6; }
+    </style>
+    
+    <!-- 修正點 1：鎖定 Babel 版本在 @7 -->
+    <script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
+    <script type="importmap">
+    {
+        "imports": {
+            "react": "https://esm.sh/react@18.2.0",
+            "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+            "lucide-react": "https://esm.sh/lucide-react@0.292.0"
+        }
+    }
+    </script>
+</head>
+<body class="h-screen overflow-hidden m-0 p-0">
+
+    <script>
+        window.showDiyGame = function() {
+            document.getElementById('react-creator-container').style.display = 'none';
+            document.getElementById('vanilla-game-container').style.display = 'flex';
+        };
+        window.showAiCreator = function() {
+            document.getElementById('vanilla-game-container').style.display = 'none';
+            document.getElementById('react-creator-container').style.display = 'block';
+        };
+    </script>
+
+    <div id="react-creator-container" style="display: block; width: 100%; height: 100vh;">
+        <div id="root" class="h-full w-full"></div>
+    </div>
+
+    <div id="vanilla-game-container" class="text-slate-800" style="display: none; height: 100vh; width: 100%; flex-direction: column; overflow: hidden; background-color: #eef2ff;">
+        <nav class="bg-white shadow-sm h-20 border-b flex-shrink-0 z-50 sticky top-0 font-roboto">
+            <div class="max-w-7xl mx-auto px-4 h-full flex justify-between items-center">
+                <div class="flex items-center cursor-pointer group" onclick="window.location.href='index.html'">
+                    <img src="https://i.ibb.co/CFC5v9L/Machi-Know-Logo.png" alt="Maachiiknow Logo" class="w-16 h-16 object-contain group-hover:scale-110 group-hover:rotate-6 transition-all relative -top-1 left-0 z-0" />
+                    <span class="font-logo font-black text-3xl text-gray-900 tracking-tighter relative z-10 ml-0">Maachii<span class="text-orange-600">Know</span></span>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <button onclick="window.location.href='index.html'" class="font-bold text-base text-gray-500 hover:text-orange-600 uppercase tracking-widest transition-colors">Home</button>
+                </div>
+                <button id="mobile-menu-btn" class="md:hidden text-gray-600 p-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div id="mobile-menu" class="hidden absolute top-20 left-0 w-full bg-white shadow-xl border-b md:hidden flex flex-col p-6 space-y-4 z-40">
+                <button onclick="window.location.href='index.html'" class="text-left font-bold text-gray-700">Home</button>
+            </div>
+        </nav>
+
+        <div class="bg-white border-b py-3 flex justify-center gap-6">
+            <button onclick="window.showAiCreator()" class="font-bold text-sm text-indigo-600 hover:text-indigo-700 uppercase tracking-widest transition-colors">AI Creator</button>
+            <span class="text-slate-300">|</span>
+            <button onclick="window.showDiyGame()" class="font-bold text-sm text-pink-500 hover:text-pink-600 uppercase tracking-widest transition-colors">DIY YOUR GAME</button>
+        </div>
+
+        <main class="flex-1 overflow-y-auto custom-scrollbar py-8 px-4 sm:px-6 lg:px-8 w-full">
+            <div class="max-w-4xl mx-auto space-y-8 relative">
+                <div class="absolute top-40 -right-6 text-4xl animate-float hidden md:block" style="animation-delay: 1s;">✨</div>
+
+                <header id="diy-header" class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-[2.5rem] p-6 md:p-8 border-4 border-white shadow-lg relative overflow-hidden">
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="text-4xl">🌟</span>
+                            <h1 class="text-3xl md:text-4xl font-cute font-bold text-indigo-600">Build Your Beast Game!</h1>
+                        </div>
+                        <div class="bg-white/80 rounded-2xl p-5 border-2 border-indigo-100">
+                            <h3 class="font-bold text-lg text-indigo-800 mb-3 flex items-center gap-2">
+                                <span class="bg-indigo-100 p-1.5 rounded-lg">🎮</span> How to play:
+                            </h3>
+                            <ul class="space-y-3 text-indigo-700 font-medium">
+                                <li class="flex gap-2 items-start"><span class="text-pink-400 font-bold">1.</span> <div><strong>Input:</strong> Name, Animal, feature, color, and part are filled by the student.</div></li>
+                                <li class="flex gap-2 items-start"><span class="text-pink-400 font-bold">2.</span> <div><strong>Generate Code:</strong> Turn your words into a magic game code!</div></li>
+                                <li class="flex gap-2 items-start"><span class="text-pink-400 font-bold">3.</span> <div><strong>AI Builder:</strong> Paste the code into the AI Engine to generate your unique game.</div></li>
+                                <li class="flex gap-2 items-start"><span class="text-pink-400 font-bold">4.</span> <div><strong>Multiple Choice & Reward:</strong> Identify the correct words to unlock a picture of your beast!</div></li>
+                            </ul>
+                        </div>
+                    </div>
+                </header>
+
+                <section id="setup-section" class="cute-panel p-6 md:p-10 relative">
+                    <div class="text-center mb-8">
+                        <span class="bg-pink-100 text-pink-600 text-sm font-bold px-4 py-1.5 rounded-full uppercase tracking-widest font-cute border border-pink-200 shadow-sm">✨ Step 1: Preparation ✨</span>
+                        <h2 class="text-3xl font-cute font-bold mt-4 text-slate-800">Word Magic Box 🪄</h2>
+                        <p class="text-slate-500 font-medium mt-2">Fill up the magic box to build your unique game!</p>
+                    </div>
+
+                    <form id="game-form" class="space-y-6">
+                        <div class="mb-6 text-sm text-amber-800 bg-amber-50 p-5 rounded-2xl border-2 border-amber-200 flex items-start gap-3 shadow-sm">
+                            <span class="text-2xl">💡</span>
+                            <p class="pt-1"><strong>Tip:</strong> Please fill in all the blanks completely to provide enough words. The game will randomly pick one combination!</p>
+                        </div>
+
+                        <div class="bg-white p-6 md:p-8 rounded-[2rem] border-4 border-indigo-50 text-center shadow-md relative overflow-hidden">
+                            <div class="absolute -right-4 -top-4 text-6xl opacity-20">📝</div>
+                            <p class="text-sm font-bold text-indigo-400 uppercase tracking-widest mb-4">Sentence Formula (造句公式)</p>
+                            <p class="text-2xl md:text-3xl font-cute font-bold text-slate-700 leading-loose flex flex-wrap justify-center items-center gap-x-3 gap-y-2 relative z-10">
+                                <span>I am</span>
+                                <span class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-xl border-2 border-yellow-200 shadow-sm">(Name)</span>
+                                <span>. My</span>
+                                <span class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-xl border-2 border-indigo-200 shadow-sm">(Animal)</span>
+                                <span>is</span>
+                                <span class="bg-cyan-100 text-cyan-700 px-3 py-1 rounded-xl border-2 border-cyan-200 shadow-sm">(Color)</span>
+                                <span>. It has</span>
+                                <span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-xl border-2 border-emerald-200 shadow-sm">(Feature)</span>
+                                <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-xl border-2 border-purple-200 shadow-sm">(Body Part)</span>
+                                <span>. It has</span>
+                                <span class="bg-rose-100 text-rose-700 px-3 py-1 rounded-xl border-2 border-rose-200 shadow-sm">(Texture)</span>
+                                <span>.</span>
+                            </p>
+                        </div>
+                        
+                        <div id="form-error" class="hidden text-sm text-red-600 bg-red-50 p-4 rounded-xl border-2 border-red-200 font-bold text-center"></div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            
+                            <div class="space-y-3 md:col-span-2 bg-yellow-50/50 p-6 rounded-[2rem] border-2 border-yellow-100">
+                                <label class="flex items-center flex-wrap gap-2 font-cute font-bold text-yellow-900 text-xl mb-2">
+                                    👋 I am... <span class="bg-yellow-200 text-yellow-800 px-3 py-0.5 rounded-lg ml-1">Name</span>
+                                    <span class="text-pink-500">*</span>
+                                </label>
+                                <input type="text" id="student-name-input" class="w-full max-w-md px-4 py-3 font-bold text-yellow-700 rounded-xl border-2 border-yellow-200 focus:ring-4 focus:ring-yellow-100 focus:border-yellow-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-yellow-300" placeholder="Your English Name (e.g. Tom)" required>
+                            </div>
+
+                            <div class="space-y-3 md:col-span-2 bg-indigo-50/50 p-6 rounded-[2rem] border-2 border-indigo-100">
+                                <label class="flex items-center flex-wrap gap-2 font-cute font-bold text-indigo-900 text-xl mb-2">
+                                    🐾 My... <span class="bg-indigo-200 text-indigo-800 px-3 py-0.5 rounded-lg ml-1">Animal</span>
+                                    <span class="text-sm font-nunito font-medium text-indigo-400 bg-white px-2 py-1 rounded-lg shadow-sm md:ml-auto">(Please fill all 9)</span> 
+                                    <span class="text-pink-500">*</span>
+                                </label>
+                                <div class="grid grid-cols-2 sm:grid-cols-5 gap-3" id="animal-inputs">
+                                    <input type="text" class="animal-input w-full px-4 py-3 font-bold text-indigo-700 rounded-xl border-2 border-indigo-200 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-indigo-300" placeholder="dog" required>
+                                    <input type="text" class="animal-input w-full px-4 py-3 font-bold text-indigo-700 rounded-xl border-2 border-indigo-200 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-indigo-300" placeholder="horse" required>
+                                    <input type="text" class="animal-input w-full px-4 py-3 font-bold text-indigo-700 rounded-xl border-2 border-indigo-200 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-indigo-300" placeholder="elephant" required>
+                                    <input type="text" class="animal-input w-full px-4 py-3 font-bold text-indigo-700 rounded-xl border-2 border-indigo-200 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-indigo-300" placeholder="lion" required>
+                                    <input type="text" class="animal-input w-full px-4 py-3 font-bold text-indigo-700 rounded-xl border-2 border-indigo-200 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-indigo-300" placeholder="snake" required>
+                                    <input type="text" class="animal-input w-full px-4 py-3 font-bold text-indigo-700 rounded-xl border-2 border-indigo-200 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-indigo-300" placeholder="crow" required>
+                                    <input type="text" class="animal-input w-full px-4 py-3 font-bold text-indigo-700 rounded-xl border-2 border-indigo-200 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-indigo-300" placeholder="eagle" required>
+                                    <input type="text" class="animal-input w-full px-4 py-3 font-bold text-indigo-700 rounded-xl border-2 border-indigo-200 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-indigo-300" placeholder="whale" required>
+                                    <input type="text" class="animal-input w-full px-4 py-3 font-bold text-indigo-700 rounded-xl border-2 border-indigo-200 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-indigo-300" placeholder="seal" required>
+                                </div>
+                            </div>
+
+                            <div class="space-y-3 md:col-span-2 bg-cyan-50/50 p-6 rounded-[2rem] border-2 border-cyan-100">
+                                <label class="flex items-center flex-wrap gap-2 font-cute font-bold text-cyan-900 text-xl mb-2">
+                                    🎨 is... <span class="bg-cyan-200 text-cyan-800 px-3 py-0.5 rounded-lg ml-1">Color</span>
+                                    <span class="text-sm font-nunito font-medium text-cyan-400 bg-white px-2 py-1 rounded-lg shadow-sm md:ml-auto">(Please fill all 13)</span> 
+                                    <span class="text-pink-500">*</span>
+                                </label>
+                                <div class="grid grid-cols-2 sm:grid-cols-5 gap-3" id="color-inputs">
+                                    <input type="text" class="color-input w-full px-4 py-3 font-bold text-cyan-700 rounded-xl border-2 border-cyan-200 focus:ring-4 focus:ring-cyan-100 focus:border-cyan-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-cyan-300" placeholder="red" required>
+                                    <input type="text" class="color-input w-full px-4 py-3 font-bold text-cyan-700 rounded-xl border-2 border-cyan-200 focus:ring-4 focus:ring-cyan-100 focus:border-cyan-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-cyan-300" placeholder="blue" required>
+                                    <input type="text" class="color-input w-full px-4 py-3 font-bold text-cyan-700 rounded-xl border-2 border-cyan-200 focus:ring-4 focus:ring-cyan-100 focus:border-cyan-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-cyan-300" placeholder="green" required>
+                                    <input type="text" class="color-input w-full px-4 py-3 font-bold text-cyan-700 rounded-xl border-2 border-cyan-200 focus:ring-4 focus:ring-cyan-100 focus:border-cyan-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-cyan-300" placeholder="yellow" required>
+                                    <input type="text" class="color-input w-full px-4 py-3 font-bold text-cyan-700 rounded-xl border-2 border-cyan-200 focus:ring-4 focus:ring-cyan-100 focus:border-cyan-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-cyan-300" placeholder="orange" required>
+                                    <input type="text" class="color-input w-full px-4 py-3 font-bold text-cyan-700 rounded-xl border-2 border-cyan-200 focus:ring-4 focus:ring-cyan-100 focus:border-cyan-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-cyan-300" placeholder="pink" required>
+                                    <input type="text" class="color-input w-full px-4 py-3 font-bold text-cyan-700 rounded-xl border-2 border-cyan-200 focus:ring-4 focus:ring-cyan-100 focus:border-cyan-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-cyan-300" placeholder="purple" required>
+                                    <input type="text" class="color-input w-full px-4 py-3 font-bold text-cyan-700 rounded-xl border-2 border-cyan-200 focus:ring-4 focus:ring-cyan-100 focus:border-cyan-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-cyan-300" placeholder="black" required>
+                                    <input type="text" class="color-input w-full px-4 py-3 font-bold text-cyan-700 rounded-xl border-2 border-cyan-200 focus:ring-4 focus:ring-cyan-100 focus:border-cyan-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-cyan-300" placeholder="brown" required>
+                                    <input type="text" class="color-input w-full px-4 py-3 font-bold text-cyan-700 rounded-xl border-2 border-cyan-200 focus:ring-4 focus:ring-cyan-100 focus:border-cyan-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-cyan-300" placeholder="white" required>
+                                    <input type="text" class="color-input w-full px-4 py-3 font-bold text-cyan-700 rounded-xl border-2 border-cyan-200 focus:ring-4 focus:ring-cyan-100 focus:border-cyan-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-cyan-300" placeholder="gray" required>
+                                    <input type="text" class="color-input w-full px-4 py-3 font-bold text-cyan-700 rounded-xl border-2 border-cyan-200 focus:ring-4 focus:ring-cyan-100 focus:border-cyan-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-cyan-300" placeholder="golden" required>
+                                    <input type="text" class="color-input w-full px-4 py-3 font-bold text-cyan-700 rounded-xl border-2 border-cyan-200 focus:ring-4 focus:ring-cyan-100 focus:border-cyan-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-cyan-300" placeholder="colorful" required>
+                                </div>
+                            </div>
+
+                            <div class="space-y-3 md:col-span-2 bg-emerald-50/50 p-6 rounded-[2rem] border-2 border-emerald-100">
+                                <label class="flex items-center flex-wrap gap-2 font-cute font-bold text-emerald-900 text-xl mb-2">
+                                    📏 It has... <span class="bg-emerald-200 text-emerald-800 px-3 py-0.5 rounded-lg ml-1">Feature</span>
+                                    <span class="text-sm font-nunito font-medium text-emerald-400 bg-white px-2 py-1 rounded-lg shadow-sm md:ml-auto">(Please fill all 5)</span> 
+                                    <span class="text-pink-500">*</span>
+                                </label>
+                                <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3" id="feature-inputs">
+                                    <input type="text" class="feature-input w-full px-4 py-3 font-bold text-emerald-700 rounded-xl border-2 border-emerald-200 focus:ring-4 focus:ring-emerald-100 focus:border-emerald-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-emerald-300" placeholder="big" required>
+                                    <input type="text" class="feature-input w-full px-4 py-3 font-bold text-emerald-700 rounded-xl border-2 border-emerald-200 focus:ring-4 focus:ring-emerald-100 focus:border-emerald-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-emerald-300" placeholder="small" required>
+                                    <input type="text" class="feature-input w-full px-4 py-3 font-bold text-emerald-700 rounded-xl border-2 border-emerald-200 focus:ring-4 focus:ring-emerald-100 focus:border-emerald-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-emerald-300" placeholder="long" required>
+                                    <input type="text" class="feature-input w-full px-4 py-3 font-bold text-emerald-700 rounded-xl border-2 border-emerald-200 focus:ring-4 focus:ring-emerald-100 focus:border-emerald-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-emerald-300" placeholder="short" required>
+                                    <input type="text" class="feature-input w-full px-4 py-3 font-bold text-emerald-700 rounded-xl border-2 border-emerald-200 focus:ring-4 focus:ring-emerald-100 focus:border-emerald-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-emerald-300" placeholder="curly" required>
+                                </div>
+                            </div>
+
+                            <div class="space-y-3 md:col-span-2 bg-purple-50/50 p-6 rounded-[2rem] border-2 border-purple-100">
+                                <label class="flex items-center flex-wrap gap-2 font-cute font-bold text-purple-900 text-xl mb-2">
+                                    🦴 <span class="text-slate-400 font-medium">+</span> <span class="bg-purple-200 text-purple-800 px-3 py-0.5 rounded-lg ml-1">Body Part</span> .
+                                    <span class="text-sm font-nunito font-medium text-purple-400 bg-white px-2 py-1 rounded-lg shadow-sm md:ml-auto">(Please fill all 11)</span> 
+                                    <span class="text-pink-500">*</span>
+                                </label>
+                                <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3" id="part-inputs">
+                                    <input type="text" class="part-input w-full px-4 py-3 font-bold text-purple-700 rounded-xl border-2 border-purple-200 focus:ring-4 focus:ring-purple-100 focus:border-purple-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-purple-300" placeholder="tail" required>
+                                    <input type="text" class="part-input w-full px-4 py-3 font-bold text-purple-700 rounded-xl border-2 border-purple-200 focus:ring-4 focus:ring-purple-100 focus:border-purple-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-purple-300" placeholder="nose" required>
+                                    <input type="text" class="part-input w-full px-4 py-3 font-bold text-purple-700 rounded-xl border-2 border-purple-200 focus:ring-4 focus:ring-purple-100 focus:border-purple-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-purple-300" placeholder="horn" required>
+                                    <input type="text" class="part-input w-full px-4 py-3 font-bold text-purple-700 rounded-xl border-2 border-purple-200 focus:ring-4 focus:ring-purple-100 focus:border-purple-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-purple-300" placeholder="neck" required>
+                                    <input type="text" class="part-input w-full px-4 py-3 font-bold text-purple-700 rounded-xl border-2 border-purple-200 focus:ring-4 focus:ring-purple-100 focus:border-purple-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-purple-300" placeholder="tongue" required>
+                                    <input type="text" class="part-input w-full px-4 py-3 font-bold text-purple-700 rounded-xl border-2 border-purple-200 focus:ring-4 focus:ring-purple-100 focus:border-purple-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-purple-300" placeholder="legs" required>
+                                    <input type="text" class="part-input w-full px-4 py-3 font-bold text-purple-700 rounded-xl border-2 border-purple-200 focus:ring-4 focus:ring-purple-100 focus:border-purple-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-purple-300" placeholder="claws" required>
+                                    <input type="text" class="part-input w-full px-4 py-3 font-bold text-purple-700 rounded-xl border-2 border-purple-200 focus:ring-4 focus:ring-purple-100 focus:border-purple-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-purple-300" placeholder="tusks" required>
+                                    <input type="text" class="part-input w-full px-4 py-3 font-bold text-purple-700 rounded-xl border-2 border-purple-200 focus:ring-4 focus:ring-purple-100 focus:border-purple-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-purple-300" placeholder="wings" required>
+                                    <input type="text" class="part-input w-full px-4 py-3 font-bold text-purple-700 rounded-xl border-2 border-purple-200 focus:ring-4 focus:ring-purple-100 focus:border-purple-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-purple-300" placeholder="fins" required>
+                                    <input type="text" class="part-input w-full px-4 py-3 font-bold text-purple-700 rounded-xl border-2 border-purple-200 focus:ring-4 focus:ring-purple-100 focus:border-purple-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-purple-300" placeholder="ears" required>
+                                </div>
+                            </div>
+
+                            <div class="space-y-3 md:col-span-2 bg-rose-50/50 p-6 rounded-[2rem] border-2 border-rose-100">
+                                <label class="flex items-center flex-wrap gap-2 font-cute font-bold text-rose-900 text-xl mb-2">
+                                    🧸 It has... <span class="bg-rose-200 text-rose-800 px-3 py-0.5 rounded-lg ml-1">Texture</span> .
+                                    <span class="text-sm font-nunito font-medium text-rose-400 bg-white px-2 py-1 rounded-lg shadow-sm md:ml-auto">(Please fill all 4)</span> 
+                                    <span class="text-pink-500">*</span>
+                                </label>
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="texture-inputs">
+                                    <input type="text" class="texture-input w-full px-4 py-3 font-bold text-rose-700 rounded-xl border-2 border-rose-200 focus:ring-4 focus:ring-rose-100 focus:border-rose-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-rose-300" placeholder="scales" required>
+                                    <input type="text" class="texture-input w-full px-4 py-3 font-bold text-rose-700 rounded-xl border-2 border-rose-200 focus:ring-4 focus:ring-rose-100 focus:border-rose-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-rose-300" placeholder="fur" required>
+                                    <input type="text" class="texture-input w-full px-4 py-3 font-bold text-rose-700 rounded-xl border-2 border-rose-200 focus:ring-4 focus:ring-rose-100 focus:border-rose-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-rose-300" placeholder="feathers" required>
+                                    <input type="text" class="texture-input w-full px-4 py-3 font-bold text-rose-700 rounded-xl border-2 border-rose-200 focus:ring-4 focus:ring-rose-100 focus:border-rose-400 outline-none transition-all shadow-sm placeholder:font-medium placeholder:text-rose-300" placeholder="skin" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-center pt-6 pb-2">
+                            <button type="submit" 
+                                class="chunky-btn bg-pink-500 hover:bg-pink-400 text-white font-cute font-bold text-xl py-4 px-10 rounded-full shadow-[0_6px_0_0_#be185d] flex items-center gap-2">
+                                <span class="text-2xl">⚙️</span> Generate Game Code!
+                            </button>
+                        </div>
+                    </form>
+                </section>
+
+                <section id="code-display-section" class="hidden cute-panel p-6 md:p-10 relative text-center animate-pop-in">
+                    <span class="bg-pink-100 text-pink-600 text-sm font-bold px-4 py-1.5 rounded-full uppercase tracking-widest font-cute border border-pink-200 shadow-sm">✨ Success ✨</span>
+                    <h2 class="text-3xl font-cute font-bold mt-4 text-slate-800 mb-6">Your Game Prompt is Ready!</h2>
+                    
+                    <div class="bg-slate-50 border-4 border-dashed border-indigo-200 rounded-[2rem] p-6 max-w-2xl mx-auto mb-8 relative">
+                        <div class="absolute -top-5 left-1/2 -translate-x-1/2 text-4xl">📜</div>
+                        <p class="text-slate-500 font-bold mb-3 mt-2">Copy this prompt to command the AI:</p>
+                        <div class="bg-white p-4 rounded-xl border-2 border-slate-200 whitespace-pre-wrap text-left font-mono text-indigo-700 font-bold text-sm h-64 overflow-y-auto custom-scrollbar shadow-inner leading-relaxed" id="generated-code-display">
+                        </div>
+                        <button id="copy-code-btn" class="mt-4 chunky-btn bg-indigo-500 hover:bg-indigo-400 text-white font-bold py-2 px-6 rounded-xl shadow-[0_4px_0_0_#3730a3] transition-colors flex items-center gap-2 mx-auto">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                            Copy Prompt
+                        </button>
+                        <div id="copy-toast" class="text-emerald-500 font-bold mt-2 opacity-0 transition-opacity">Copied to clipboard! ✓</div>
+                    </div>
+
+                    <button id="go-to-ai-btn" class="chunky-btn bg-emerald-500 hover:bg-emerald-400 text-white font-cute font-bold text-xl py-4 px-10 rounded-full shadow-[0_6px_0_0_#059669] flex items-center gap-2 mx-auto">
+                        Next: Go to AI Generator <span class="text-2xl">🤖</span>
+                    </button>
+                </section>
+
+                <section id="ai-decoder-section" class="hidden cute-panel p-6 md:p-10 relative">
+                    <div class="text-center mb-8">
+                        <span class="bg-emerald-100 text-emerald-700 text-sm font-bold px-4 py-1.5 rounded-full uppercase tracking-widest font-cute border border-emerald-200 shadow-sm">🤖 AI Engine 🤖</span>
+                        <h2 class="text-3xl font-cute font-bold mt-4 text-slate-800">Generate Your Game</h2>
+                        <p class="text-slate-500 font-medium mt-2">Paste your magic prompt below so the AI can build your game!</p>
+                    </div>
+
+                    <div class="max-w-xl mx-auto space-y-6">
+                        <div id="decode-error" class="hidden text-sm text-red-600 bg-red-50 p-4 rounded-xl border-2 border-red-200 font-bold text-center"></div>
+                        
+                        <textarea id="ai-code-input" rows="8" placeholder="Paste your 🤖 AI SYSTEM PROMPT here..." class="w-full px-4 py-3 font-mono font-bold text-slate-700 rounded-2xl border-4 border-emerald-100 focus:ring-4 focus:ring-emerald-50 focus:border-emerald-400 outline-none transition-all shadow-sm resize-none"></textarea>
+                        
+                        <div class="flex justify-center">
+                            <button id="start-game-btn" class="chunky-btn bg-cyan-500 hover:bg-cyan-400 text-white font-cute font-bold text-xl py-4 px-10 rounded-full shadow-[0_6px_0_0_#0891b2] flex items-center gap-2 w-full justify-center">
+                                <span class="text-2xl">⚡</span> Boot Up The Game!
+                            </button>
+                        </div>
+                        <div class="text-center mt-4">
+                            <button id="back-to-create-btn" class="text-slate-400 hover:text-slate-600 font-bold underline underline-offset-4 transition-colors">Or create a new game</button>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="game-section" class="hidden cute-panel p-6 md:p-10 relative">
+                    <div class="absolute -top-6 right-10 text-5xl animate-bounce">👾</div>
+                    
+                    <div class="flex items-end justify-between mb-8 border-b-4 border-dashed border-slate-100 pb-6">
+                        <div>
+                            <span class="bg-cyan-100 text-cyan-700 text-sm font-bold px-4 py-1.5 rounded-full uppercase tracking-widest font-cute border border-cyan-200">🕹️ Step 2: Game Time</span>
+                            <h2 class="text-3xl md:text-4xl font-cute font-bold mt-4 text-slate-800">Identify the Words!</h2>
+                        </div>
+                        <div class="text-center bg-purple-100 p-3 rounded-2xl border-2 border-purple-200">
+                            <div class="text-xs font-bold text-purple-500 uppercase tracking-wide">Progress</div>
+                            <div class="text-3xl font-cute font-bold text-purple-700"><span id="score-display">0</span> <span class="text-xl text-purple-400">/ 10</span></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-[2.5rem] p-8 mb-10 border-4 border-white shadow-md relative">
+                        <div class="absolute -left-3 top-8 w-6 h-6 bg-white border-4 border-white shadow-md rounded-full"></div>
+                        <div class="absolute -left-8 top-12 w-3 h-3 bg-white border-2 border-white shadow-md rounded-full"></div>
+                        
+                        <p class="text-sm text-cyan-500 font-bold mb-3 uppercase tracking-wider">A Wild Beast Appears:</p>
+                        <p id="target-sentence" class="text-2xl md:text-4xl font-cute font-medium text-slate-700 leading-relaxed"></p>
+                    </div>
+
+                    <div id="questions-container" class="space-y-6">
+                    </div>
+
+                    <!-- 遊戲 HTML 代碼區塊 (Standalone Generator) -->
+                    <div class="mt-10 bg-pink-50 border-4 border-dashed border-pink-200 rounded-[2rem] p-6 max-w-2xl mx-auto relative">
+                        <div class="absolute -top-5 left-1/2 -translate-x-1/2 text-4xl">💻</div>
+                        <p class="text-pink-600 font-bold mb-3 mt-2 text-center">Standalone HTML Game Code (Play at Home!):</p>
+                        <div class="bg-white p-4 rounded-xl border-2 border-pink-200 text-left font-mono text-pink-700 font-bold text-sm h-64 overflow-y-auto custom-scrollbar shadow-inner whitespace-pre-wrap" id="generated-link-display">
+                        </div>
+                        <button id="copy-link-btn" class="mt-4 chunky-btn bg-pink-500 hover:bg-pink-400 text-white font-bold py-2 px-6 rounded-xl shadow-[0_4px_0_0_#be185d] transition-colors flex items-center gap-2 mx-auto">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                            Copy HTML Code
+                        </button>
+                        <div id="copy-link-toast" class="text-emerald-500 font-bold mt-2 opacity-0 transition-opacity text-center">Code copied! ✓</div>
+                    </div>
+                </section>
+
+                <div id="reward-modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+                    <div class="bg-white rounded-[3rem] p-2 max-w-md w-full shadow-2xl animate-pop-in border-8 border-yellow-300">
+                        <div class="bg-orange-50 rounded-[2.5rem] p-8 text-center relative overflow-hidden">
+                            <div class="absolute top-4 left-4 text-2xl">✨</div>
+                            <div class="absolute top-8 right-6 text-2xl">🎉</div>
+                            <div class="absolute bottom-10 left-6 text-2xl">🎈</div>
+
+                            <div class="w-24 h-24 bg-yellow-300 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner border-4 border-white">
+                                <span class="text-5xl">🏆</span>
+                            </div>
+                            <h2 class="text-4xl font-cute font-bold text-orange-600 mb-2">Excellent!</h2>
+                            <p class="text-orange-800 font-medium mb-6">You successfully completed 10 rounds!</p>
+                            
+                            <div class="relative rounded-[2rem] overflow-hidden shadow-lg border-4 border-white mb-8 bg-white aspect-video flex items-center justify-center transform rotate-2">
+                                <img id="reward-image" src="" alt="Reward Animal" class="w-full h-full object-cover relative z-10">
+                                <div class="absolute inset-0 flex items-center justify-center z-0 bg-slate-100">
+                                    <span class="text-slate-400 font-bold text-sm animate-pulse">Loading cute picture...</span>
+                                </div>
+                            </div>
+
+                            <button id="play-again-btn" 
+                                class="chunky-btn w-full bg-green-400 hover:bg-green-500 text-white font-cute font-bold text-2xl py-4 rounded-full shadow-[0_6px_0_0_#16a34a] transition-colors">
+                                Next Round ➡️
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="bg-white/80 backdrop-blur-sm border-t py-4 text-center shrink-0 font-roboto mt-auto">
+            <p class="text-[10px] text-gray-400 font-black uppercase tracking-[0.3em]">© 2026 MaachiiKnow. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- 修正點 2：加入 data-presets="react" -->
+    <script type="text/babel" data-type="module" data-presets="react">
+        // 修正點 3：加入魔法註解
+        /** @jsx React.createElement */
+        
+        import React, { useState } from 'react';
+        import { createRoot } from 'react-dom/client';
+        import { Copy, CheckCircle, Menu, X, Sparkles, Volume2 } from 'lucide-react';
+
+        // 專為舊版系統相容性繪製的 SVG 向量圖示
+        const crowSvg = (
+            <svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'inline-block' }}>
+                <path d="M21.5 13c0 0-3.5-1.5-5-3.5C15 7.5 12 5.5 9 6.5 5 8 3.5 11 3.5 11L1.5 11.5 4 14c0 3.5 3.5 6 7.5 6 3.5 0 6-3 9.5-5 1.5-1 .5-2 .5-2z" fill="#111827"/>
+                <path d="M1.5 11.5L5 9.5l.5 2.5-4-1z" fill="#F59E0B"/>
+                <circle cx="8.5" cy="10.5" r="1.2" fill="white"/>
+                <circle cx="8.5" cy="10.5" r="0.6" fill="black"/>
+            </svg>
+        );
+
+        const sealSvg = (
+            <svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'inline-block' }}>
+                <path d="M22 17c-2 1-5 1-7.5-1-2.5 0-5.5 1-8.5.5-3-.5-4.5-3-4-5.5.5-3 3-4.5 6-4 3 .5 5 3 6 4 2 .5 5 2.5 7 3.5 2 1 1 2.5 1 2.5z" fill="#9CA3AF"/>
+                <path d="M4 17c0 0-2 2-1 3 1 1 3 0 4-1.5" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round"/>
+                <circle cx="6.5" cy="11.5" r="1.2" fill="white"/>
+                <circle cx="6.5" cy="11.5" r="0.6" fill="black"/>
+                <circle cx="3.5" cy="13" r="1" fill="#4B5563"/>
+            </svg>
+        );
+
+        const bodyOptions = [
+            { w: 'dog', e: '🐕' }, { w: 'horse', e: '🐎' }, { w: 'elephant', e: '🐘' }, 
+            { w: 'lion', e: '🦁' }, { w: 'snake', e: '🐍' }, { w: 'crow', e: crowSvg }, 
+            { w: 'eagle', e: '🦅' }, { w: 'whale', e: '🐋' }, { w: 'seal', e: sealSvg }
+        ];
+        const featureOptions = [
+            { w: 'big', e: '🐘' }, { w: 'small', e: '🐁' }, { w: 'long', e: '📏' }, { w: 'short', e: '✂️' }, 
+            { w: 'curly', e: '🌀' }
+        ];
+        const colorOptions = [
+            { w: 'red', hex: '#ef4444' }, { w: 'blue', hex: '#3b82f6' }, { w: 'green', hex: '#22c55e' }, 
+            { w: 'yellow', hex: '#eab308' }, { w: 'orange', hex: '#f97316' }, { w: 'pink', hex: '#ec4899' },
+            { w: 'purple', hex: '#a855f7' }, { w: 'black', hex: '#1e293b' }, { w: 'brown', hex: '#78350f' }, 
+            { w: 'white', hex: '#e2e8f0' }, { w: 'gray', hex: '#9ca3af' }, { w: 'golden', hex: '#fbbf24' },
+            { w: 'colorful', hex: 'linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet)' }
+        ];
+        const partOptions = [
+            { w: 'tail', e: '🐈' },
+            { w: 'nose', e: '🐽' }, { w: 'horn', e: '🦄' },
+            { w: 'neck', e: '🦒' }, { w: 'tongue', e: '🐍' },
+            { w: 'legs', e: '🐾' }, { w: 'claws', e: '🦅' },
+            { w: 'tusks', e: '🦣' }, { w: 'wings', e: '🪽' },
+            { w: 'fins', e: '🐟' }, { w: 'ears', e: '🐘' }
+        ];
+        const textureOptions = [
+            { w: 'scales', e: '🐍' }, { w: 'fur', e: '🧸' }, { w: 'feathers', e: '🪶' }, { w: 'skin', e: '🐋' }
+        ];
+        const locationOptions = [
+            { w: 'Asia', e: '⛩️' }, { w: 'Europe', e: '🏛️' }, { w: 'America', e: '🦅' },
+            { w: 'Africa', e: '🦁' }, { w: 'Oceania', e: '🦘' }
+        ];
+        const numberOptions = [
+            { w: 'one', e: '1️⃣' }, { w: 'two', e: '2️⃣' }, { w: 'three', e: '3️⃣' },
+            { w: 'four', e: '4️⃣' }, { w: 'five', e: '5️⃣' }, { w: 'six', e: '6️⃣' },
+            { w: 'seven', e: '7️⃣' }, { w: 'eight', e: '8️⃣' }, { w: 'nine', e: '9️⃣' }, { w: 'ten', e: '🔟' }
+        ];
+
+        function App() {
+            const [body, setBody] = useState('dog');
+            const [adj, setAdj] = useState('big');
+            const [color, setColor] = useState('blue');
+            const [part, setPart] = useState('tail');
+            const [texture, setTexture] = useState('fur');
+            const [location, setLocation] = useState('Asia');
+            
+            const [number, setNumber] = useState('two');
+            const [partColor, setPartColor] = useState('red');
+            
+            const [copied, setCopied] = useState(false);
+            const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+            // 判斷是否為 one，並根據後面的形容詞開頭字母決定 a 或 an
+            const displayArticleOrNumber = number === 'one' 
+                ? (['a', 'e', 'i', 'o', 'u'].includes(adj[0].toLowerCase()) ? 'an' : 'a') 
+                : number;
+            
+            // 判斷單複數：如果是 one 則去 s，如果是其他數字則確保有 s
+            const displayPart = number === 'one'
+                ? (part.endsWith('s') ? part.slice(0, -1) : part)
+                : (part.endsWith('s') ? part : part + 's');
+                
+            // 判斷動物開頭母音，加上 a 或 an
+            const animalArticle = ['a', 'e', 'i', 'o', 'u'].includes(body[0].toLowerCase()) ? 'an' : 'a';
+
+            const prompt = `A full body of a cute 3D cartoon ${body}, completely visible, centered, colored in ${color}, with ${texture} texture, and it has ${displayArticleOrNumber} ${adj} ${partColor} ${displayPart}. It lives in ${location}. Beautiful landscape of ${location} as background, high quality.`;
+
+            const handleCopy = () => {
+                navigator.clipboard.writeText(prompt);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            };
+
+            return (
+                <div className="flex flex-col h-screen overflow-hidden font-sans">
+                    <nav className="bg-white shadow-sm h-20 border-b flex-shrink-0 z-50 sticky top-0 font-roboto">
+                        <div className="max-w-7xl mx-auto px-4 h-full flex justify-between items-center">
+                            <div className="flex items-center cursor-pointer group" onClick={() => window.location.href='index.html'}>
+                                <img src="https://i.ibb.co/CFC5v9L/Machi-Know-Logo.png" alt="Maachiiknow Logo" className="w-16 h-16 object-contain group-hover:scale-110 group-hover:rotate-6 transition-all relative -top-1 left-0 z-0" />
+                                <span className="font-logo font-black text-3xl text-gray-900 tracking-tighter relative z-10 ml-0">Maachii<span className="text-orange-600">Know</span></span>
+                            </div>
+                            <div className="hidden md:flex items-center space-x-12">
+                                <button onClick={() => window.location.href='index.html'} className="font-bold text-base text-gray-500 hover:text-orange-600 uppercase tracking-widest transition-colors">Home</button>
+                            </div>
+                            <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden text-gray-600 p-2">
+                                {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+                            </button>
+                        </div>
+                        {isMobileMenuOpen && (
+                            <div className="absolute top-20 left-0 w-full bg-white shadow-xl border-b md:hidden flex flex-col p-6 space-y-4 z-40 animate-in slide-in-from-top-2 duration-300">
+                                <button onClick={() => window.location.href='index.html'} className="text-left font-bold text-gray-700">Home</button>
+                            </div>
+                        )}
+                    </nav>
+
+                    <div className="bg-white border-b py-3 flex justify-center gap-6">
+                        <button onClick={() => window.showAiCreator()} className="font-bold text-sm text-indigo-600 hover:text-indigo-700 uppercase tracking-widest transition-colors">AI Creator</button>
+                        <span className="text-slate-300">|</span>
+                        <button onClick={() => window.showDiyGame()} className="font-bold text-sm text-pink-500 hover:text-pink-600 uppercase tracking-widest transition-colors">DIY YOUR GAME</button>
+                    </div>
+
+                    <main className="flex-1 overflow-y-auto lg:overflow-hidden p-4 md:p-6 flex flex-col items-center custom-scrollbar">
+                        <div className="flex flex-col lg:flex-row w-full lg:h-full max-w-7xl mx-auto gap-6 lg:gap-8">
+                            <div className="w-full lg:w-1/2 lg:overflow-y-auto custom-scrollbar pr-1 lg:pr-2 pb-4 lg:pb-10 space-y-6">
+                                {[
+                                    { title: 'My beast is...', data: bodyOptions, val: body, set: setBody, key: 'w' },
+                                    { title: 'It lives in...', data: locationOptions, val: location, set: setLocation, key: 'w' },
+                                    { title: 'It is...', data: colorOptions, val: color, set: setColor, key: 'w', isColor: true },
+                                    { title: 'It has "{Number}"...', data: numberOptions, val: number, set: setNumber, key: 'w' },
+                                    { title: `It has ${number} "{Feature}"...`, data: featureOptions, val: adj, set: setAdj, key: 'w' },
+                                    { title: `It has ${number} ${adj} "{Color}"...`, data: colorOptions, val: partColor, set: setPartColor, key: 'w', isColor: true },
+                                    { title: `It has ${number} ${adj} ${partColor} "{Part}".`, data: partOptions, val: part, set: (v) => setPart(v), key: 'w' },
+                                    { title: 'It has...', data: textureOptions, val: texture, set: setTexture, key: 'w' }
+                                ].map(sec => (
+                                    <div key={sec.title}>
+                                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">{sec.title}</h3>
+                                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                                            {sec.data.map(item => {
+                                                const val = item[sec.key] || item.w;
+                                                return (
+                                                    <button key={val} onClick={() => sec.set(val)} className={`p-3 rounded-xl border transition-all flex flex-col items-center gap-1 ${sec.val === val ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white border-slate-200 hover:border-indigo-200'}`}>
+                                                        {sec.isColor ? <div className="w-6 h-6 rounded-full" style={{background: item.hex}}></div> : <span className="text-xl">{item.e}</span>}
+                                                        <span className="text-xs font-bold truncate w-full px-1 text-center">{val}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="w-full lg:w-1/2 flex flex-col gap-4 pb-10 lg:pb-0 h-full">
+                                <div className="flex-1 bg-white p-6 lg:p-10 rounded-3xl shadow-sm border border-indigo-100 text-center flex flex-col justify-center items-center">
+                                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Your Sentence</p>
+                                    <div className="text-xl sm:text-2xl lg:text-[1.8rem] font-black text-slate-900 space-y-4 mb-10">
+                                        <div>My beast is {animalArticle} <span className="text-indigo-600 px-2 bg-indigo-50 rounded-lg">{body}</span>.</div>
+                                        <div>It lives in <span className="text-orange-600 px-2 bg-orange-50 rounded-lg">{location}</span>.</div>
+                                        <div>It is <span className="text-cyan-600 px-2 bg-cyan-50 rounded-lg">{color}</span>.</div>
+                                        <div>It has <span className="text-amber-500 px-2 bg-amber-50 rounded-lg">{displayArticleOrNumber}</span> <span className="text-emerald-500 px-2 bg-emerald-50 rounded-lg">{adj}</span> <span className="text-pink-500 px-2 bg-pink-50 rounded-lg">{partColor}</span> <span className="text-purple-600 px-2 bg-purple-50 rounded-lg">{displayPart}</span>.</div>
+                                        <div>It has <span className="text-rose-500 px-2 bg-rose-50 rounded-lg">{texture}</span>.</div>
+                                    </div>
+                                    
+                                    <button onClick={handleCopy} className="w-full max-w-md bg-indigo-600 text-white font-black text-xl py-5 px-8 rounded-full hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 flex items-center justify-center gap-3">
+                                        {copied ? <CheckCircle size={28}/> : <Copy size={28}/>}
+                                        {copied ? "已複製指令！" : "複製 Prompt 給 Gemini"}
+                                    </button>
+
+                                    {copied && (
+                                        <a href="https://gemini.google.com/" target="_blank" className="mt-6 text-indigo-500 font-bold text-lg underline animate-pulse flex items-center gap-2">
+                                            點擊這裡開啟 Gemini 並貼上生成圖片 ➔
+                                        </a>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+
+                    <footer className="bg-white/80 backdrop-blur-sm border-t py-4 text-center shrink-0 font-roboto mt-auto">
+                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.3em]">© 2026 MaachiiKnow. All rights reserved.</p>
+                    </footer>
+                </div>
+            );
+        }
+        createRoot(document.getElementById('root')).render(<App />);
+    </script>
+
+    <script>
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+            if(mobileMenu.classList.contains('hidden')) {
+                mobileMenuBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>';
+            } else {
+                mobileMenuBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+            }
+        });
+
+        let gameData = {
+            studentName: '',
+            pools: { animal: [], feature: [], color: [], part: [], texture: [] },
+            target: { animal: '', feature: '', color: '', part: '', texture: '' }
+        };
+        let correctAnswers = 0;
+        let globalRounds = 0; // 用於追蹤 10 題連環
+
+        const form = document.getElementById('game-form');
+        const setupSection = document.getElementById('setup-section');
+        const codeDisplaySection = document.getElementById('code-display-section');
+        const aiDecoderSection = document.getElementById('ai-decoder-section');
+        const gameSection = document.getElementById('game-section');
+        
+        const generatedCodeDisplay = document.getElementById('generated-code-display');
+        const copyCodeBtn = document.getElementById('copy-code-btn');
+        const copyToast = document.getElementById('copy-toast');
+        const goToAiBtn = document.getElementById('go-to-ai-btn');
+        
+        const aiCodeInput = document.getElementById('ai-code-input');
+        const startGameBtn = document.getElementById('start-game-btn');
+        const decodeError = document.getElementById('decode-error');
+        const backToCreateBtn = document.getElementById('back-to-create-btn');
+
+        const questionsContainer = document.getElementById('questions-container');
+        const targetSentenceEl = document.getElementById('target-sentence');
+        const scoreDisplay = document.getElementById('score-display');
+        const rewardModal = document.getElementById('reward-modal');
+        const rewardImage = document.getElementById('reward-image');
+        const playAgainBtn = document.getElementById('play-again-btn');
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const studentNameInput = document.getElementById('student-name-input').value.trim();
+            const animalInputs = Array.from(document.querySelectorAll('.animal-input')).map(input => input.value.trim().toLowerCase());
+            const featureInputs = Array.from(document.querySelectorAll('.feature-input')).map(input => input.value.trim().toLowerCase());
+            const colorInputs = Array.from(document.querySelectorAll('.color-input')).map(input => input.value.trim().toLowerCase());
+            const partInputs = Array.from(document.querySelectorAll('.part-input')).map(input => input.value.trim().toLowerCase());
+            const textureInputs = Array.from(document.querySelectorAll('.texture-input')).map(input => input.value.trim().toLowerCase());
+
+            const errorContainer = document.getElementById('form-error');
+            
+            // 嚴格檢查：任何一個欄位是空的，就不准通過！
+            if (!studentNameInput || 
+                animalInputs.some(s => s === '') || 
+                featureInputs.some(s => s === '') || 
+                colorInputs.some(s => s === '') || 
+                partInputs.some(s => s === '') || 
+                textureInputs.some(s => s === '')) {
+                
+                errorContainer.classList.remove('hidden');
+                errorContainer.textContent = "Error: Please fill in ALL the blanks completely and correctly!";
+                return;
+            }
+            
+            gameData.studentName = studentNameInput;
+            gameData.pools.animal = animalInputs;
+            gameData.pools.feature = featureInputs;
+            gameData.pools.color = colorInputs;
+            gameData.pools.part = partInputs;
+            gameData.pools.texture = textureInputs;
+
+            errorContainer.classList.add('hidden');
+            
+            try {
+                const finalCode = `🤖 AI SYSTEM PROMPT: BUILD GAME 🤖\n\nInstruction: Hello AI! Please build a vocabulary guessing game for me using the data below.\n\n[Step 1] Learn the Grammar Rule:\nMake sentences using this formula:\n"I am [Name]. My [Animal] is [Color]. It has [Feature] [Body Part]. It has [Texture]."\n\n[Step 2] Load the Vocabulary Data:\n▶ Name: ${gameData.studentName}\n▶ Nouns (Animals): ${gameData.pools.animal.join(', ')}\n▶ Adjectives (Colors): ${gameData.pools.color.join(', ')}\n▶ Adjectives (Features): ${gameData.pools.feature.join(', ')}\n▶ Nouns (Body Parts): ${gameData.pools.part.join(', ')}\n▶ Nouns (Textures): ${gameData.pools.texture.join(', ')}\n\nExecute Game Generation! 🚀`;
+                generatedCodeDisplay.textContent = finalCode;
+                setupSection.classList.add('hidden');
+                codeDisplaySection.classList.remove('hidden');
+            } catch (err) {
+                errorContainer.classList.remove('hidden');
+                errorContainer.textContent = "Error generating code. Please try again.";
+            }
+        });
+
+        copyCodeBtn.addEventListener('click', () => {
+            const codeText = generatedCodeDisplay.textContent;
+            
+            const textArea = document.createElement("textarea");
+            textArea.value = codeText;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-9999px";
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                copyToast.classList.remove('opacity-0');
+                setTimeout(() => { copyToast.classList.add('opacity-0'); }, 2000);
+            } catch (err) {
+                console.error('Copy failed', err);
+            }
+            document.body.removeChild(textArea);
+        });
+
+        goToAiBtn.addEventListener('click', () => {
+            codeDisplaySection.classList.add('hidden');
+            aiDecoderSection.classList.remove('hidden');
+            aiDecoderSection.classList.add('animate-pop-in');
+            aiCodeInput.value = ''; 
+            decodeError.classList.add('hidden');
+        });
+
+        backToCreateBtn.addEventListener('click', () => {
+            aiDecoderSection.classList.add('hidden');
+            setupSection.classList.remove('hidden');
+        });
+
+        const copyLinkBtn = document.getElementById('copy-link-btn');
+        if (copyLinkBtn) {
+            copyLinkBtn.addEventListener('click', () => {
+                const codeText = document.getElementById('generated-link-display').textContent;
+                const textArea = document.createElement("textarea");
+                textArea.value = codeText;
+                textArea.style.position = "fixed";
+                textArea.style.left = "-9999px";
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    const copyLinkToast = document.getElementById('copy-link-toast');
+                    copyLinkToast.classList.remove('opacity-0');
+                    setTimeout(() => { copyLinkToast.classList.add('opacity-0'); }, 2000);
+                } catch (err) {
+                    console.error('Copy failed', err);
+                }
+                document.body.removeChild(textArea);
+            });
+        }
+
+        startGameBtn.addEventListener('click', () => {
+            const rawInput = aiCodeInput.value.trim();
+            decodeError.classList.add('hidden');
+
+            if (!rawInput.includes('AI SYSTEM PROMPT: BUILD GAME')) {
+                decodeError.textContent = "Invalid command! Make sure you copied the entire 🤖 AI SYSTEM PROMPT 🤖.";
+                decodeError.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const extractList = (prefix) => {
+                    const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    const regex = new RegExp(`${escapedPrefix}\\s*(.*)`);
+                    const match = rawInput.match(regex);
+                    if (match && match[1]) {
+                        return match[1].split(/[,，、]+/).map(s => s.trim()).filter(s => s);
+                    }
+                    return [];
+                };
+
+                gameData.pools.animal = extractList('▶ Nouns (Animals):');
+                gameData.pools.color = extractList('▶ Adjectives (Colors):');
+                gameData.pools.feature = extractList('▶ Adjectives (Features):');
+                gameData.pools.part = extractList('▶ Nouns (Body Parts):');
+                gameData.pools.texture = extractList('▶ Nouns (Textures):');
+
+                const extractedName = extractList('▶ Name:');
+                gameData.studentName = extractedName.length > 0 ? extractedName[0] : "Player";
+
+                if (gameData.pools.animal.length === 0 || gameData.pools.feature.length === 0 || gameData.pools.color.length === 0 || gameData.pools.part.length === 0 || gameData.pools.texture.length === 0) {
+                    throw new Error("Missing vocabulary words.");
+                }
+
+                // 生成獨立 HTML 程式碼供學生帶回家玩
+                const standaloneHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${gameData.studentName}'s DIY GAME</title>
+<script src="https://cdn.tailwindcss.com"><\/script>
+<style>
+  body { font-family: 'Arial', sans-serif; background: #eef2ff; }
+  .btn { transition: transform 0.1s; border: 2px solid #e2e8f0; }
+  .btn:active:not(:disabled) { transform: translateY(2px); }
+  .correct { background-color: #4ade80 !important; color: white !important; border-color: #22c55e !important; }
+  .wrong { background-color: #f87171 !important; color: white !important; border-color: #ef4444 !important; }
+</style>
+</head>
+<body class="p-4 flex flex-col items-center min-h-screen">
+<div class="max-w-3xl w-full bg-white rounded-3xl shadow-xl p-6 md:p-10 text-center border-4 border-indigo-100 mt-10">
+    <h1 class="text-3xl md:text-4xl font-black text-indigo-600 mb-6">🌟 ${gameData.studentName}'s DIY GAME 🌟</h1>
+    <div class="text-xl text-purple-600 font-bold mb-6 bg-purple-50 p-4 rounded-2xl border-2 border-purple-200 inline-block">Score: <span id="score">0</span> / 10</div>
+    <div class="bg-blue-50 p-6 rounded-2xl mb-8 border-2 border-blue-100 shadow-inner">
+        <p id="sentence" class="text-2xl md:text-3xl font-bold leading-loose text-slate-700"></p>
+    </div>
+    <div id="questions" class="space-y-4"></div>
+</div>
+<script>
+    const data = ${JSON.stringify({pools: gameData.pools, studentName: gameData.studentName})};
+    let score = 0, roundPoints = 0;
+    const singularParts = ['tail', 'nose', 'horn', 'neck', 'tongue'];
+    
+    function startRound() {
+        if (score >= 50) { 
+            document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#fdf2f8;"><h1 style="font-size:3rem;color:#be185d;margin-bottom:2rem;">🎉 Incredible! You completed all 10 rounds! 🎉</h1><button onclick="location.reload()" style="padding:15px 30px;font-size:1.5rem;background:#be185d;color:white;border:none;border-radius:1rem;cursor:pointer;box-shadow:0 4px 6px rgba(0,0,0,0.1);">Play Again 🔄</button></div>'; 
+            return; 
+        }
+        roundPoints = 0;
+        document.getElementById('score').innerText = Math.floor(score / 5);
+        
+        const rand = arr => arr[Math.floor(Math.random() * arr.length)];
+        const target = { animal: rand(data.pools.animal), color: rand(data.pools.color), feature: rand(data.pools.feature), part: rand(data.pools.part), texture: rand(data.pools.texture) };
+        
+        const isSingular = singularParts.includes(target.part);
+        const art = isSingular ? (['a','e','i','o','u'].includes(target.feature.charAt(0).toLowerCase()) ? 'an ' : 'a ') : '';
+        const pt = isSingular ? (target.part.endsWith('s') ? target.part.slice(0,-1) : target.part) : (target.part.endsWith('s') ? target.part : target.part + 's');
+        
+        document.getElementById('sentence').innerHTML = "I am <strong class='text-yellow-600 bg-white px-2 rounded-lg border'>"+data.studentName+"</strong>. My <strong class='text-indigo-600 bg-white px-2 rounded-lg border'>"+target.animal+"</strong> is <strong class='text-cyan-600 bg-white px-2 rounded-lg border'>"+target.color+"</strong>. It has "+art+"<strong class='text-emerald-600 bg-white px-2 rounded-lg border'>"+target.feature+"</strong> <strong class='text-purple-600 bg-white px-2 rounded-lg border'>"+pt+"</strong>. It has <strong class='text-rose-600 bg-white px-2 rounded-lg border'>"+target.texture+"</strong>.";
+        
+        const cats = [{ id: 'animal', l: '🐾 Animal?' }, { id: 'color', l: '🎨 Color?' }, { id: 'part', l: '🦴 Body Part?' }, { id: 'feature', l: '📏 Feature?' }, { id: 'texture', l: '🧸 Texture?' }];
+        const qContainer = document.getElementById('questions');
+        qContainer.innerHTML = '';
+        
+        cats.forEach(c => {
+            let wrongs = data.pools[c.id].filter(w => w !== target[c.id]).sort(() => Math.random() - 0.5);
+            let opts = [target[c.id], wrongs[0], wrongs[1]].filter(Boolean).sort(() => Math.random() - 0.5);
+            
+            let html = "<div class='bg-gray-50 p-5 rounded-2xl border-2 border-gray-200'><h3 class='font-bold text-lg text-gray-700 mb-3'>"+c.l+"</h3><div class='grid grid-cols-1 sm:grid-cols-3 gap-3' id='group-"+c.id+"'>";
+            opts.forEach(o => html += "<button class='btn bg-white rounded-xl py-3 font-bold text-lg text-slate-600 hover:bg-slate-50' onclick='answer(this, \\""+o+"\\", \\""+target[c.id]+"\\", \\""+c.id+"\\")'>"+o+"</button>");
+            qContainer.innerHTML += html + "</div></div>";
+        });
+    }
+    
+    window.answer = function(btn, sel, cor, gid) {
+        const grp = document.getElementById('group-'+gid);
+        if(grp.dataset.answered) return;
+        if(sel === cor) {
+            btn.classList.add('correct');
+            grp.dataset.answered = "true";
+            Array.from(grp.children).forEach(b => { if(b !== btn) { b.style.opacity = '0.5'; b.disabled = true; } });
+            score++; roundPoints++;
+            if(roundPoints === 5) setTimeout(startRound, 1000);
+        } else {
+            btn.classList.add('wrong'); btn.disabled = true;
+            setTimeout(() => btn.classList.remove('wrong'), 500);
+        }
+    }
+    startRound();
+<\/script>
+</body>
+</html>`;
+                document.getElementById('generated-link-display').textContent = standaloneHTML;
+
+                globalRounds = 0;
+                loadNewBeast();
+
+                aiDecoderSection.classList.add('hidden');
+                gameSection.classList.remove('hidden');
+                gameSection.classList.add('animate-pop-in');
+            } catch (err) {
+                decodeError.textContent = "Failed to decode the game! The code might be broken or incomplete.";
+                decodeError.classList.remove('hidden');
+            }
+        });
+
+        function loadNewBeast() {
+            const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+            gameData.target.animal = getRandom(gameData.pools.animal);
+            gameData.target.feature = getRandom(gameData.pools.feature);
+            gameData.target.color = getRandom(gameData.pools.color);
+            gameData.target.part = getRandom(gameData.pools.part);
+            gameData.target.texture = getRandom(gameData.pools.texture);
+
+            const singularParts = ['tail', 'nose', 'horn', 'neck', 'tongue'];
+            const isSingular = singularParts.includes(gameData.target.part);
+            const partArticle = isSingular ? (['a', 'e', 'i', 'o', 'u'].includes(gameData.target.feature.charAt(0).toLowerCase()) ? 'an ' : 'a ') : '';
+            const displayPart = isSingular ? (gameData.target.part.endsWith('s') ? gameData.target.part.slice(0,-1) : gameData.target.part) : (gameData.target.part.endsWith('s') ? gameData.target.part : gameData.target.part + 's');
+            
+            const sentence = `I am <strong class="text-yellow-600 bg-white px-2 py-1 rounded-xl border-2 border-yellow-100 shadow-sm inline-block mx-1">${gameData.studentName}</strong>. My <strong class="text-indigo-600 bg-white px-2 py-1 rounded-xl border-2 border-indigo-100 shadow-sm inline-block mx-1">${gameData.target.animal}</strong> is <strong class="text-cyan-600 bg-white px-2 py-1 rounded-xl border-2 border-cyan-100 shadow-sm inline-block mx-1">${gameData.target.color}</strong>. It has ${partArticle}<strong class="text-emerald-600 bg-white px-2 py-1 rounded-xl border-2 border-emerald-100 shadow-sm inline-block mx-1">${gameData.target.feature}</strong> <strong class="text-purple-600 bg-white px-2 py-1 rounded-xl border-2 border-purple-100 shadow-sm inline-block mx-1">${displayPart}</strong>. It has <strong class="text-rose-600 bg-white px-2 py-1 rounded-xl border-2 border-rose-100 shadow-sm inline-block mx-1">${gameData.target.texture}</strong>.`;
+            targetSentenceEl.innerHTML = sentence;
+
+            correctAnswers = 0;
+            scoreDisplay.textContent = globalRounds;
+            buildQuestions();
+        }
+
+        function buildQuestions() {
+            questionsContainer.innerHTML = '';
+            const challenges = [
+                { id: 'q-animal', category: 'animal', label: '🐾 What is your animal?' },
+                { id: 'q-color', category: 'color', label: '🎨 What color is it?' },
+                { id: 'q-part', category: 'part', label: '🦴 It has...' },
+                { id: 'q-feature', category: 'feature', label: '📏 It is... / These are...' },
+                { id: 'q-texture', category: 'texture', label: '🧸 What is your animal\'s texture?' }
+            ];
+
+            challenges.forEach(challenge => {
+                const correctAnswer = gameData.target[challenge.category];
+                const pool = gameData.pools[challenge.category];
+                let wrongOptions = pool.filter(word => word !== correctAnswer);
+                wrongOptions = [...new Set(wrongOptions)]; 
+                wrongOptions = shuffleArray(wrongOptions).slice(0, 2);
+                let options = shuffleArray([correctAnswer, ...wrongOptions]);
+
+                const qDiv = document.createElement('div');
+                qDiv.className = 'bg-slate-50/80 rounded-3xl p-6 border-2 border-slate-200 transition-all';
+                qDiv.innerHTML = `
+                    <h3 class="font-cute font-bold text-xl text-slate-700 mb-4">${challenge.label}</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 options-group" data-category="${challenge.category}">
+                        ${options.map(opt => `
+                            <button class="chunky-btn option-btn rounded-2xl py-3 px-4 font-bold text-lg focus:outline-none"
+                                    onclick="handleAnswer(this, '${opt}', '${correctAnswer}')">
+                                ${opt}
+                            </button>
+                        `).join('')}
+                    </div>
+                `;
+                questionsContainer.appendChild(qDiv);
+            });
+        }
+
+        window.handleAnswer = function(button, selectedWord, correctWord) {
+            const group = button.closest('.options-group');
+            const allButtons = group.querySelectorAll('button');
+            if (group.classList.contains('answered')) return;
+
+            if (selectedWord === correctWord) {
+                button.classList.add('correct-btn');
+                group.classList.add('answered'); 
+                allButtons.forEach(btn => {
+                    if (btn !== button) {
+                        btn.disabled = true;
+                        btn.classList.add('opacity-50');
+                    }
+                });
+                correctAnswers++;
+                if (correctAnswers === 5) {
+                    globalRounds++;
+                    scoreDisplay.textContent = globalRounds;
+                    if (globalRounds >= 10) {
+                        setTimeout(triggerSuccess, 800);
+                    } else {
+                        setTimeout(loadNewBeast, 800);
+                    }
+                }
+            } else {
+                button.classList.add('wrong-btn');
+                button.disabled = true;
+                setTimeout(() => {
+                    button.classList.remove('wrong-btn');
+                    button.classList.add('bg-slate-200', 'border-slate-300', 'text-slate-400', 'opacity-50', 'shadow-none', 'transform', 'translate-y-1');
+                }, 400);
+            }
+        };
+
+        function triggerSuccess() {
+            const safeAnimalKeyword = encodeURIComponent(gameData.target.animal);
+            rewardImage.src = `https://loremflickr.com/600/400/${safeAnimalKeyword}`;
+            rewardModal.classList.remove('hidden');
+            
+            // 自動跳轉到下一輪機制 (4秒後自動重新開始)
+            globalRounds = 0;
+            setTimeout(() => {
+                if(!rewardModal.classList.contains('hidden')) {
+                    rewardModal.classList.add('hidden');
+                    loadNewBeast();
+                }
+            }, 4000);
+        }
+
+        playAgainBtn.addEventListener('click', function() {
+            rewardModal.classList.add('hidden');
+            loadNewBeast(); // 手動點擊直接開啟下一輪
+        });
+    </script>
+</body>
+</html>

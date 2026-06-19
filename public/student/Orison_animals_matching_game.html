@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animal Match</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .preserve-3d {
+            transform-style: preserve-3d;
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+    </style>
+</head>
+<body class="h-screen overflow-hidden bg-slate-50 flex flex-col items-center py-2 sm:py-4 px-4 font-sans text-slate-800">
+
+    <div class="max-w-4xl w-full h-full flex flex-col">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-3 bg-white p-3 rounded-xl shadow-sm border border-slate-200 shrink-0">
+            <div>
+                <h1 class="text-xl font-bold text-indigo-600">Animal Match</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="text-center">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Moves</p>
+                    <p id="moves-counter" class="font-bold">0</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Pairs</p>
+                    <p id="matches-counter" class="font-bold">0/10</p>
+                </div>
+                <button onclick="initializeGame()" class="w-8 h-8 flex items-center justify-center bg-indigo-100 text-indigo-600 rounded-lg hover:bg-indigo-200 transition-colors">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Game Grid -->
+        <div id="game-board" class="grid grid-cols-4 grid-rows-5 gap-2 sm:gap-3 flex-1 min-h-0 pb-4" style="perspective: 1000px;">
+            <!-- Cards will be generated here by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Victory Modal -->
+    <div id="victory-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm items-center justify-center z-50 p-4 hidden">
+        <div class="bg-white p-8 rounded-2xl shadow-xl max-w-xs w-full text-center">
+            <i class="fa-solid fa-trophy text-yellow-500 text-5xl mb-4 block mx-auto"></i>
+            <h2 class="text-2xl font-bold mb-2">Great Job!</h2>
+            <p class="text-slate-600 mb-6">Completed in <span id="final-moves">0</span> moves.</p>
+            <button onclick="initializeGame()" class="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        const ANIMAL_DATA = [
+            { id: 'horse', word: 'Horse', image: '🐎' },
+            { id: 'dog', word: 'Dog', image: '🐕' },
+            { id: 'whale', word: 'Whale', image: '🐋' },
+            { id: 'crow', word: 'Crow', image: '🐦‍⬛' },
+            { id: 'eagle', word: 'Eagle', image: '🦅' },
+            { id: 'human', word: 'Human', image: '🧑' },
+            { id: 'elephant', word: 'Elephant', image: '🐘' },
+            { id: 'lion', word: 'Lion', image: '🦁' },
+            { id: 'snake', word: 'Snake', image: '🐍' },
+            { id: 'seal', word: 'Seal', image: '🦭' },
+        ];
+
+        let cards = [];
+        let flippedIndices = [];
+        let matchedPairs = 0;
+        let moves = 0;
+        let isLocked = false;
+
+        const boardElement = document.getElementById('game-board');
+        const movesElement = document.getElementById('moves-counter');
+        const matchesElement = document.getElementById('matches-counter');
+        const modalElement = document.getElementById('victory-modal');
+        const finalMovesElement = document.getElementById('final-moves');
+
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        function createCardElement(card, index) {
+            const cardWrapper = document.createElement('div');
+            cardWrapper.className = 'relative w-full h-full cursor-pointer';
+            cardWrapper.onclick = () => handleCardClick(index);
+
+            const innerDiv = document.createElement('div');
+            innerDiv.id = `card-inner-${index}`;
+            innerDiv.className = 'w-full h-full relative transition-transform duration-500 preserve-3d rounded-lg shadow-sm';
+            
+            const cardBack = document.createElement('div');
+            cardBack.className = 'absolute inset-0 w-full h-full bg-indigo-500 rounded-lg flex items-center justify-center backface-hidden border-2 border-indigo-400';
+            cardBack.innerHTML = '<span class="text-white font-bold opacity-30 text-xl">?</span>';
+
+            const cardFront = document.createElement('div');
+            cardFront.id = `card-front-${index}`;
+            cardFront.className = 'absolute inset-0 w-full h-full bg-white rounded-lg flex items-center justify-center border-2 border-slate-200 rotate-y-180 backface-hidden';
+            
+            const contentSpan = document.createElement('span');
+            if (card.type === 'image') {
+                contentSpan.className = 'text-3xl';
+            } else {
+                contentSpan.className = 'text-xs sm:text-sm font-bold text-center px-1';
+            }
+            contentSpan.textContent = card.content;
+            
+            cardFront.appendChild(contentSpan);
+            innerDiv.appendChild(cardBack);
+            innerDiv.appendChild(cardFront);
+            cardWrapper.appendChild(innerDiv);
+
+            return cardWrapper;
+        }
+
+        function renderBoard() {
+            boardElement.innerHTML = '';
+            cards.forEach((card, index) => {
+                const cardEl = createCardElement(card, index);
+                boardElement.appendChild(cardEl);
+                updateCardVisuals(index); 
+            });
+        }
+
+        function updateCardVisuals(index) {
+            const card = cards[index];
+            const innerDiv = document.getElementById(`card-inner-${index}`);
+            const frontDiv = document.getElementById(`card-front-${index}`);
+
+            if (card.isFlipped || card.isMatched) {
+                innerDiv.classList.add('rotate-y-180');
+            } else {
+                innerDiv.classList.remove('rotate-y-180');
+            }
+
+            if (card.isMatched) {
+                frontDiv.classList.remove('border-slate-200', 'bg-white');
+                frontDiv.classList.add('border-emerald-400', 'bg-emerald-50');
+            } else {
+                frontDiv.classList.add('border-slate-200', 'bg-white');
+                frontDiv.classList.remove('border-emerald-400', 'bg-emerald-50');
+            }
+        }
+
+        function updateUI() {
+            movesElement.textContent = moves;
+            matchesElement.textContent = `${matchedPairs}/10`;
+            
+            if (matchedPairs === ANIMAL_DATA.length) {
+                finalMovesElement.textContent = moves;
+                modalElement.classList.remove('hidden');
+                modalElement.classList.add('flex');
+            } else {
+                modalElement.classList.add('hidden');
+                modalElement.classList.remove('flex');
+            }
+        }
+
+        function handleCardClick(index) {
+            if (isLocked || cards[index].isFlipped || cards[index].isMatched) return;
+
+            cards[index].isFlipped = true;
+            updateCardVisuals(index);
+            flippedIndices.push(index);
+
+            if (flippedIndices.length === 2) {
+                isLocked = true;
+                moves++;
+                updateUI();
+
+                const [firstIndex, secondIndex] = flippedIndices;
+                
+                if (cards[firstIndex].matchId === cards[secondIndex].matchId) {
+                    setTimeout(() => {
+                        cards[firstIndex].isMatched = true;
+                        cards[secondIndex].isMatched = true;
+                        updateCardVisuals(firstIndex);
+                        updateCardVisuals(secondIndex);
+                        
+                        matchedPairs++;
+                        flippedIndices = [];
+                        isLocked = false;
+                        updateUI();
+                    }, 500);
+                } else {
+                    setTimeout(() => {
+                        cards[firstIndex].isFlipped = false;
+                        cards[secondIndex].isFlipped = false;
+                        updateCardVisuals(firstIndex);
+                        updateCardVisuals(secondIndex);
+                        
+                        flippedIndices = [];
+                        isLocked = false;
+                    }, 1000);
+                }
+            }
+        }
+
+        function initializeGame() {
+            const deck = [];
+            ANIMAL_DATA.forEach((animal) => {
+                deck.push({
+                    uniqueId: `${animal.id}-word`,
+                    matchId: animal.id,
+                    type: 'word',
+                    content: animal.word,
+                    isFlipped: false,
+                    isMatched: false,
+                });
+                deck.push({
+                    uniqueId: `${animal.id}-img`,
+                    matchId: animal.id,
+                    type: 'image',
+                    content: animal.image,
+                    isFlipped: false,
+                    isMatched: false,
+                });
+            });
+
+            cards = shuffleArray(deck);
+            flippedIndices = [];
+            matchedPairs = 0;
+            moves = 0;
+            isLocked = false;
+            
+            updateUI();
+            renderBoard();
+        }
+
+        // 頁面載入完成後啟動遊戲
+        window.onload = initializeGame;
+
+    </script>
+</body>
+</html>

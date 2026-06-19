@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Hungry Monster</title>
+    <style>
+        /* 使用 Quicksand Bold */
+        @font-face {
+            font-family: 'Quicksand';
+            src: url('./fonts/Quicksand-Bold.ttf') format('truetype');
+            font-weight: 700;
+            font-style: normal;
+        }
+
+        :root {
+            --bg: #fdf6e3;
+            --shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e8f5e9 0%, #fdf6e3 40%, #fff8e1 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Quicksand', 'Nunito', 'Segoe UI', 'PingFang TC', sans-serif;
+            touch-action: manipulation;
+            padding: 10px;
+        }
+
+        .bg-cloud {
+            position: fixed;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.45;
+            pointer-events: none;
+            z-index: 0;
+            animation: floatCloud 20s ease-in-out infinite;
+        }
+        .bg-cloud:nth-child(1) { width: 120px; height: 50px; top: 8%; left: 5%; }
+        .bg-cloud:nth-child(2) { width: 90px; height: 38px; top: 15%; right: 8%; animation-delay: -7s; }
+        .bg-cloud:nth-child(3) { width: 100px; height: 42px; top: 5%; left: 55%; animation-delay: -14s; }
+
+        @keyframes floatCloud {
+            0%,100% { transform: translateX(0); }
+            25% { transform: translateX(30px); }
+            50% { transform: translateX(-15px); }
+            75% { transform: translateX(20px); }
+        }
+
+        .game-container {
+            position: relative;
+            z-index: 1;
+            width: min(92vw, 1100px);
+            aspect-ratio: 16 / 9;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 32px;
+            box-shadow: var(--shadow), 0 0 0 6px rgba(255, 255, 255, 0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 2% 3%;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+        }
+
+        .game-title {
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 700;
+            font-size: clamp(42px, 7vw, 64px);
+            color: #4a6b4a;
+            text-align: center;
+            letter-spacing: 1.5px;
+            text-shadow: 1px 1px 0 rgba(255,255,200,0.8);
+            background: rgba(255, 235, 150, 0.85);
+            border-radius: 30px;
+            padding: 12px 36px;
+            white-space: nowrap;
+            margin-top: 0.5%;
+            z-index: 5;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .monster-area {
+            position: relative;
+            flex: 0 1 50%;
+            width: 100%;
+            max-height: 55%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .canvas-wrapper {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 20px;
+        }
+        .flying-overlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+        }
+
+        .word-btn {
+            position: absolute;
+            padding: 12px 16px;
+            font-size: clamp(18px, 2.5vw, 24px);
+            font-weight: 700;
+            border: none;
+            border-radius: 20px;
+            background: #ffffff;
+            color: #2c3e50;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: transform 0.15s, box-shadow 0.15s, background 0.2s;
+            letter-spacing: 1px;
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+            text-align: center;
+            z-index: 10;
+            white-space: nowrap;
+            font-family: 'Quicksand', sans-serif;
+        }
+        .word-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .word-btn.active-word {
+            background: #a3d9b8;
+            color: white;
+            box-shadow: 0 0 20px rgba(120,196,160,0.5);
+        }
+
+        .word-btn-apple    { top: 25%; left: 2%; }
+        .word-btn-grape    { bottom: 25%; left: 2%; }
+        .word-btn-strawberry { top: 25%; right: 2%; }
+        .word-btn-banana   { bottom: 25%; right: 2%; }
+
+        .fruits-panel {
+            flex: 0 0 auto;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding-bottom: 1.5%;
+        }
+        .fruits-row {
+            display: flex;
+            justify-content: center;
+            gap: clamp(18px, 3.5vw, 32px);
+            flex-wrap: wrap;
+        }
+        .fruit-btn {
+            width: clamp(86px, 12vw, 120px);
+            height: clamp(86px, 12vw, 120px);
+            border-radius: 50%;
+            border: 4px solid rgba(0,0,0,0.08);
+            background: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+            overflow: hidden;
+            padding: 0px;
+        }
+        .fruit-btn img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            pointer-events: none;
+        }
+        .fruit-btn:active {
+            transform: scale(0.9);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+        }
+        .fruit-btn.correct-glow {
+            border-color: #4caf84 !important;
+            box-shadow: 0 0 28px rgba(76,175,132,0.6) !important;
+            transform: scale(1.1);
+        }
+        .fruit-btn.shake {
+            animation: shakeBtn 0.5s ease-in-out;
+            border-color: #ff6b6b !important;
+        }
+        @keyframes shakeBtn {
+            0%,100% { transform: translateX(0); }
+            15% { transform: translateX(-10px); }
+            30% { transform: translateX(10px); }
+            45% { transform: translateX(-8px); }
+            60% { transform: translateX(8px); }
+            75% { transform: translateX(-4px); }
+            90% { transform: translateX(4px); }
+        }
+
+        .start-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.55);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+        .start-overlay.hidden { display: none; }
+        .start-btn {
+            font-family: 'Quicksand', sans-serif;
+            background: #fff;
+            border: none;
+            border-radius: 80px;
+            padding: 30px 70px;
+            font-size: 56px;
+            font-weight: 700;
+            cursor: pointer;
+            color: #4a7c5e;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+            letter-spacing: 3px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+        .start-btn .icon {
+            font-size: 76px;
+        }
+        .start-btn:active {
+            transform: scale(0.93);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+        }
+
+        @media (max-width: 640px) {
+            .game-container {
+                aspect-ratio: auto;
+                width: 92vw;
+                max-width: 460px;
+                height: auto;
+                padding: 14px 10px 18px;
+                gap: 6px;
+            }
+            .game-title { font-size: 32px; padding: 8px 20px; }
+            .monster-area { flex: 0 0 auto; width: 100%; aspect-ratio: 1 / 0.8; max-height: none; }
+            .word-btn { padding: 8px 12px; font-size: 16px; }
+            .fruit-btn { width: 76px; height: 76px; }
+            .fruits-row { gap: 12px; }
+            .start-btn {
+                padding: 24px 48px;
+                font-size: 40px;
+                border-radius: 60px;
+                gap: 12px;
+            }
+            .start-btn .icon { font-size: 54px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-cloud"></div>
+    <div class="bg-cloud"></div>
+    <div class="bg-cloud"></div>
+
+    <div class="game-container" id="gameContainer">
+        <div class="game-title">What snacks do you like?</div>
+
+        <div class="monster-area" id="monsterArea">
+            <div class="canvas-wrapper" id="canvasWrapper">
+                <canvas id="monsterCanvas" aria-label="可愛的小怪獸"></canvas>
+                <div class="flying-overlay" id="flyingOverlay"></div>
+            </div>
+
+            <button class="word-btn word-btn-apple" data-word="apple">apple</button>
+            <button class="word-btn word-btn-grape" data-word="grape">grape</button>
+            <button class="word-btn word-btn-strawberry" data-word="strawberry">strawberry</button>
+            <button class="word-btn word-btn-banana" data-word="banana">banana</button>
+        </div>
+
+        <div class="fruits-panel">
+            <div class="fruits-row" id="fruitsRow">
+                <button class="fruit-btn" data-fruit="grape"><img src="./img/grape.png" alt="grape"></button>
+                <button class="fruit-btn" data-fruit="banana"><img src="./img/banana.png" alt="banana"></button>
+                <button class="fruit-btn" data-fruit="strawberry"><img src="./img/strawberry.png" alt="strawberry"></button>
+                <button class="fruit-btn" data-fruit="apple"><img src="./img/apple.png" alt="apple"></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="start-overlay" id="startOverlay">
+        <button class="start-btn" id="startBtn">
+            <span class="icon">🌟</span> Let's Play!
+        </button>
+    </div>
+
+    <script>
+        (function() {
+            const canvas = document.getElementById('monsterCanvas');
+            const ctx = canvas.getContext('2d');
+            const canvasWrapper = document.getElementById('canvasWrapper');
+            const flyingOverlay = document.getElementById('flyingOverlay');
+            const fruitButtons = document.querySelectorAll('.fruit-btn');
+            const wordButtons = document.querySelectorAll('.word-btn');
+            const startOverlay = document.getElementById('startOverlay');
+            const startBtn = document.getElementById('startBtn');
+
+            const monsterIdleImg = new Image();
+            monsterIdleImg.src = './img/monster-1.png';
+            const monsterEatImg = new Image();
+            monsterEatImg.src = './img/monster-2.png';
+
+            let imagesReady = false;
+            let imagesLoaded = 0;
+            function checkImages() {
+                imagesLoaded++;
+                if (imagesLoaded === 2) imagesReady = true;
+            }
+            monsterIdleImg.onload = checkImages;
+            monsterEatImg.onload = checkImages;
+            monsterIdleImg.onerror = () => { console.warn('monster-1.png load failed'); checkImages(); };
+            monsterEatImg.onerror = () => { console.warn('monster-2.png load failed'); checkImages(); };
+
+            const soundPaths = {
+                word: {
+                    apple: './sound/apple.mp3',
+                    banana: './sound/banana.mp3',
+                    grape: './sound/grape.mp3',
+                    strawberry: './sound/strawberry.mp3'
+                },
+                correct: './sound/correct.mp3',
+                error: './sound/error.mp3',
+                tryAgain: './sound/try again.mp3',
+                praises: [
+                    './sound/good job.mp3',
+                    './sound/great.mp3',
+                    './sound/way to go.mp3'
+                ],
+                bgm: './sound/bgm.mp3'
+            };
+
+            const audioElements = {
+                word: {},
+                correct: null,
+                error: null,
+                tryAgain: null,
+                praises: [],
+                bgm: null
+            };
+
+            function preloadAudio() {
+                for (let fruit in soundPaths.word) {
+                    const audio = new Audio(soundPaths.word[fruit]);
+                    audio.preload = 'auto';
+                    audio.volume = 1.0;
+                    audioElements.word[fruit] = audio;
+                }
+                audioElements.correct = new Audio(soundPaths.correct);
+                audioElements.correct.preload = 'auto';
+                audioElements.correct.volume = 0.8;
+                audioElements.error = new Audio(soundPaths.error);
+                audioElements.error.preload = 'auto';
+                audioElements.error.volume = 1.0;
+                audioElements.tryAgain = new Audio(soundPaths.tryAgain);
+                audioElements.tryAgain.preload = 'auto';
+                audioElements.tryAgain.volume = 1.0;
+                soundPaths.praises.forEach(path => {
+                    const audio = new Audio(path);
+                    audio.preload = 'auto';
+                    audio.volume = 1.0;
+                    audioElements.praises.push(audio);
+                });
+                audioElements.bgm = new Audio(soundPaths.bgm);
+                audioElements.bgm.loop = true;
+                audioElements.bgm.volume = 0.0;
+                audioElements.bgm.preload = 'auto';
+            }
+            preloadAudio();
+
+            function playAudio(audio) {
+                if (!audio) return;
+                audio.currentTime = 0;
+                audio.play().catch(e => console.warn('audio play error', e));
+            }
+
+            function stopAudio(audio) {
+                if (!audio) return;
+                audio.pause();
+                audio.currentTime = 0;
+            }
+
+            function playSequence(audioList, onAllEnd, earlyCutTime = 0) {
+                let index = 0;
+                let timer = null;
+                function playNext() {
+                    if (timer) clearTimeout(timer);
+                    if (index < audioList.length) {
+                        const audio = audioList[index];
+                        let played = false;
+                        if (audio) {
+                            const onAudioEnd = () => {
+                                if (!played) {
+                                    played = true;
+                                    index++;
+                                    playNext();
+                                }
+                            };
+                            if (index === 0 && earlyCutTime > 0) {
+                                timer = setTimeout(() => {
+                                    if (!played) {
+                                        played = true;
+                                        stopAudio(audio);
+                                        index++;
+                                        playNext();
+                                    }
+                                }, earlyCutTime);
+                                audio.onended = onAudioEnd;
+                            } else {
+                                audio.onended = onAudioEnd;
+                            }
+                            playAudio(audio);
+                        } else {
+                            index++;
+                            playNext();
+                        }
+                    } else {
+                        if (onAllEnd) onAllEnd();
+                    }
+                }
+                playNext();
+            }
+
+            let currentWordAudio = null;
+            function playWordSound(fruit) {
+                if (currentWordAudio) stopAudio(currentWordAudio);
+                const audio = audioElements.word[fruit];
+                if (audio) {
+                    currentWordAudio = audio;
+                    playAudio(audio);
+                    audio.onended = () => { if (currentWordAudio === audio) currentWordAudio = null; };
+                }
+            }
+
+            function getRandomPraiseAudio() {
+                const arr = audioElements.praises;
+                if (arr.length === 0) return null;
+                return arr[Math.floor(Math.random() * arr.length)];
+            }
+
+            const MOUTH_RELATIVE_X = 0.5;
+            const MOUTH_RELATIVE_Y = 0.72;
+            let currentMouthCanvasPos = { x: 0, y: 0 };
+
+            function resizeCanvas() {
+                const rect = canvasWrapper.getBoundingClientRect();
+                const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                const width = rect.width;
+                const height = rect.height;
+                if (canvas.width !== width*dpr || canvas.height !== height*dpr) {
+                    canvas.width = width*dpr;
+                    canvas.height = height*dpr;
+                    canvas.style.width = width+'px';
+                    canvas.style.height = height+'px';
+                    ctx.setTransform(1,0,0,1,0,0);
+                    ctx.scale(dpr,dpr);
+                }
+                return {width, height};
+            }
+
+            function drawMonster(w, h, t) {
+                ctx.clearRect(0, 0, w, h);
+                if (!imagesReady) {
+                    const cx = w/2, cy = h*0.5;
+                    const r = Math.min(w, h) * 0.25;
+                    ctx.fillStyle = '#78c4a0';
+                    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
+                    currentMouthCanvasPos = { x: cx, y: cy + r*0.5 };
+                    return;
+                }
+
+                const maxWidth = w * 0.78;
+                const maxHeight = h * 0.84;
+                const img = isEating ? monsterEatImg : monsterIdleImg;
+                if (!img.complete || !img.naturalWidth) {
+                    currentMouthCanvasPos = { x: w/2, y: h/2 };
+                    return;
+                }
+                const imgRatio = img.width / img.height;
+                let drawWidth, drawHeight;
+                if (maxWidth / maxHeight > imgRatio) {
+                    drawHeight = maxHeight;
+                    drawWidth = drawHeight * imgRatio;
+                } else {
+                    drawWidth = maxWidth;
+                    drawHeight = drawWidth / imgRatio;
+                }
+                const dx = (w - drawWidth) / 2;
+                const dy = (h - drawHeight) / 2;
+                ctx.drawImage(img, dx, dy, drawWidth, drawHeight);
+
+                const mouthX = dx + drawWidth * MOUTH_RELATIVE_X;
+                const mouthY = dy + drawHeight * MOUTH_RELATIVE_Y;
+                currentMouthCanvasPos = { x: mouthX, y: mouthY };
+
+                sparkles.forEach(sp => {
+                    const alpha = sp.life / sp.maxLife;
+                    ctx.fillStyle = `rgba(255,220,100,${alpha})`;
+                    ctx.font = `${12 + sp.size * 6}px sans-serif`;
+                    ctx.fillText('✨', sp.x, sp.y);
+                });
+            }
+
+            function getMouthPagePosition() {
+                const rect = canvas.getBoundingClientRect();
+                const dpr = window.devicePixelRatio || 1;
+                const scaleX = rect.width / (canvas.width / dpr);
+                const scaleY = rect.height / (canvas.height / dpr);
+                return {
+                    x: rect.left + currentMouthCanvasPos.x * scaleX,
+                    y: rect.top + currentMouthCanvasPos.y * scaleY
+                };
+            }
+
+            function animateFruitFly(fruitType, fromElement) {
+                const mouthPos = getMouthPagePosition();
+                const btnRect = fromElement.getBoundingClientRect();
+                const startX = btnRect.left + btnRect.width/2;
+                const startY = btnRect.top + btnRect.height/2;
+                const flyEl = document.createElement('div');
+                flyEl.style.cssText = `position:fixed; z-index:200; width:55px; height:55px; left:${startX}px; top:${startY}px; transform:translate(-50%,-50%) scale(1);`;
+                const img = document.createElement('img');
+                img.src = `./img/${fruitType}.png`;
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.objectFit = 'contain';
+                flyEl.appendChild(img);
+                document.body.appendChild(flyEl);
+                const duration = 550, startTime = performance.now();
+                function anim(ts) {
+                    const progress = Math.min((ts - startTime) / duration, 1);
+                    const t = progress < 0.5 ? 2*progress*progress : -1+(4-2*progress)*progress;
+                    const cx = startX + (mouthPos.x - startX) * t;
+                    const cy = startY + (mouthPos.y - startY) * t - Math.sin(progress * Math.PI) * 60;
+                    flyEl.style.left = cx + 'px';
+                    flyEl.style.top = cy + 'px';
+                    flyEl.style.transform = `translate(-50%,-50%) scale(${1 - t * 0.7})`;
+                    flyEl.style.opacity = progress > 0.85 ? 1 - (progress - 0.85)/0.15 : '1';
+                    if (progress < 1) requestAnimationFrame(anim);
+                    else flyEl.remove();
+                }
+                requestAnimationFrame(anim);
+            }
+
+            let sparkles = [];
+            function spawnSparkles() {
+                const dpr = window.devicePixelRatio || 1;
+                const canvasW = canvas.width / dpr;
+                const canvasH = canvas.height / dpr;
+                for (let i = 0; i < 8; i++) {
+                    sparkles.push({
+                        x: currentMouthCanvasPos.x + (Math.random() - 0.5) * 80,
+                        y: currentMouthCanvasPos.y + (Math.random() - 0.5) * 60,
+                        size: Math.random() * 0.8 + 0.4,
+                        life: 1,
+                        maxLife: 1,
+                        vy: -(Math.random() * 1.5 + 0.8),
+                        vx: (Math.random() - 0.5) * 1.2
+                    });
+                }
+            }
+            function updateSparkles() {
+                sparkles = sparkles.filter(sp => {
+                    sp.life -= 0.018;
+                    sp.y += sp.vy;
+                    sp.x += sp.vx;
+                    sp.vy -= 0.01;
+                    return sp.life > 0;
+                });
+            }
+
+            let gameState = 'idle';
+            let targetFruit = null;
+            let isEating = false;
+            let animationId = null;
+
+            function setFruitButtonsEnabled(enabled) {
+                fruitButtons.forEach(b => {
+                    b.disabled = !enabled;
+                    b.style.pointerEvents = enabled ? 'auto' : 'none';
+                    b.style.opacity = enabled ? '1' : '0.6';
+                });
+            }
+
+            function highlightWordButton(word) {
+                wordButtons.forEach(b => {
+                    b.classList.toggle('active-word', b.dataset.word === word);
+                });
+            }
+            function clearWordHighlight() {
+                wordButtons.forEach(b => b.classList.remove('active-word'));
+            }
+
+            function resetToIdle() {
+                isEating = false;
+                targetFruit = null;
+                gameState = 'idle';
+                setFruitButtonsEnabled(false);
+                clearWordHighlight();
+                sparkles = [];
+                fruitButtons.forEach(b => b.classList.remove('shake', 'correct-glow'));
+            }
+
+            function handleWordClick(word) {
+                if (gameState === 'animating') return;
+                targetFruit = word;
+                gameState = 'waiting';
+                setFruitButtonsEnabled(true);
+                highlightWordButton(word);
+                playWordSound(word);
+                fruitButtons.forEach(b => b.classList.remove('shake', 'correct-glow'));
+            }
+
+            function handleFruitClick(fruitType, buttonElement) {
+                if (gameState !== 'waiting') return;
+                if (fruitType === targetFruit) {
+                    gameState = 'animating';
+                    setFruitButtonsEnabled(false);
+                    clearWordHighlight();
+                    buttonElement.classList.add('correct-glow');
+
+                    isEating = true;
+                    setTimeout(() => {
+                        if (gameState === 'animating') isEating = false;
+                    }, 500);
+
+                    animateFruitFly(fruitType, buttonElement);
+
+                    const praiseAudio = getRandomPraiseAudio();
+                    playSequence([audioElements.correct, praiseAudio], () => {
+                        buttonElement.classList.remove('correct-glow');
+                        resetToIdle();
+                    }, 600);
+
+                    setTimeout(() => { spawnSparkles(); }, 400);
+                } else {
+                    playAudio(audioElements.error);
+                    buttonElement.classList.add('shake');
+                    setTimeout(() => buttonElement.classList.remove('shake'), 500);
+
+                    const tryAudio = audioElements.tryAgain;
+                    if (tryAudio) {
+                        stopAudio(tryAudio);
+                        playAudio(tryAudio);
+                    }
+
+                    const activeBtn = document.querySelector('.word-btn.active-word');
+                    if (activeBtn) {
+                        activeBtn.style.transform = 'scale(0.9)';
+                        setTimeout(() => { activeBtn.style.transform = ''; }, 200);
+                    }
+                }
+            }
+
+            wordButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    handleWordClick(btn.dataset.word);
+                });
+                btn.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    handleWordClick(btn.dataset.word);
+                });
+            });
+
+            fruitButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    handleFruitClick(btn.dataset.fruit, btn);
+                });
+                btn.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    handleFruitClick(btn.dataset.fruit, btn);
+                });
+            });
+
+            function startGame() {
+                startOverlay.classList.add('hidden');
+                if (audioElements.bgm) {
+                    audioElements.bgm.play().catch(e => console.warn('bgm play failed', e));
+                }
+                resizeCanvas();
+                resetToIdle();
+            }
+
+            startBtn.addEventListener('click', (e) => { e.preventDefault(); startGame(); });
+            startBtn.addEventListener('touchend', (e) => { e.preventDefault(); startGame(); });
+            startOverlay.addEventListener('click', (e) => { if (e.target === startOverlay) startGame(); });
+
+            window.addEventListener('resize', () => resizeCanvas());
+
+            function animate(ts) {
+                const {width, height} = resizeCanvas();
+                updateSparkles();
+                drawMonster(width, height, ts);
+                animationId = requestAnimationFrame(animate);
+            }
+
+            function init() {
+                resizeCanvas();
+                const {width, height} = resizeCanvas();
+                drawMonster(width, height, 0);
+                animationId = requestAnimationFrame(animate);
+                setFruitButtonsEnabled(false);
+                gameState = 'idle';
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+
+            window.addEventListener('beforeunload', () => {
+                if (animationId) cancelAnimationFrame(animationId);
+                Object.values(audioElements.word).forEach(a => stopAudio(a));
+                stopAudio(audioElements.correct);
+                stopAudio(audioElements.error);
+                stopAudio(audioElements.tryAgain);
+                audioElements.praises.forEach(a => stopAudio(a));
+                if (audioElements.bgm) {
+                    audioElements.bgm.pause();
+                    audioElements.bgm.currentTime = 0;
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

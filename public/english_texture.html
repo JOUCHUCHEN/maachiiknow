@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animal Textures - MaachiiKnow</title>
+    
+    <!-- 引入 Noto Sans TC (Logo使用) 與 Roboto (全站使用) 字體 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Roboto', 'sans-serif'],
+                        logo: ['"Noto Sans TC"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- 遊戲與 UI 所需的自訂 CSS -->
+    <style>
+        body { font-family: 'Roboto', sans-serif; }
+        .custom-scroll::-webkit-scrollbar { width: 8px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f0f9ff; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #bae6fd; border-radius: 20px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #7dd3fc; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; } 
+        .no-scrollbar::-webkit-scrollbar { display: none; } 
+        @keyframes bounce-slow { 
+            0%, 100% { transform: translateY(-5%); animation-timing-function: cubic-bezier(0.8, 0, 1, 1); } 
+            50% { transform: translateY(0); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); } 
+        }
+        .animate-bounce-slow { animation: bounce-slow 3s infinite; }
+        .emoji-shadow { filter: drop-shadow(0px 10px 15px rgba(0, 0, 0, 0.15)); }
+    </style>
+
+    <!-- Import Maps -->
+    <script type="importmap">
+    {
+        "imports": {
+            "react": "https://esm.sh/react@18.2.0",
+            "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+            "lucide-react": "https://esm.sh/lucide-react@0.292.0?deps=react@18.2.0"
+        }
+    }
+    </script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-sky-50 h-screen overflow-hidden">
+    <div id="root" class="h-full"></div>
+
+    <script type="text/babel" data-type="module">
+        import React, { useState } from 'react';
+        import { createRoot } from 'react-dom/client';
+        import { MonitorPlay, FlaskConical, Sparkles, Download, Menu, X } from 'lucide-react';
+
+        const AdBanner = ({ format = 'horizontal', className = "" }) => (
+            <div className={`relative flex items-center justify-center bg-sky-100/50 border-2 border-dashed border-sky-200 text-sky-400 rounded-lg overflow-hidden ${format === 'horizontal' ? 'w-full h-20 my-2' : 'w-full aspect-square max-h-[250px] my-4'} ${className}`}>
+                <span className="absolute top-1 right-2 text-[10px] bg-sky-200 text-sky-600 px-1 rounded uppercase tracking-tighter font-black">AD Space</span>
+                <p className="font-bold text-xs uppercase tracking-widest">ADVERTISEMENT (728 x 90)</p>
+            </div>
+        );
+
+        const HomeCard = ({ icon, title, desc, color, targetUrl }) => (
+            <button 
+                onClick={() => window.location.href = targetUrl} 
+                className={`${color} border-2 rounded-[2rem] p-4 sm:p-5 text-left flex items-center gap-4 transition-all hover:scale-[1.03] active:scale-95 group shadow-sm w-full`}
+            >
+                <div className="bg-white p-3 sm:p-4 rounded-2xl shadow-sm group-hover:rotate-6 transition-transform flex-shrink-0">
+                    {icon}
+                </div>
+                <div>
+                    <h3 className="text-lg sm:text-xl font-black text-gray-800 leading-tight">{title}</h3>
+                    <p className="text-[10px] sm:text-[11px] text-gray-500 font-bold mt-1 uppercase tracking-wider">{desc}</p>
+                </div>
+            </button>
+        );
+
+        function App() {
+            const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+            const navigateToHome = () => { window.location.href = 'index.html'; };
+
+            const Navbar = () => (
+                <nav className="bg-white shadow-sm h-20 border-b flex-shrink-0 z-50 sticky top-0">
+                    <div className="max-w-7xl mx-auto px-4 h-full flex justify-between items-center">
+                        <div className="flex items-center cursor-pointer group" onClick={navigateToHome}>
+                            <img 
+                                src="https://i.ibb.co/CFC5v9L/Machi-Know-Logo.png" 
+                                alt="Maachiiknow Logo" 
+                                className="w-16 h-16 object-contain group-hover:scale-110 group-hover:rotate-6 transition-all relative -top-1 left-0 z-0"
+                            />
+                            <span className="font-logo font-black text-3xl text-gray-900 tracking-tighter relative z-10 ml-0">
+                                Maachii<span className="text-orange-600">Know</span>
+                            </span>
+                        </div>
+                        
+                        <div className="hidden md:flex items-center space-x-12">
+                            <button 
+                                onClick={navigateToHome} 
+                                className="font-bold text-base text-gray-500 hover:text-orange-600 uppercase tracking-widest transition-colors"
+                            >
+                                Home
+                            </button>
+                        </div>
+
+                        <button 
+                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
+                            className="md:hidden text-gray-600 p-2"
+                        >
+                            {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+                        </button>
+                    </div>
+                    
+                    {isMobileMenuOpen && (
+                        <div className="absolute top-20 left-0 w-full bg-white shadow-xl border-b md:hidden flex flex-col p-6 space-y-4 z-40 animate-in slide-in-from-top-2 duration-300">
+                            <button 
+                                onClick={navigateToHome} 
+                                className="text-left font-bold text-gray-700"
+                            >
+                                Home
+                            </button>
+                        </div>
+                    )}
+                </nav>
+            );
+
+            return (
+                <div className="min-h-screen bg-sky-50 flex flex-col h-screen overflow-hidden">
+                    <Navbar />
+                    
+                    {/* 將 main 改為 flex-col 並修正內距，防止小螢幕被 Navbar 遮擋 */}
+                    <main className="flex-1 overflow-y-auto overflow-x-hidden relative custom-scroll flex flex-col">
+                        {/* 縮小上下內距與元素間距，讓四個選項能集中在一個畫面內 */}
+                        <div className="max-w-7xl mx-auto w-full flex flex-col items-center justify-start text-center animate-in fade-in slide-in-from-bottom-4 duration-700 flex-1 px-4 md:px-6 pt-6 md:pt-8 pb-4">
+                            
+                            <div className="flex gap-4 sm:gap-6 md:gap-8 mb-6 animate-bounce justify-center">
+                                <img src="https://i.ibb.co/Kx5QgzjW/scales.jpg" alt="Scales" className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 object-cover rounded-full shadow-lg border-4 border-white emoji-shadow" />
+                                <img src="https://i.ibb.co/VpD6SBfy/feathers.jpg" alt="Feathers" className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 object-cover rounded-full shadow-lg border-4 border-white emoji-shadow" />
+                                <img src="https://i.ibb.co/wZz1kC2Y/fur.jpg" alt="Fur" className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 object-cover rounded-full shadow-lg border-4 border-white emoji-shadow" />
+                                <img src="https://i.ibb.co/JWn0W1Gb/skin.png" alt="Skin" className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 object-cover rounded-full shadow-lg border-4 border-white emoji-shadow" />
+                            </div>
+                            
+                            <h2 className="text-3xl sm:text-4xl font-black text-sky-900 mb-2 tracking-tight">Animal Textures!</h2>
+                            {/* 將 max-w-sm 改為 max-w-2xl 確保文字可以在一行顯示 */}
+                            <p className="text-sm sm:text-base text-sky-700/80 mb-6 max-w-2xl font-bold leading-relaxed mx-auto px-4">
+                                Explore animal textures, learn vocabulary, and play games!
+                            </p>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-4xl px-4 sm:px-6 mb-6">
+                                <HomeCard icon={<MonitorPlay className="text-emerald-500" size={26} />} title="Texture Library" desc="LEARNING GALLERY" color="bg-emerald-50/50 border-emerald-200" targetUrl="texture/texture_library.html" />
+                                <HomeCard icon={<FlaskConical className="text-indigo-500" size={26} />} title="Texture Lab" desc="MATCHING EXPERIMENT" color="bg-indigo-50/50 border-indigo-200" targetUrl="texture/texture_lab.html" />
+                                <HomeCard icon={<Sparkles className="text-orange-500" size={26} />} title="Texture Quiz" desc="ANSWER THE CHALLENGES" color="bg-orange-50/50 border-orange-200" targetUrl="texture/texture_quiz.html" />
+                                <HomeCard icon={<Download className="text-purple-500" size={26} />} title="Materials" desc="PPT & WORKSHEETS" color="bg-purple-50/50 border-purple-200" targetUrl="texture/texture_materials.html" />
+                            </div>
+
+                            {/* mt-auto 確保廣告始終被推到底部 */}
+                            <div className="mt-auto w-full max-w-3xl px-6">
+                                <AdBanner format="horizontal" />
+                            </div>
+                        </div>
+                    </main>
+
+                    <footer className="bg-white/80 backdrop-blur-sm border-t py-4 text-center shrink-0">
+                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.3em]">© 2026 MaachiiKnow. All rights reserved.</p>
+                    </footer>
+                </div>
+            );
+        }
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

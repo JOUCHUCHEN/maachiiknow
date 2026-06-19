@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Texture Library - MaachiiKnow</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Outfit:wght@400;500;700;900&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // 確保 Tailwind 完全載入後才執行設定，避免 ReferenceError
+        function setupTailwind() {
+            if (window.tailwind) {
+                window.tailwind.config = {
+                    theme: {
+                        extend: {
+                            fontFamily: {
+                                sans: ['Outfit', 'sans-serif'],
+                                roboto: ['Roboto', 'sans-serif'],
+                                logo: ['"Noto Sans TC"', 'sans-serif'],
+                            },
+                            boxShadow: {
+                                'premium': '0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02)',
+                            }
+                        }
+                    }
+                };
+            } else {
+                setTimeout(setupTailwind, 50);
+            }
+        }
+        setupTailwind();
+    </script>
+
+    <style>
+        body { font-family: 'Outfit', sans-serif; }
+        .custom-scroll::-webkit-scrollbar { width: 8px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f0f9ff; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #bae6fd; border-radius: 20px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #7dd3fc; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; } 
+        .no-scrollbar::-webkit-scrollbar { display: none; } 
+        @keyframes bounce-slow { 
+          0%, 100% { transform: translateY(-5%); } 
+          50% { transform: translateY(0); } 
+        }
+        .animate-bounce-slow { animation: bounce-slow 3s infinite; }
+        
+        .zoom-overlay { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "react": "https://esm.sh/react@18.2.0",
+            "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+            "lucide-react": "https://esm.sh/lucide-react@0.292.0?deps=react@18.2.0"
+        }
+    }
+    </script>
+
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-sky-50 h-screen overflow-hidden">
+    <div id="root" class="h-full"></div>
+
+    <script type="text/babel" data-type="module">
+        import React, { useState, useEffect } from 'react';
+        import { createRoot } from 'react-dom/client';
+        import { BookOpen, ArrowLeft, Menu, X, Volume2, Volume1, Sparkles, ChevronRight, Maximize2 } from 'lucide-react';
+
+        // 質地定義
+        const TEXTURES = [
+          { 
+            id: 'scales', 
+            name: 'Scales', 
+            firstLetter: 's',
+            phonicsSound: 'ss', 
+            audioUrl: 'https://raw.githubusercontent.com/JOUCHUCHEN/maachiiknow/main/texture/s_phonics.mp3',
+            phonics: 'sc - a - le - s',
+            adjectives: 'Hard and shiny', 
+            gradient: 'from-emerald-50 to-emerald-100/50', 
+            borderColor: 'border-emerald-400', 
+            textColor: 'text-emerald-800', 
+            adjectiveColor: 'text-emerald-500',
+            ringColor: 'ring-emerald-200',
+            bgLightColor: 'bg-emerald-50',
+            image: 'https://i.ibb.co/Kx5QgzjW/scales.jpg' 
+          },
+          { 
+            id: 'feathers', 
+            name: 'Feathers',
+            firstLetter: 'f',
+            phonicsSound: 'ff', 
+            phonics: 'f - ea - th - er - s',
+            adjectives: 'Soft and light', 
+            gradient: 'from-rose-50 to-rose-100/50', 
+            borderColor: 'border-rose-400', 
+            textColor: 'text-rose-800', 
+            adjectiveColor: 'text-rose-500',
+            ringColor: 'ring-rose-200',
+            bgLightColor: 'bg-rose-50',
+            image: 'https://i.ibb.co/VpD6SBfy/feathers.jpg' 
+          },
+          { 
+            id: 'fur', 
+            name: 'Fur', 
+            firstLetter: 'f',
+            phonicsSound: 'ff',
+            phonics: 'f - ur',
+            adjectives: 'Warm and thick', 
+            gradient: 'from-amber-50 to-amber-100/50', 
+            borderColor: 'border-amber-400', 
+            textColor: 'text-amber-800', 
+            adjectiveColor: 'text-amber-500',
+            ringColor: 'ring-amber-200',
+            bgLightColor: 'bg-amber-50',
+            image: 'https://i.ibb.co/wZz1kC2Y/fur.jpg' 
+          },
+          { 
+            id: 'skin', 
+            name: 'Skin', 
+            firstLetter: 's',
+            phonicsSound: 'ss',
+            audioUrl: 'https://raw.githubusercontent.com/JOUCHUCHEN/maachiiknow/main/texture/s_phonics.mp3',
+            phonics: 's - k - i - n',
+            adjectives: 'Bare skin', 
+            gradient: 'from-cyan-50 to-cyan-100/50', 
+            borderColor: 'border-cyan-400', 
+            textColor: 'text-cyan-800', 
+            adjectiveColor: 'text-cyan-500',
+            ringColor: 'ring-cyan-200',
+            bgLightColor: 'bg-cyan-50',
+            image: 'https://i.ibb.co/JWn0W1Gb/skin.png' 
+          }
+        ];
+
+        // 動物數據與描述
+        const ANIMALS = [
+          { id: 'snake', name: 'snake', phonicsSound: 'ss', audioUrl: 'https://raw.githubusercontent.com/JOUCHUCHEN/maachiiknow/main/texture/s_phonics.mp3', texture: 'scales', emoji: '🐍', image: 'https://i.ibb.co/GfL1pxPN/sipa-line-1289145-1280.jpg', desc: 'Snakes have dry and hard scales.' }, 
+          { id: 'fish', name: 'fish', phonicsSound: 'ff', texture: 'scales', emoji: '🐟', image: 'https://i.ibb.co/JWfG1dgf/fish.jpg', desc: 'Fish have shiny and wet scales.' }, 
+          { id: 'crocodile', name: 'crocodile', phonicsSound: 'k', texture: 'scales', emoji: '🐊', image: 'https://i.ibb.co/Ng3L4Xw2/miniformat65-nile-crocodile-245013-1920.jpg', desc: 'Crocodiles have very hard scales.' },
+          { id: 'lizard', name: 'lizard', phonicsSound: 'll', texture: 'scales', emoji: '🦎', image: 'https://i.ibb.co/SwT4hFnB/pavanprasad-ind-lizard-9076520-1920.jpg', desc: 'Lizards have small and dry scales.', zoomClass: 'scale-[1.6] object-[25%_40%]' },
+          { id: 'eagle', name: 'eagle', phonicsSound: 'ee', texture: 'feathers', emoji: '🦅', image: 'https://i.ibb.co/5gVzdnGc/stacyvitallo-eagle-1029909-1920.jpg', desc: 'Eagles have strong feathers for flying.' }, 
+          { id: 'crow', name: 'crow', phonicsSound: 'k', texture: 'feathers', emoji: '🐦‍⬛', image: 'https://i.ibb.co/kgBKWdwG/chiemseherin-raven-bird-3696515-1920.jpg', desc: 'Crows have black and shiny feathers.' }, 
+          { id: 'parrot', name: 'parrot', phonicsSound: 'p', texture: 'feathers', emoji: '🦜', image: 'https://i.ibb.co/v4SmBfMV/beckytregear-bird-4728857-1920.jpg', desc: 'Parrots have colorful feathers.' },
+          { id: 'owl', name: 'owl', phonicsSound: 'ow', texture: 'feathers', emoji: '🦉', image: 'https://i.ibb.co/gZWtxzYh/iulian-ursache-great-horned-owl-5463688-1920.jpg', desc: 'Owls have very soft feathers.' },
+          { id: 'dog', name: 'dog', phonicsSound: 'd', texture: 'fur', emoji: '🐶', image: 'https://i.ibb.co/Mykm32YH/enirehtacess-border-collie-4449956-1920.jpg', desc: 'Dogs are our furry best friends.' }, 
+          { id: 'lion', name: 'lion', phonicsSound: 'll', texture: 'fur', emoji: '🦁', image: 'https://i.ibb.co/SXHL39W5/ambquinn-lion-7573939-1280.jpg', desc: 'Lions have thick and warm fur.' }, 
+          { id: 'horse', name: 'horse', phonicsSound: 'h', texture: 'fur', emoji: '🐴', image: 'https://i.ibb.co/r28tcFMz/richardpics-horse-4530644-1280.jpg', desc: 'Horses have short and smooth fur.' },
+          { id: 'panda', name: 'panda', phonicsSound: 'p', texture: 'fur', emoji: '🐼', image: 'https://i.ibb.co/JRzTXdx2/995645-panda-3875426-1280.jpg', desc: 'Pandas have thick black and white fur.' },
+          { id: 'whale', name: 'whale', phonicsSound: 'w', texture: 'skin', emoji: '🐳', image: 'https://i.ibb.co/35bv6dgB/fitschen-whale-1302757-1280.jpg', desc: 'Whales have smooth skin.' }, 
+          { id: 'dolphin', name: 'dolphin', phonicsSound: 'd', texture: 'skin', emoji: '🐬', image: 'https://i.ibb.co/h1ZsPBxk/werdepate-dolphin-2709809-1280.jpg', desc: 'Dolphins have very smooth skin for swimming fast.' }, 
+          { id: 'frog', name: 'frog', phonicsSound: 'ff', texture: 'skin', emoji: '🐸', image: 'https://i.ibb.co/vvqWjKtZ/garten-gg-animals-4322025-1280.jpg', desc: 'Frogs have smooth and wet skin.' },
+          { id: 'elephant', name: 'elephant', phonicsSound: 'eh', texture: 'skin', emoji: '🐘', image: 'https://i.ibb.co/JwRvB1YZ/jbauer-fotographie-elephant-3832516-1920.jpg', desc: 'Elephants have rough and thick skin. Elephant skin is not smooth!' }
+        ];
+
+        // 正常速度朗讀
+        const speak = (text) => {
+          if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.8;
+            window.speechSynthesis.speak(utterance);
+          }
+        };
+
+        // 專用：點擊字首時，優先播放 MP3
+        const speakLetterSound = (sound, audioUrl) => {
+            if (audioUrl) {
+                const audio = new Audio(audioUrl);
+                audio.play().catch(e => console.error("Error playing audio:", e));
+                return;
+            }
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel(); 
+            const utterance = new SpeechSynthesisUtterance(sound);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.5; 
+            window.speechSynthesis.speak(utterance);
+        };
+
+        function App() {
+          const [selectedTexture, setSelectedTexture] = useState(null);
+          const [activeAnimal, setActiveAnimal] = useState(null);
+          const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+          const [zoomedImage, setZoomedImage] = useState(null);
+
+          const navigateToHome = () => { window.location.href = '/index.html'; };
+          const navigateToEnglishTexture = () => { window.location.href = '/english_texture.html'; };
+
+          // 縮小後的例句字體
+          const formatDescription = (desc) => {
+            const regex = /^([A-Za-z\s]+(?:have|are))\s(.*)$/i;
+            const match = desc.match(regex);
+            if (match) {
+              return (
+                <p className="text-base sm:text-lg xl:text-2xl leading-tight tracking-tight">
+                  <span className="text-slate-600 font-medium">{match[1]} </span>
+                  <span className="text-orange-600 font-black">{match[2]}</span>
+                </p>
+              );
+            }
+            return <p className="text-base sm:text-lg xl:text-2xl font-black text-orange-600 leading-tight tracking-tight">{desc}</p>;
+          };
+
+          // --- Navbar Component ---
+          const Navbar = () => (
+            <nav className="bg-white shadow-sm h-16 border-b flex-shrink-0 z-50 sticky top-0 font-roboto">
+              <div className="max-w-7xl mx-auto px-4 h-full flex justify-between items-center">
+                <div className="flex items-center cursor-pointer group" onClick={navigateToHome}>
+                  <img 
+                      src="https://i.ibb.co/CFC5v9L/Machi-Know-Logo.png" 
+                      alt="Maachiiknow Logo" 
+                      className="w-12 h-12 object-contain group-hover:scale-110 group-hover:rotate-6 transition-all relative -top-1 left-0 z-0"
+                   />
+                   <span className="font-logo font-black text-2xl text-gray-900 tracking-tighter relative z-10 ml-0">
+                     Maachii<span className="text-orange-600">Know</span>
+                   </span>
+                </div>
+                
+                <div className="hidden md:flex items-center space-x-12">
+                  <button 
+                    onClick={navigateToHome} 
+                    className="font-bold text-sm text-gray-500 hover:text-orange-600 uppercase tracking-widest transition-colors"
+                  >
+                    Home
+                  </button>
+                </div>
+
+                <button 
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
+                  className="md:hidden text-gray-600 p-2"
+                >
+                  {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                </button>
+              </div>
+              
+              {isMobileMenuOpen && (
+                <div className="absolute top-16 left-0 w-full bg-white shadow-xl border-b md:hidden flex flex-col p-6 space-y-4 z-40 animate-in slide-in-from-top-2 duration-300">
+                  <button 
+                    onClick={navigateToHome} 
+                    className="text-left font-bold text-gray-700"
+                  >
+                    Home
+                  </button>
+                </div>
+              )}
+            </nav>
+          );
+
+          return (
+            <div className="min-h-screen bg-sky-50 flex flex-col h-screen overflow-hidden">
+                <Navbar />
+
+                {/* 修改點：讓空間在 16:9 垂直自動置中，不需捲動 */}
+                <main className="flex-1 overflow-y-auto overflow-x-hidden relative custom-scroll px-4 md:px-6 xl:px-8 py-4 w-full flex flex-col items-center justify-center">
+                  
+                  <div className="w-full max-w-4xl xl:max-w-6xl flex flex-col items-center transition-all duration-500 my-auto">
+                    
+                    {/* Header Title Bar：微調上下邊距 */}
+                    <div className="flex items-center justify-between mb-4 xl:mb-8 bg-white p-2.5 xl:p-3 rounded-full shadow-sm border border-sky-100 flex-shrink-0 w-full transition-all duration-500">
+                      <button 
+                        onClick={() => selectedTexture ? setSelectedTexture(null) : navigateToEnglishTexture()} 
+                        className="p-2 xl:p-2.5 text-orange-600 hover:bg-orange-50 rounded-full transition-all shadow-sm active:scale-90"
+                      >
+                        <ArrowLeft className="w-5 h-5 xl:w-7 xl:h-7" />
+                      </button>
+                      <h2 className="text-xl sm:text-2xl xl:text-3xl font-black text-slate-800 flex items-center gap-2 xl:gap-3">
+                        <BookOpen className="text-emerald-500 w-6 h-6 xl:w-8 xl:h-8" /> Texture Library
+                      </h2>
+                      <div className="w-9 xl:w-12"></div>
+                    </div>
+
+                    <div className="flex flex-col w-full transition-all duration-500">
+                      {!selectedTexture ? (
+                        /* 首頁 2x2 網格：整體縮小 10~15% */
+                        <div className="grid grid-cols-1 md:grid-cols-2 grid-rows-2 gap-3 sm:gap-4 xl:gap-6 w-full animate-in fade-in slide-in-from-bottom-4">
+                          {TEXTURES.map((t) => (
+                            <button 
+                              key={t.id} 
+                              onClick={() => { setSelectedTexture(t); }}
+                              className="relative bg-white border border-slate-100 rounded-full shadow-premium hover:shadow-2xl hover:-translate-y-1 transform transition-all duration-500 group overflow-hidden flex flex-row items-center justify-start gap-3 sm:gap-4 xl:gap-6 p-2.5 sm:p-3 xl:p-5 pr-5 sm:pr-6 xl:pr-8 w-full"
+                            >
+                              <div className={`absolute inset-0 bg-gradient-to-r ${t.gradient} opacity-40 group-hover:opacity-60 transition-opacity`}></div>
+                              <Sparkles className="absolute top-1/2 -translate-y-1/2 right-5 xl:right-6 text-white/40 group-hover:text-white/80 transition-colors w-5 h-5 xl:w-7 xl:h-7" />
+
+                              <div className="relative flex-shrink-0 flex items-center justify-center">
+                                <div className={`absolute inset-0 rounded-full ring-4 ${t.ringColor} scale-[1.05] opacity-50`}></div>
+                                {/* 縮小首頁預覽圖尺寸 */}
+                                <div className="w-16 h-16 sm:w-20 sm:h-20 xl:w-32 xl:h-32 rounded-full shadow-lg border-[3px] xl:border-[5px] border-white relative z-10 group-hover:scale-105 transition-transform duration-500 overflow-hidden shrink-0">
+                                   <img src={t.image} alt={t.name} className="w-full h-full object-cover" />
+                                </div>
+                              </div>
+
+                              <div className="relative z-10 text-left flex-1 min-w-0">
+                                <div className="flex items-center gap-2 xl:gap-3 w-full">
+                                  {/* 縮小字體，確保即使是 Feathers 也不會跑版 */}
+                                  <h3 className={`text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-black ${t.textColor} tracking-tight leading-none truncate`}>{t.name}</h3>
+                                  <div
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      speak(t.name);
+                                    }}
+                                    className={`flex-shrink-0 opacity-60 hover:opacity-100 transition-opacity cursor-pointer ${t.textColor}`}
+                                  >
+                                    {/* 縮小喇叭 Icon */}
+                                    <Volume2 className="w-5 h-5 sm:w-6 sm:h-6 xl:w-8 xl:h-8" />
+                                  </div>
+                                </div>
+                                <div className={`mt-1 xl:mt-2 flex items-center justify-start gap-1 text-[10px] sm:text-xs xl:text-sm font-bold ${t.textColor} opacity-60 tracking-widest`}>
+                                  explore <ChevronRight className="w-3 h-3 xl:w-4 xl:h-4" />
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        /* 詳情頁：配合首頁比例，也微微縮小 */
+                        <div className="bg-white rounded-[2rem] xl:rounded-[3rem] border border-slate-100 shadow-2xl relative flex flex-col lg:flex-row overflow-hidden animate-in zoom-in-95 fade-in duration-500 w-full min-h-[50vh] xl:min-h-[55vh]">
+                          <div className={`absolute inset-0 bg-gradient-to-b lg:bg-gradient-to-r ${selectedTexture.gradient} opacity-20 pointer-events-none`}></div>
+                          
+                          {/* 左側：質地大圖與主題標題 */}
+                          <div className="relative z-10 lg:w-5/12 flex flex-col items-center justify-center p-6 sm:p-8 xl:p-10 lg:pr-8 xl:pr-12 lg:border-r border-slate-100/50 shrink-0">
+                            <div 
+                              className="relative cursor-pointer group/img mb-6 xl:mb-8"
+                              onClick={() => setZoomedImage(selectedTexture.image)}
+                            >
+                              {/* 縮小主圖 */}
+                              <div className="w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 xl:w-56 xl:h-56 rounded-full shadow-2xl border-[6px] xl:border-[8px] border-white animate-bounce-slow group-hover/img:scale-105 transition-transform overflow-hidden shrink-0">
+                                 <img src={selectedTexture.image} alt={selectedTexture.name} className="w-full h-full object-cover" />
+                              </div>
+                              <div className="absolute -bottom-2 -right-2 xl:-bottom-3 xl:-right-3 bg-white p-2 xl:p-3 rounded-full shadow-md text-orange-600 opacity-0 group-hover/img:opacity-100 transition-opacity">
+                                <Maximize2 className="w-5 h-5 xl:w-6 xl:h-6" />
+                              </div>
+                            </div>
+
+                            <div className="text-center flex flex-col items-center w-full">
+                              <div className="flex items-center justify-center gap-2 sm:gap-3 xl:gap-4 mb-4 xl:mb-6">
+                                {/* 縮小大標題 */}
+                                <h3 className={`text-4xl sm:text-5xl xl:text-[4.5rem] font-black ${selectedTexture.textColor} tracking-tight`}>
+                                  <span 
+                                    onClick={() => speakLetterSound(selectedTexture.phonicsSound, selectedTexture.audioUrl)}
+                                    className="inline-block cursor-pointer text-orange-500 hover:scale-110 hover:-translate-y-0.5 transition-transform duration-300 origin-bottom"
+                                    title="Play Letter Sound"
+                                  >
+                                    {selectedTexture.name.charAt(0)}
+                                  </span>
+                                  <span>{selectedTexture.name.slice(1)}</span>
+                                </h3>
+                                <button 
+                                  onClick={() => speak(selectedTexture.name)}
+                                  className={`w-10 h-10 sm:w-10 sm:h-10 xl:w-12 xl:h-12 rounded-full bg-white/60 hover:bg-white hover:shadow-md flex items-center justify-center transition-all opacity-80 hover:opacity-100 active:scale-95 ${selectedTexture.textColor}`}
+                                >
+                                  <Volume2 className="w-5 h-5 xl:w-6 xl:h-6" />
+                                </button>
+                              </div>
+                              
+                              <div className="flex items-center justify-center gap-2 xl:gap-3">
+                                <div className={`inline-flex items-center gap-2 px-4 py-2 xl:px-5 xl:py-2.5 rounded-full text-sm sm:text-base xl:text-lg font-black bg-white/80 backdrop-blur shadow-sm border border-white ${selectedTexture.adjectiveColor}`}>
+                                  <span className="w-2 h-2 rounded-full bg-current animate-pulse"></span>
+                                  {selectedTexture.adjectives}
+                                </div>
+                                <button 
+                                  onClick={() => speak(selectedTexture.adjectives)}
+                                  className={`w-9 h-9 sm:w-10 sm:h-10 xl:w-10 xl:h-10 rounded-full bg-white/60 hover:bg-white hover:shadow-md flex items-center justify-center transition-all opacity-80 hover:opacity-100 active:scale-95 ${selectedTexture.adjectiveColor}`}
+                                >
+                                  <Volume2 className="w-5 h-5" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* 右側：動物網格 */}
+                          <div className="relative z-10 flex-1 overflow-y-auto custom-scroll p-4 lg:p-6 xl:p-8 flex items-center justify-center">
+                            <div className="w-full">
+                              {/* 縮小卡片間距 */}
+                              <div className="grid grid-cols-2 gap-3 xl:gap-5 w-full max-w-[20rem] sm:max-w-[28rem] lg:max-w-[30rem] xl:max-w-[36rem] mx-auto py-2">
+                                {ANIMALS.filter(a => a.texture === selectedTexture.id).map(animal => (
+                                  <div 
+                                    key={animal.id} 
+                                    className="bg-white/60 backdrop-blur-sm p-3 sm:p-4 xl:p-5 rounded-[1.5rem] xl:rounded-[2rem] border border-white hover:border-orange-200 hover:bg-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col items-center justify-center group relative overflow-hidden" 
+                                    onClick={() => {
+                                        setActiveAnimal(animal);
+                                    }}
+                                  >
+                                    <div className="absolute -right-4 -bottom-4 w-12 h-12 xl:w-16 xl:h-16 bg-orange-50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                    
+                                    <div className="mb-2 xl:mb-3 transform group-hover:scale-110 group-hover:rotate-6 transition-transform relative z-10 flex justify-center">
+                                      {animal.image ? (
+                                        <div className="w-16 h-16 sm:w-20 sm:h-20 xl:w-24 xl:h-24 rounded-full shadow-md border-[4px] xl:border-[5px] border-white overflow-hidden shrink-0">
+                                          <img src={animal.image} alt={animal.name} className={`w-full h-full object-cover transition-transform ${animal.zoomClass || ''}`} />
+                                        </div>
+                                      ) : (
+                                        <span className="text-4xl sm:text-5xl xl:text-6xl">{animal.emoji}</span>
+                                      )}
+                                    </div>
+
+                                    <div className="flex flex-col items-center">
+                                      <div className="text-lg sm:text-xl xl:text-2xl font-black text-slate-700 tracking-tighter relative z-10 leading-none pb-1">
+                                        {animal.name}
+                                      </div>
+                                      <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            speak(animal.name);
+                                        }}
+                                        className="mt-1 text-slate-300 hover:text-slate-500 transition-colors active:scale-95 z-20 relative"
+                                      >
+                                        <Volume2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </main>
+
+                {/* 圖片放大 Overlay (將 z-index 提高到 120，確保能蓋過所有視窗) */}
+                {zoomedImage && (
+                    <div 
+                        className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 zoom-overlay"
+                        onClick={() => setZoomedImage(null)}
+                    >
+                        <div className="relative max-w-3xl xl:max-w-4xl w-full flex flex-col items-center">
+                            <button className="absolute -top-12 right-0 xl:-top-16 text-white hover:text-orange-400 transition-colors">
+                                <X className="w-10 h-10 xl:w-12 xl:h-12" />
+                            </button>
+                            <img 
+                                src={zoomedImage} 
+                                className="max-h-[80vh] w-auto rounded-3xl xl:rounded-[3rem] shadow-2xl border-4 xl:border-[8px] border-white/20"
+                                alt="Zoomed Texture"
+                            />
+                            <p className="mt-6 xl:mt-8 text-white text-xl xl:text-3xl font-black tracking-widest uppercase">
+                                Detail View
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* 動物描述 Popup (改為上下排版：上方滿版寬圖，下方左單字右句子) */}
+                {activeAnimal && (
+                    <div 
+                        className="fixed inset-0 z-[110] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 xl:p-8 zoom-overlay"
+                        onClick={() => setActiveAnimal(null)}
+                    >
+                        <div 
+                            className="bg-white w-full max-w-4xl xl:max-w-6xl rounded-[2.5rem] xl:rounded-[3rem] p-4 sm:p-6 xl:p-8 shadow-2xl border border-white relative animate-in zoom-in-95 duration-300 flex flex-col gap-4 sm:gap-6 xl:gap-8 overflow-hidden max-h-[95vh]"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* 關閉按鈕改為懸浮在右上角 */}
+                            <button 
+                                onClick={() => setActiveAnimal(null)}
+                                className="absolute top-6 right-6 sm:top-8 sm:right-8 xl:top-10 xl:right-10 p-2 sm:p-3 bg-black/20 hover:bg-black/40 text-white rounded-full backdrop-blur-md transition-all z-20 group shadow-sm"
+                            >
+                                <X className="w-5 h-5 sm:w-6 sm:h-6 xl:w-8 xl:h-8 group-hover:scale-110 transition-transform" />
+                            </button>
+
+                            {/* 上方：橫跨全寬的大面積動物圖片 */}
+                            <div className="w-full flex-shrink-0 flex items-center justify-center">
+                                {activeAnimal.image ? (
+                                    <div 
+                                      className="relative w-full h-[35vh] sm:h-[40vh] lg:h-[45vh] xl:h-[55vh] rounded-[1.5rem] xl:rounded-[2rem] shadow-sm overflow-hidden group/zoom cursor-pointer shrink-0 bg-slate-100"
+                                      onClick={() => setZoomedImage(activeAnimal.image)}
+                                      title="Click to zoom"
+                                    >
+                                        <img src={activeAnimal.image} alt={activeAnimal.name} className={`w-full h-full object-cover transition-transform duration-700 group-hover/zoom:scale-105 ${activeAnimal.zoomClass || ''}`} />
+                                        <div className="absolute inset-0 bg-black/0 group-hover/zoom:bg-black/20 transition-colors flex items-center justify-center">
+                                            <Maximize2 className="text-white opacity-0 group-hover/zoom:opacity-100 w-10 h-10 xl:w-12 xl:h-12 transition-opacity drop-shadow-lg" />
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="relative w-full h-[35vh] sm:h-[40vh] lg:h-[45vh] xl:h-[55vh] rounded-[1.5rem] xl:rounded-[2rem] shadow-sm overflow-hidden bg-slate-50 flex items-center justify-center shrink-0">
+                                        <span className="text-[8rem] lg:text-[12rem] xl:text-[15rem]">{activeAnimal.emoji}</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* 下方：左單字，右句子 */}
+                            <div className="w-full flex flex-col lg:flex-row items-center justify-between gap-4 sm:gap-6 xl:gap-10 shrink-0 overflow-y-auto custom-scroll px-2 pb-2">
+                                
+                                {/* 左側：單字與專屬發音 */}
+                                <div className="w-full lg:w-5/12 flex flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4 xl:gap-6 shrink-0">
+                                    <h4 className="text-5xl sm:text-6xl xl:text-[5.5rem] font-black text-slate-800 tracking-tight leading-none">
+                                        <span 
+                                          onClick={(e) => {
+                                              e.stopPropagation();
+                                              speakLetterSound(activeAnimal.phonicsSound || activeAnimal.name.charAt(0), activeAnimal.audioUrl);
+                                          }}
+                                          className="inline-block cursor-pointer text-orange-500 hover:scale-110 hover:-translate-y-0.5 transition-transform duration-300 origin-bottom"
+                                          title="Play Letter Sound"
+                                        >
+                                          {activeAnimal.name.charAt(0)}
+                                        </span>
+                                        <span>{activeAnimal.name.slice(1)}</span>
+                                    </h4>
+                                    <button 
+                                      onClick={() => speak(activeAnimal.name)}
+                                      className="w-10 h-10 sm:w-12 sm:h-12 xl:w-14 xl:h-14 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-all text-slate-500 hover:text-orange-600 active:scale-95 shrink-0 shadow-sm"
+                                    >
+                                      <Volume2 className="w-5 h-5 sm:w-6 sm:h-6 xl:w-7 xl:h-7" />
+                                    </button>
+                                </div>
+
+                                {/* 右側：描述句 */}
+                                <div className="w-full lg:w-7/12 bg-orange-50/50 p-4 sm:p-5 xl:p-8 rounded-[1.5rem] xl:rounded-[2rem] border-2 border-orange-100/50 flex flex-row items-center justify-between gap-3 sm:gap-4 xl:gap-6 shrink-0">
+                                    <div className="flex-1 text-left">
+                                        {formatDescription(activeAnimal.desc)}
+                                    </div>
+                                    <button 
+                                        onClick={() => speak(activeAnimal.desc)}
+                                        className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 xl:w-14 xl:h-14 rounded-full bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center shadow-lg shadow-orange-200 active:scale-95 transition-all"
+                                        title="Listen to Sentence"
+                                    >
+                                        <Volume2 className="w-5 h-5 sm:w-6 sm:h-6 xl:w-7 xl:h-7" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <footer className="bg-white/80 backdrop-blur-sm border-t py-2 xl:py-3 text-center shrink-0">
+                  <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.3em]">
+                    © 2026 MaachiiKnow. All rights reserved.
+                  </p>
+                </footer>
+            </div>
+          );
+        }
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
