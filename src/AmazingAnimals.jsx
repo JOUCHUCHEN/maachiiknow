@@ -366,78 +366,26 @@ function AaDownloadsView({ onHome }) {
   );
 }
 
+// ...上方保留您所有的匯入與元件邏輯不變...
+
 // --- 匯出主要組件 ---
-// 加入 backToHome 屬性，用來跟外部的 App.jsx 溝通切換頁面
-export default function AmazingAnimals({ backToHome }) {
+// 因為導覽列由 Layout 處理，不需要再傳入 backToHome 了
+export default function AmazingAnimals() {
   const [moduleView, setModuleView] = useState('home');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
     <>
       <style>{`
-        .custom-scroll::-webkit-scrollbar { width: 8px; }
-        .custom-scroll::-webkit-scrollbar-track { background: #f0f9ff; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #bae6fd; border-radius: 20px; }
-        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #7dd3fc; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; } 
         .no-scrollbar::-webkit-scrollbar { display: none; } 
       `}</style>
-      <div className="min-h-screen bg-sky-50 flex flex-col h-screen overflow-hidden">
-          {/* Navbar 已經接上 backToHome，點擊 Home 就能回到主平台 */}
-          <nav className="bg-white shadow-sm h-20 border-b flex-shrink-0 z-50 sticky top-0">
-            <div className="max-w-7xl mx-auto px-4 h-full flex justify-between items-center">
-              <div className="flex items-center cursor-pointer group" onClick={backToHome}>
-                <img 
-                    src="https://i.ibb.co/CFC5v9L/Machi-Know-Logo.png" 
-                    alt="Maachiiknow Logo" 
-                    className="w-16 h-16 object-contain group-hover:scale-110 group-hover:rotate-6 transition-all relative -top-1 left-0 z-0"
-                />
-                <span className="font-logo font-black text-3xl text-gray-900 tracking-tighter relative z-10 ml-0">
-                  Maachii<span className="text-orange-600">Know</span>
-                </span>
-              </div>
-              
-              <div className="hidden md:flex items-center space-x-12">
-                <button 
-                  onClick={backToHome} 
-                  className="font-bold text-base text-gray-500 hover:text-orange-600 uppercase tracking-widest transition-colors"
-                >
-                  Home
-                </button>
-              </div>
-
-              <button 
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
-                className="md:hidden text-gray-600 p-2"
-              >
-                {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
-              </button>
-            </div>
-            
-            {isMobileMenuOpen && (
-              <div className="absolute top-20 left-0 w-full bg-white shadow-xl border-b md:hidden flex flex-col p-6 space-y-4 z-40 animate-in slide-in-from-top-2 duration-300">
-                <button 
-                  onClick={backToHome} 
-                  className="text-left font-bold text-gray-700"
-                >
-                  Home
-                </button>
-              </div>
-            )}
-          </nav>
-
-          <main className="flex-1 overflow-y-auto overflow-x-hidden relative custom-scroll p-4 md:p-6">
-            <div className="max-w-7xl mx-auto h-full">
-              {moduleView === 'home' && <AaHomeView setModuleView={setModuleView} />}
-              {moduleView === 'learn' && <AaLearnView onHome={() => setModuleView('home')} />}
-              {moduleView === 'swatter' && <AaSwatterGameView onHome={() => setModuleView('home')} />}
-              {moduleView === 'downloads' && <AaDownloadsView onHome={() => setModuleView('home')} />}
-            </div>
-          </main>
-          
-          <footer className="bg-white/80 backdrop-blur-sm border-t py-4 text-center shrink-0">
-            <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.3em]">© 2026 MaachiiKnow. All rights reserved.</p>
-          </footer>
+      
+      {/* 移除了外層的 bg-sky-50, nav 和 footer，只保留內容核心 */}
+      <div className="max-w-7xl mx-auto h-full">
+        {moduleView === 'home' && <AaHomeView setModuleView={setModuleView} />}
+        {moduleView === 'learn' && <AaLearnView onHome={() => setModuleView('home')} />}
+        {moduleView === 'swatter' && <AaSwatterGameView onHome={() => setModuleView('home')} />}
+        {moduleView === 'downloads' && <AaDownloadsView onHome={() => setModuleView('home')} />}
       </div>
     </>
   );
