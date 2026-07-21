@@ -183,6 +183,7 @@ export default function App() {
           <Route path="animal_parts" element={<AnimalBodyParts />} />
           <Route path="english_texture" element={<AnimalTextures />} />
           <Route path="beast_creator" element={<BeastCreator />} />
+          <Route path="steam/bow_and_arrow" element={<BowAndArrow />} />
 
           {/* 透過 Iframe 嵌進來的靜態 HTML 頁面 */}
           <Route path="steam_crazyfrog" element={<IframePage fileUrl="/steam_crazyfrog.html" />} />
