@@ -7,6 +7,10 @@ import AnimalBodyParts from './AnimalBodyParts';
 import AnimalTextures from './AnimalTextures';
 import BeastCreator from './BeastCreator'; 
 import IframePage from './IframePage';
+import AutoGrabber from './AutoGrabber'; // 請確認路徑是否符合您的資料夾結構
+import BowAndArrow from './BowAndArrow'; // 請確認路徑是否符合您的資料夾結構
+
+
 
 const containerClasses = "max-w-7xl 3xl:max-w-[1920px] 4xl:max-w-[2800px] mx-auto px-4 w-full";
 
@@ -184,6 +188,7 @@ export default function App() {
           <Route path="english_texture" element={<AnimalTextures />} />
           <Route path="beast_creator" element={<BeastCreator />} />
           <Route path="steam/bow_and_arrow" element={<BowAndArrow />} />
+          <Route path="steam/auto_grabber" element={<AutoGrabber />} />
 
           {/* 透過 Iframe 嵌進來的靜態 HTML 頁面 */}
           <Route path="steam_crazyfrog" element={<IframePage fileUrl="/steam_crazyfrog.html" />} />
