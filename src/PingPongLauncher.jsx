@@ -1,0 +1,519 @@
+import React, { useState } from 'react';
+import { 
+    Lightbulb, Rocket, PlayCircle, Wrench, Cpu, FileDown, 
+    Target, Box, BookOpen, ShieldAlert, ClipboardCheck, Zap 
+} from 'lucide-react';
+
+// 廣告區塊組件
+const AdBanner = ({ format = 'horizontal', className = "" }) => (
+  <div className={`relative flex items-center justify-center bg-gray-50 border-2 border-dashed border-gray-200 text-gray-400 rounded-2xl overflow-hidden ${format === 'horizontal' ? 'w-full h-20 my-2' : 'w-full aspect-square max-h-[250px] my-4'} ${className}`}>
+    <span className="absolute top-2 right-3 text-[9px] bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded uppercase tracking-widest font-bold">AD Space</span>
+    <p className="font-bold text-xs opacity-50">{format === 'horizontal' ? '728 x 90' : '300 x 250'}</p>
+  </div>
+);
+
+// 專案資料物件
+const projectData = {
+    spm: {
+        id: 'spm',
+        title: "LEGO 9686 SPM: Ping Pong Launcher",
+        subtitle: "Secrets of Power and Speed",
+        imageUrl: "https://i.ibb.co/5xWX3X9y/Ping-Pong-Ball-Machine.png",
+        ioLink: "https://raw.githubusercontent.com/JOUCHUCHEN/maachiiknow/main/steam/pingponglauncher/Ping_Pong_Launcher(spm_version).io", 
+        pdfLink: "https://raw.githubusercontent.com/JOUCHUCHEN/maachiiknow/main/steam/pingponglauncher/Ping_Pong_Launcher(spm_version).pdf", 
+        lessonPlanEn: "https://raw.githubusercontent.com/JOUCHUCHEN/maachiiknow/main/steam/pingponglauncher/LEGO%209686%20SPM%20Ping%20Pong%20Launcher%20Lesson%20Plan.pdf",
+        lessonPlanCh: "https://raw.githubusercontent.com/JOUCHUCHEN/maachiiknow/main/steam/pingponglauncher/%E5%B8%AB%E8%B3%87%E5%9F%B9%E8%A8%93%E6%95%99%E6%A1%88%EF%BC%9ALEGO%209686%20%E4%B9%92%E4%B9%93%E7%90%83%E7%99%BC%E5%B0%84%E5%99%A8.pdf",
+        intro: "The LEGO 9686 Launcher is a fun machine that uses a motor and rubber wheels to shoot ping pong balls. It uses a battery to spin two wheels very fast. When you put a ball in, the wheels \"grab\" it and flick it forward! It is a great way for students to see how gears work and how energy turns into fast motion.\n\nThis lesson plan is specifically designed for STEAM Teacher Training. The target audience for the actual lesson is lower elementary students. The instructional focus is on utilizing the LEGO 9686 set to guide students in understanding fundamental mechanical principles.",
+        objectives: [
+            "1. Physics Cognition: Understand the role of Friction in object propulsion.",
+            "2. Mechanical Structures: Learn the basic path of Gear Transmission.",
+            "3. Engineering Practice: Strengthen fine motor skills and judgment of structural stability through hands-on building.",
+            "4. Computational Thinking: Introduce the logic of Energy Transformation (Battery -> Motor -> Kinetic Energy)."
+        ],
+        materials: [
+            "● Set Series: LEGO 9686 (Simple & Powered Machines Set)",
+            "● Key Components: DC Motor, Battery Box, Rubber Tires, Large/Small Gears, Cross Axles.",
+            "● Instructional Phase: Phase II — Automation and Logic Construction (SPM)."
+        ],
+        instructionalModel: [
+            {
+                step: "1. Engage — Sparking Interest",
+                details: [
+                    "● Guiding Questions:",
+                    "  ○ \"Kids, if we want to enter a ping pong competition but our arms get tired, what machine could help us throw the ball?\"",
+                    "  ○ Show a video or image of a \"Professional Ball Launcher\" used in sports.",
+                    "● Core Inquiry: Why are machine-launched balls so much faster and more accurate than hand-thrown ones?"
+                ]
+            },
+            {
+                step: "2. Explore — Structural Building",
+                details: [
+                    "● Teacher Guidance Focus:",
+                    "  ○ Alignment Precision: Guide students to observe if gears are \"mesh correctly\"—neither too loose nor jammed.",
+                    "  ○ Symmetry: The launcher’s frame must be symmetrical; otherwise, the ball will veer off course during launch.",
+                    "  ○ Motor Skill Training: Use the connection of cross-axles to train finger strength and precision."
+                ]
+            },
+            {
+                step: "3. Explain — Principles Breakdown",
+                details: [
+                    "● Energy Transfer Path:",
+                    "  ○ Chemical Energy (Battery) -> Electrical Energy (Wires).",
+                    "  ○ Electrical Energy -> Mechanical Energy (Motor rotation).",
+                    "  ○ Power Distribution (Gear Transmission) -> Final Execution (Tire rotation).",
+                    "● The Secret of Friction:",
+                    "  ○ Why use \"Rubber Tires\" instead of \"Smooth Plastic Disks\"?",
+                    "  ○ Explain how the friction of rubber \"grabs\" the ball and transfers speed to it."
+                ]
+            },
+            {
+                step: "4. Elaborate — Experimentation and Debugging",
+                details: [
+                    "● Variable Experiments:",
+                    "  ○ Gear Ratio Challenge: If you swap the gear driving the tire from a large gear to a small one, will it spin faster or slower?",
+                    "  ○ Angle Testing: At which launch angle—30 degrees or 45 degrees—does the ball fly further?",
+                    "● Debugging: If the ball won't launch, ask students to check:",
+                    "  ○ Is the motor rotating in the correct direction?",
+                    "  ○ Is the gap between the tires and the ball too wide?"
+                ]
+            },
+            {
+                step: "5. Evaluate — Achievement Showcase",
+                details: [
+                    "● Fun Competitions:",
+                    "  ○ Accuracy Contest: Hit a paper cup 2 meters away.",
+                    "  ○ Distance Contest: See whose ball can cross the classroom's center line.",
+                    "● Oral Presentation: Ask students to share: \"What is the biggest advantage of your launcher design?\""
+                ]
+            }
+        ],
+        trainerNotes: [
+            {
+                title: "1. Safety First",
+                points: [
+                    "● Set Rules: Strictly forbid pointing the launcher at faces or eyes.",
+                    "● Component Safety: Prohibit sticking fingers into gear assemblies while the motor is running."
+                ]
+            },
+            {
+                title: "2. Differentiation",
+                points: [
+                    "● Advanced Students: Guide them to add an \"Automatic Feeding Device\" (funnel structure).",
+                    "● Students Needing Support: Assist in checking the polarity of the battery box and motor connections to ensure power output."
+                ]
+            },
+            {
+                title: "3. Equipment Maintenance",
+                points: [
+                    "● Post-training, teachers must lead students in \"Part Inventory\". This is a core task in STEAM classroom management.",
+                    "● Check battery boxes for leakage risks and motors for unusual noises."
+                ]
+            }
+        ],
+        logTemplate: {
+            name: "My Project Name: ____________________",
+            parts: "Important Parts I Used: (Draw the tire and motor)",
+            content: (
+                <div>
+                    <p>● How far did my ball fly?:</p>
+                    <div className="mt-4 space-y-2 pl-4 text-slate-600 font-medium text-sm">
+                        <p>○ [ ] Short distance</p>
+                        <p>○ [ ] Average</p>
+                        <p>○ [ ] Super far!</p>
+                    </div>
+                </div>
+            ),
+            challenge: "Challenges I faced and how I solved them: ____________________"
+        }
+    },
+    wedo: {
+        id: 'wedo',
+        title: "WeDo 2.0 Smart Sensing Launcher",
+        subtitle: "Automation in Practice",
+        imageUrl: "https://i.ibb.co/dsnqrs3k/Ping-Pong-Ball-Machine-Wedo2.png",
+        ioLink: "https://raw.githubusercontent.com/JOUCHUCHEN/maachiiknow/main/steam/pingponglauncher/Ping_Pong_Launcher(wedo2.0_version).io",
+        pdfLink: "https://raw.githubusercontent.com/JOUCHUCHEN/maachiiknow/main/steam/pingponglauncher/Ping_Pong_Launcher(wedo2.0_version).pdf", 
+        lessonPlanEn: "https://raw.githubusercontent.com/JOUCHUCHEN/maachiiknow/main/steam/pingponglauncher/LEGO%20WeDo%202.0%20Advanced%20Lesson%20Plan.pdf",
+        lessonPlanCh: "https://raw.githubusercontent.com/JOUCHUCHEN/maachiiknow/main/steam/pingponglauncher/%E5%B8%AB%E8%B3%87%E5%9F%B9%E8%A8%93%E9%80%B2%E9%9A%8E%E6%95%99%E6%A1%88%EF%BC%9AWeDo%202.0%20%E6%99%BA%E6%85%A7%E6%84%9F%E6%87%89%E7%99%BC%E5%B0%84%E5%99%A8.pdf",
+        intro: "This lesson plan is an Advanced Module designed to upgrade manual mechanical structures into a sensor-driven automated system. It introduces the core programming concept of \"Input (Sensor) — Process (Program) — Output (Motor).\"",
+        objectives: [
+            "1. Systems Thinking: Understand the basic components of automated equipment (Sensing, Decision-making, Execution).",
+            "2. Sensor Application: Master the principles of the \"Motion Sensor\" and how to set trigger values.",
+            "3. Programming Logic: Learn the \"Wait Until\" command and \"Conditional Trigger\" logic.",
+            "4. Structural Upgrade: Learn how to securely mount electronic components onto existing mechanical structures."
+        ],
+        materials: [
+            "● Set Series: LEGO WeDo 2.0",
+            "● Key Hardware:",
+            "  ○ Smart Hub: The \"brain\" of the system, responsible for Bluetooth connection and running programs.",
+            "  ○ Medium Motor: Drives the launcher tires.",
+            "  ○ Motion Sensor: Detects if a ball is in position.",
+            "● Instructional Phase: Phase II — Automation and Logic Construction (Programming & Sensing)."
+        ],
+        instructionalModel: [
+            {
+                step: "1. Engage — From Manual to Automatic",
+                details: [
+                    "● Scenario Simulation:",
+                    "  ○ \"What if the launcher could work like automatic doors at a store? Can we make it fire by itself when it 'sees' the ball?\"",
+                    "● Discussion Question: What \"organs\" do automatic machines need to \"see\" things? (Lead to: Sensors)."
+                ]
+            },
+            {
+                step: "2. Explore — Hardware Structural Transition",
+                details: [
+                    "● Structural Improvement Points:",
+                    "  ○ Smart Hub Weight Distribution: The Smart Hub is heavy. Guide students to place it on the base to ensure stability.",
+                    "  ○ Sensor Positioning: Where should the sensor go? (Ideal: Near the end of the feeder ramp, where the ball is about to touch the tires).",
+                    "● Teacher Guidance: Remind students to manage the cables for the motor and sensor to avoid them getting caught in the gears."
+                ]
+            },
+            {
+                step: "3. Explain — Logic Path",
+                details: [
+                    "● Input and Output Logic:",
+                    "  ○ Input: Motion sensor detects an object approaching (value decreases).",
+                    "  ○ Process: The program evaluates: \"Is the value less than 5?\"",
+                    "  ○ Output: The motor runs for 2 seconds.",
+                    "● Key Concept: Explain how the sensor uses infrared light to detect distance."
+                ]
+            },
+            {
+                step: "4. Elaborate — Programming Practice",
+                details: [
+                    "● Mission Goal: Write a program so the launcher \"detects the ball -> launches -> stops.\"",
+                    "● Code Block Suggestions:",
+                    "  1. Start Block",
+                    "  2. Wait for Distance Down (Wait until something is close)",
+                    "  3. Motor On (Power level 8-10)",
+                    "  4. Wait 2s (Ensure the ball has left the launcher)",
+                    "  5. Motor Off",
+                    "  6. Loop (Ready for the next ball)"
+                ]
+            },
+            {
+                step: "5. Evaluate — System Pressure Test",
+                details: [
+                    "● Stability Test: Place 3 balls in a row to see if the program accurately detects and launches each one consecutively.",
+                    "● Logic Debugging:",
+                    "  ○ \"What if the sensor doesn't see the ball?\" (Check sensor angle).",
+                    "  ○ \"What if the motor is too slow?\" (Adjust \"Motor Power\" in the code)."
+                ]
+            }
+        ],
+        trainerNotes: [
+            {
+                title: "1. Technical Iteration",
+                points: [
+                    "● Firmware Updates: Ensure Smart Hub firmware is updated before class to avoid Bluetooth connection issues.",
+                    "● Environmental Interference: Strong sunlight may affect the accuracy of infrared sensors."
+                ]
+            },
+            {
+                title: "2. Differentiation",
+                points: [
+                    "● Advanced Challenge: Ask students to add a \"Sound Effect\"—making the hub play a \"Bang!\" sound every time a ball launches.",
+                    "● Strategic Analysis: Discuss why automatic launching is more consistent than manual launching in a competition setting."
+                ]
+            },
+            {
+                title: "3. Resilience Building",
+                points: [
+                    "● In coding, programs \"not working\" is a normal part of the process. Train teachers to guide students through \"Logic Debugging\" instead of providing the answers immediately."
+                ]
+            }
+        ],
+        logTemplate: {
+            name: "System Flowchart: (Draw: Sensor -> Smart Hub -> Motor)",
+            parts: "My Settings:",
+            content: (
+                <div className="mt-4 space-y-2 pl-4 text-slate-600 font-medium text-sm">
+                    <p>○ Sensor trigger distance set to: _____</p>
+                    <p>○ Motor power set to: _____</p>
+                    <p>○ Key to Success: (e.g., Placing the sensor at the bottom of the ramp makes it most sensitive)</p>
+                </div>
+            ),
+            challenge: "New Feature I Want to Add: ____________________"
+        }
+    }
+};
+
+export default function PingPongLauncher() {
+    const [activeTab, setActiveTab] = useState('spm');
+    const [isAnimating, setIsAnimating] = useState(false);
+
+    const currentData = projectData[activeTab];
+
+    // 下載檔案的處理函式
+    const handleDownload = async (e, url, filename) => {
+        e.preventDefault(); 
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+        } catch (error) {
+            window.open(url, '_blank');
+        }
+    };
+
+    // 處理頁籤切換與動畫
+    const handleTabChange = (tabId) => {
+        if(tabId === activeTab) return;
+        setIsAnimating(true);
+        setTimeout(() => {
+            setActiveTab(tabId);
+            setIsAnimating(false);
+        }, 200); 
+    };
+
+    // 圖片遮罩樣式
+    const imageMaskStyle = {
+        WebkitMaskImage: '-webkit-radial-gradient(white, black)',
+        maskImage: 'radial-gradient(white, black)'
+    };
+
+    return (
+        <div className="w-full font-sans">
+            <main className="w-full">
+                <div className="p-6 lg:p-10 max-w-5xl mx-auto w-full flex flex-col">
+                    
+                    {/* Tab Switcher 頁籤切換按鈕 */}
+                    <div className="flex flex-col sm:flex-row items-center gap-4 mb-10 bg-white p-2 rounded-3xl shadow-sm border border-slate-100 w-fit mx-auto">
+                        <button
+                            onClick={() => handleTabChange('spm')}
+                            className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all duration-300 ${activeTab === 'spm' ? 'bg-indigo-600 text-white shadow-md scale-105' : 'text-slate-400 hover:bg-slate-50'}`}
+                        >
+                            <Wrench size={18} />
+                            Lego SPM Version
+                        </button>
+                        <button
+                            onClick={() => handleTabChange('wedo')}
+                            className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all duration-300 ${activeTab === 'wedo' ? 'bg-emerald-500 text-white shadow-md scale-105' : 'text-slate-400 hover:bg-slate-50'}`}
+                        >
+                            <Cpu size={18} />
+                            WeDo 2.0 Version
+                        </button>
+                    </div>
+
+                    <div className={`transition-all duration-300 ${isAnimating ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
+                        
+                        {/* Header 區塊 */}
+                        <div className="mb-8 text-center sm:text-left">
+                            <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight mb-3">
+                                {currentData.title}
+                            </h2>
+                            <div className="flex items-center justify-center sm:justify-start gap-2 text-slate-400 font-bold tracking-wider uppercase text-xs">
+                                <PlayCircle size={14} className={activeTab === 'spm' ? "text-indigo-500" : "text-emerald-500"} />
+                                <span>STEAM Project Learning</span>
+                                <span className="text-slate-200 mx-1">•</span>
+                                <span className={activeTab === 'spm' ? "text-indigo-600" : "text-emerald-600"}>{currentData.subtitle}</span>
+                            </div>
+                        </div>
+
+                        {/* 專案介紹 Project Introduction */}
+                        <div className="mb-10 w-full">
+                            <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 p-6 opacity-[0.03] group-hover:scale-110 transition-transform duration-700">
+                                    <Lightbulb size={120} className={activeTab === 'spm' ? "text-indigo-600" : "text-emerald-600"} />
+                                </div>
+                                <h3 className={`font-black text-xl mb-4 flex items-center gap-3 tracking-tight ${activeTab === 'spm' ? "text-indigo-600" : "text-emerald-600"}`}>
+                                    <span className={`p-2 rounded-xl ${activeTab === 'spm' ? "bg-indigo-50" : "bg-emerald-50"}`}>
+                                        <Rocket size={20} />
+                                    </span>
+                                    Project Introduction
+                                </h3>
+                                <p className="text-slate-600 leading-relaxed text-base font-medium relative z-10 whitespace-pre-line">
+                                    {currentData.intro}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* 圖片展示 Image Showcase */}
+                        <div className="w-full max-w-5xl mx-auto relative group mb-16">
+                            <div className={`absolute -inset-1 rounded-[3rem] blur opacity-15 group-hover:opacity-25 transition duration-1000 ${activeTab === 'spm' ? 'bg-gradient-to-r from-indigo-500 to-rose-500' : 'bg-gradient-to-r from-emerald-400 to-cyan-500'}`}></div>
+                            <div className="relative bg-white p-3 md:p-4 rounded-[3.5rem] shadow-2xl border border-slate-100">
+                                <div 
+                                    className="aspect-[4/3] w-full bg-slate-900 rounded-[2.5rem] overflow-hidden relative shadow-inner"
+                                    style={imageMaskStyle}
+                                >
+                                    <img 
+                                        src={currentData.imageUrl} 
+                                        alt={currentData.title}
+                                        className="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-700"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 分隔線 (替換掉原本的 .section-divider class) */}
+                        <div className="h-[1px] bg-gradient-to-r from-slate-200 to-transparent my-12"></div>
+
+                        {/* I. Learning Objectives */}
+                        <section className="mb-16">
+                            <h3 className="text-2xl font-black mb-6 flex items-center gap-3">
+                                <Target className={activeTab === 'spm' ? "text-indigo-600" : "text-emerald-600"} size={28} />
+                                I. Learning Objectives
+                            </h3>
+                            <div className="space-y-3 mt-4">
+                                {currentData.objectives.map((obj, i) => (
+                                    <div key={i} className="flex gap-4 items-start">
+                                        <div className="mt-1"><Zap size={18} className={activeTab === 'spm' ? "text-indigo-500" : "text-emerald-500"} /></div>
+                                        <p className="text-slate-700 text-base leading-relaxed font-medium">{obj}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+
+                        {/* II. Materials */}
+                        <section className="mb-16">
+                            <h3 className="text-2xl font-black mb-6 flex items-center gap-3">
+                                <Box className={activeTab === 'spm' ? "text-indigo-600" : "text-emerald-600"} size={28} />
+                                II. Core Material Information
+                            </h3>
+                            <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200 space-y-2">
+                                {currentData.materials.map((item, i) => (
+                                    <p key={i} className="text-slate-700 text-sm font-bold whitespace-pre-wrap">{item}</p>
+                                ))}
+                            </div>
+                        </section>
+
+                        <div className="h-[1px] bg-gradient-to-r from-slate-200 to-transparent my-12"></div>
+
+                        {/* III. 5E Instructional Model */}
+                        <section className="mb-16">
+                            <h3 className="text-2xl font-black mb-10 flex items-center gap-3">
+                                <BookOpen className={activeTab === 'spm' ? "text-indigo-600" : "text-emerald-600"} size={28} />
+                                III. 5E Instructional Model Execution
+                            </h3>
+                            <div className="space-y-12 ml-4 border-l-2 border-slate-200 pl-8 relative">
+                                {currentData.instructionalModel.map((item, i) => (
+                                    <div key={i} className="relative">
+                                        <div className={`absolute -left-[41px] top-0 w-5 h-5 rounded-full border-4 border-white ${activeTab === 'spm' ? 'bg-indigo-600' : 'bg-emerald-500'}`}></div>
+                                        <h4 className="text-xl font-black text-slate-900 mb-4">{item.step}</h4>
+                                        <div className="space-y-2">
+                                            {item.details.map((detail, j) => (
+                                                <p key={j} className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap pl-2">
+                                                    {detail}
+                                                </p>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+
+                        <div className="h-[1px] bg-gradient-to-r from-slate-200 to-transparent my-12"></div>
+
+                        {/* IV. Trainer's Notes */}
+                        <section className="mb-16">
+                            <h3 className="text-2xl font-black mb-6 flex items-center gap-3">
+                                <ShieldAlert className={activeTab === 'spm' ? "text-rose-600" : "text-emerald-600"} size={28} />
+                                IV. Master Trainer’s Notes
+                            </h3>
+                            <div className="space-y-8 mt-6">
+                                {currentData.trainerNotes.map((note, i) => (
+                                    <div key={i}>
+                                        <h4 className="font-black text-slate-900 mb-3 flex items-center gap-2">
+                                            <span className={`w-1.5 h-6 rounded-full ${activeTab === 'spm' ? 'bg-rose-500' : 'bg-emerald-500'}`}></span>
+                                            {note.title}
+                                        </h4>
+                                        <ul className="space-y-2 ml-4">
+                                            {note.points.map((p, j) => (
+                                                <li key={j} className="text-slate-600 text-sm leading-relaxed">{p}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+
+                        <div className="h-[1px] bg-gradient-to-r from-slate-200 to-transparent my-12"></div>
+
+                        {/* V. Engineering Log Template */}
+                        <section className="mb-16">
+                            <h3 className="text-2xl font-black mb-6 flex items-center gap-3">
+                                <ClipboardCheck className={activeTab === 'spm' ? "text-indigo-600" : "text-emerald-600"} size={28} />
+                                V. Engineering Log Template
+                            </h3>
+                            <div className="space-y-6 mt-8 text-slate-700 font-bold border-l-4 border-slate-100 pl-8">
+                                <p>● {currentData.logTemplate.name}</p>
+                                
+                                <div>
+                                    <p>● {currentData.logTemplate.parts}</p>
+                                    <div className="mt-4 bg-white/50 p-6 rounded-2xl border border-dashed border-slate-300 h-32 flex items-center justify-center italic text-slate-400 text-xs">
+                                        Student Drawing/Notes Area
+                                    </div>
+                                </div>
+
+                                <div>
+                                    {currentData.logTemplate.content}
+                                </div>
+                                
+                                <p>● {currentData.logTemplate.challenge}</p>
+                            </div>
+                        </section>
+
+                        {/* Resource Downloads */}
+                        <div className="mt-4 mb-20 flex flex-col items-center gap-6">
+                            <div className="text-center mb-4">
+                                <h3 className="text-xl font-black text-slate-900 mb-1 tracking-tight">Resource Download Center</h3>
+                                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Get instructions and lesson plans</p>
+                            </div>
+                            
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
+                                <a 
+                                    href={currentData.pdfLink} 
+                                    onClick={(e) => handleDownload(e, currentData.pdfLink, `Instruction_${activeTab}.pdf`)}
+                                    className="w-full sm:w-80 h-16 flex items-center justify-center gap-3 text-base font-bold text-slate-700 px-6 bg-white border-2 border-slate-200 hover:border-slate-300 hover:text-slate-900 rounded-full shadow-sm transition-all hover:scale-105 active:scale-95 group"
+                                >
+                                    <FileDown size={22} className="group-hover:-translate-y-1 transition-transform" /> 
+                                    Download Instruction (PDF)
+                                </a>
+
+                                <a 
+                                    href={currentData.ioLink} 
+                                    onClick={(e) => handleDownload(e, currentData.ioLink, `Instruction_${activeTab}.io`)}
+                                    className="w-full sm:w-80 h-16 flex items-center justify-center gap-3 text-base font-bold text-white px-6 bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 rounded-full shadow-lg transition-all hover:scale-105 active:scale-95 group"
+                                >
+                                    <FileDown size={22} className="group-hover:-translate-y-1 transition-transform" /> 
+                                    Download Instruction (io)
+                                </a>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
+                                <a 
+                                    href={currentData.lessonPlanEn} 
+                                    onClick={(e) => handleDownload(e, currentData.lessonPlanEn, `LessonPlan_EN_${activeTab}.pdf`)}
+                                    className="w-full sm:w-80 h-16 flex items-center justify-center gap-3 text-base font-bold text-slate-600 px-6 bg-slate-50 border-2 border-slate-200 hover:border-slate-300 hover:text-slate-800 rounded-full shadow-sm transition-all hover:scale-105 active:scale-95 group"
+                                >
+                                    <FileDown size={22} className="text-blue-500 group-hover:-translate-y-1 transition-transform" /> 
+                                    Lesson Plan (English)
+                                </a>
+
+                                <a 
+                                    href={currentData.lessonPlanCh} 
+                                    onClick={(e) => handleDownload(e, currentData.lessonPlanCh, `LessonPlan_CH_${activeTab}.pdf`)}
+                                    className="w-full sm:w-80 h-16 flex items-center justify-center gap-3 text-base font-bold text-slate-600 px-6 bg-slate-50 border-2 border-slate-200 hover:border-slate-300 hover:text-slate-800 rounded-full shadow-sm transition-all hover:scale-105 active:scale-95 group"
+                                >
+                                    <FileDown size={22} className="text-red-500 group-hover:-translate-y-1 transition-transform" /> 
+                                    Lesson Plan (Chinese)
+                                </a>
+                            </div>
+                        </div>
+
+                        <div className="mt-6 mb-20 w-full max-w-3xl mx-auto flex flex-col">
+                            <AdBanner format="horizontal" className="!my-0 w-full h-24 border-slate-200" />
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    );
+}

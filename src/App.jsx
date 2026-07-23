@@ -1,4 +1,5 @@
 import React from 'react';
+import ScrollToTop from './ScrollToTop';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { LayoutGrid, Rocket, Gamepad2, Sparkles } from 'lucide-react';
 import Layout from './Layout';
@@ -7,20 +8,23 @@ import AnimalBodyParts from './AnimalBodyParts';
 import AnimalTextures from './AnimalTextures';
 import BeastCreator from './BeastCreator'; 
 import IframePage from './IframePage';
-import AutoGrabber from './AutoGrabber'; // 請確認路徑是否符合您的資料夾結構
-import BowAndArrow from './BowAndArrow'; // 請確認路徑是否符合您的資料夾結構
 
-
+// ⚠️ 關鍵檢查點：請確認這 5 個檔案真的跟 App.jsx 放在「同一個資料夾」底下！
+import AutoGrabber from './AutoGrabber'; 
+import BowAndArrow from './BowAndArrow'; 
+import CrazyFrog from './CrazyFrog';
+import PingPongLauncher from './PingPongLauncher';
+import RubberBandCar from './RubberBandCar';
 
 const containerClasses = "max-w-7xl 3xl:max-w-[1920px] 4xl:max-w-[2800px] mx-auto px-4 w-full";
 
-// 已經幫您將 .html 副檔名移除，完全適應 React Router 架構
+// 💡 修正 1：更新首頁卡片的 link，指向我們新建立的 React 路由
 const stemProjects = [
-  { id: 'p2', title: 'Bow & Arrow', link: '/steam_bow&arrow', cover: 'https://i.ibb.co/bjhp6x9d/image.png', desc: 'Mechanical structure & logic', tags: ['SPM', 'Basic']},
-  { id: 2, title: 'Rubber Band Car', link: '/steam_rubberbandcar', cover: 'https://i.ibb.co/LD5jgtpF/45.png', desc: 'Mechanical structure & logic', tags: ['SPM', 'Basic'] },
-  { id: 6, title: 'Crazy Frog', link: '/steam_crazyfrog', cover: 'https://i.ibb.co/Pz66fwj9/cover.jpg', desc: 'Mechanical structure & logic', tags: ['SPM'] },
-  { id: 23, title: 'Auto Grabber', link: '/steam_autograbber', cover: 'https://i.ibb.co/V0c4fgDf/IMG-2482.jpg', desc: 'Mechanical structure & logic', tags: ['SPM'] },
-  { id: 'p1', title: 'Ping Pong Launcher', link: '/steam_pingponglauncher', cover: 'https://i.ibb.co/dsnqrs3k/Ping-Pong-Ball-Machine-Wedo2.png', desc: 'From Mechanics to Robotic Systems', tags: ['SPM', 'Wedo 2.0'] }
+  { id: 'p2', title: 'Bow & Arrow', link: '/steam/bow_and_arrow', cover: 'https://i.ibb.co/bjhp6x9d/image.png', desc: 'Mechanical structure & logic', tags: ['SPM', 'Basic']},
+  { id: 2, title: 'Rubber Band Car', link: '/steam/rubber_band_car', cover: 'https://i.ibb.co/LD5jgtpF/45.png', desc: 'Mechanical structure & logic', tags: ['SPM', 'Basic'] },
+  { id: 6, title: 'Crazy Frog', link: '/steam/crazy_frog', cover: 'https://i.ibb.co/Pz66fwj9/cover.jpg', desc: 'Mechanical structure & logic', tags: ['SPM'] },
+  { id: 23, title: 'Auto Grabber', link: '/steam/auto_grabber', cover: 'https://i.ibb.co/V0c4fgDf/IMG-2482.jpg', desc: 'Mechanical structure & logic', tags: ['SPM'] },
+  { id: 'p1', title: 'Ping Pong Launcher', link: '/steam/ping_pong_launcher', cover: 'https://i.ibb.co/dsnqrs3k/Ping-Pong-Ball-Machine-Wedo2.png', desc: 'From Mechanics to Robotic Systems', tags: ['SPM', 'Wedo 2.0'] }
 ];
 
 const StemProjectsGrid = () => {
@@ -120,7 +124,6 @@ function Home() {
                     </div>
                   </Link>
 
-                  {/* 🚨 這裡已經為您修正為 /beast_creator 了！🚨 */}
                   <Link to="/beast_creator" className="bg-gradient-to-br from-purple-500 to-fuchsia-600 rounded-[2rem] p-6 text-white cursor-pointer hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex flex-col justify-center min-h-[11rem] shadow-md hover:shadow-xl group text-left">
                     <div className="absolute -right-2 -bottom-4 opacity-[0.15] group-hover:scale-110 transition-transform duration-700">
                         <span className="text-[9rem] leading-none">🦄</span>
@@ -177,6 +180,7 @@ function Home() {
 export default function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<Layout />}>
           {/* 預設首頁 */}
@@ -187,15 +191,15 @@ export default function App() {
           <Route path="animal_parts" element={<AnimalBodyParts />} />
           <Route path="english_texture" element={<AnimalTextures />} />
           <Route path="beast_creator" element={<BeastCreator />} />
+          
+          {/* 💡 修正 2：這些是全新的 React 路由 */}
           <Route path="steam/bow_and_arrow" element={<BowAndArrow />} />
           <Route path="steam/auto_grabber" element={<AutoGrabber />} />
+          <Route path="steam/crazy_frog" element={<CrazyFrog />} />
+          <Route path="steam/ping_pong_launcher" element={<PingPongLauncher />} />
+          <Route path="steam/rubber_band_car" element={<RubberBandCar />} />
 
-          {/* 透過 Iframe 嵌進來的靜態 HTML 頁面 */}
-          <Route path="steam_crazyfrog" element={<IframePage fileUrl="/steam_crazyfrog.html" />} />
-          <Route path="steam_bow&arrow" element={<IframePage fileUrl="/steam_bow&arrow.html" />} />
-          <Route path="steam_rubberbandcar" element={<IframePage fileUrl="/steam_rubberbandcar.html" />} />
-          <Route path="steam_autograbber" element={<IframePage fileUrl="/steam_autograbber.html" />} />
-          <Route path="steam_pingponglauncher" element={<IframePage fileUrl="/steam_pingponglauncher.html" />} />
+          {/* 💡 修正 3：移除舊的 STEAM Iframe 路由，只保留 Scratch */}
           <Route path="scratch_cat_match" element={<IframePage fileUrl="/scratch_cat_match.html" />} />
         </Route>
       </Routes>

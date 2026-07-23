@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react'; // ✨ 加入了 useEffect 和 useRef
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 
@@ -8,6 +8,18 @@ export default function Layout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // ✨ 1. 建立一個虛擬的手指 (ref)，準備精準指著我們的滾動容器
+  const scrollRef = useRef(null);
+
+  // ✨ 2. 終極殺手鐧：只要網址一變換，立刻把容器的捲軸歸零！
+  useEffect(() => {
+    if (scrollRef.current) {
+      // 雙重保險寫法，確保所有瀏覽器都乖乖聽話
+      scrollRef.current.scrollTo(0, 0); 
+      scrollRef.current.scrollTop = 0;
+    }
+  }, [location.pathname]); // 監聽 location.pathname 的變化
 
   const handleNavClick = (sectionId) => {
     setIsMobileMenuOpen(false);
@@ -47,7 +59,6 @@ export default function Layout() {
         <nav className="bg-white shadow-sm h-20 border-b z-50 flex-shrink-0 relative font-roboto">
           <div className={`${containerClasses} h-full flex justify-between items-center`}>
             
-            {/* ✨ 修復這裡：改回 div 並使用 navigate('/') 來保持完美的水平排版 */}
             <div onClick={() => navigate('/')} className="flex flex-row items-center cursor-pointer group shrink-0">
               <img src="https://i.ibb.co/CFC5v9L/Machi-Know-Logo.png" alt="Maachiiknow Logo" className="w-16 h-16 object-contain group-hover:scale-110 group-hover:rotate-6 transition-all relative -top-1 left-0 z-0" />
               <span className="font-logo font-black text-3xl text-gray-900 tracking-tighter relative z-10 ml-0">
@@ -77,8 +88,8 @@ export default function Layout() {
           )}
         </nav>
 
-        {/* 內容區 */}
-        <main id="main-scroll-container" className="flex-1 overflow-y-auto overflow-x-hidden relative custom-scroll w-full">
+        {/* 內容區：✨ 3. 將剛剛做好的 scrollRef 綁定到這裡 */}
+        <main ref={scrollRef} id="main-scroll-container" className="flex-1 overflow-y-auto overflow-x-hidden relative custom-scroll w-full">
           <Outlet />
         </main>
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { PlayCircle, Tv, ExternalLink, Download, FileDown, AlertCircle, Lightbulb } from 'lucide-react';
 
-// 廣告區塊組件 (與 BowAndArrow 相同，可共用或直接放在這裡)
+// 廣告區塊組件 (若您已在其他檔案獨立抽出，可改為 import 引入)
 const AdBanner = ({ format = 'horizontal', className = "" }) => (
   <div className={`relative flex items-center justify-center bg-gray-50 border-2 border-dashed border-gray-200 text-gray-400 rounded-2xl overflow-hidden ${format === 'horizontal' ? 'w-full h-20 my-2' : 'w-full aspect-square max-h-[250px] my-4'} ${className}`}>
     <span className="absolute top-2 right-3 text-[9px] bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded uppercase tracking-widest font-bold">AD Space</span>
@@ -9,10 +9,10 @@ const AdBanner = ({ format = 'horizontal', className = "" }) => (
   </div>
 );
 
-export default function AutoGrabber() {
+export default function CrazyFrog() {
   // 影片 URL 與 下載 URL
-  const bilibiliUrl = "https://www.bilibili.com/video/BV1sbDsBMEob/";
-  const downloadUrl = "https://raw.githubusercontent.com/JOUCHUCHEN/maachiiknow/main/steam/autograbber/Auto_Grabber.io";
+  const bilibiliUrl = "https://www.bilibili.com/video/BV12gDjB7ELB/";
+  const downloadUrl = "https://raw.githubusercontent.com/JOUCHUCHEN/maachiiknow/main/steam/crazyfrog/Crazy_Frog.io";
 
   // 用於防止 iframe 圓角被切掉的樣式
   const videoMaskStyle = {
@@ -27,7 +27,7 @@ export default function AutoGrabber() {
           
           {/* 專案標題區 */}
           <div className="mb-10 text-left">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight mb-3">LEGO 9686 SPM: Auto Grabber</h2>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight mb-3">LEGO 9686 SPM: Crazy Frog</h2>
             <div className="flex items-center justify-start gap-2 text-slate-400 font-bold tracking-wider uppercase text-xs">
               <PlayCircle size={14} className="text-orange-500" />
               <span>STEAM Project Learning</span>
@@ -45,13 +45,11 @@ export default function AutoGrabber() {
                 style={videoMaskStyle}
               >
                 <iframe 
-                  src="//player.bilibili.com/player.html?isOutside=true&bvid=BV1sbDsBMEob&p=1&autoplay=0" 
+                  src="//player.bilibili.com/player.html?isOutside=true&aid=116368330463292&bvid=BV12gDjB7ELB&cid=37334682595&p=1" 
                   scrolling="no" 
-                  border="0" 
-                  frameBorder="no" 
-                  frameSpacing="0" 
+                  frameBorder="0" 
                   allowFullScreen={true}
-                  className="w-full h-full"
+                  className="absolute inset-0 w-full h-full"
                 ></iframe>
               </div>
             </div>
@@ -75,7 +73,7 @@ export default function AutoGrabber() {
                 href={downloadUrl} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                download="Auto_Grabber.io"
+                download="CrazyFrog.io"
                 className="flex items-center gap-3 text-base font-bold text-white px-8 py-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 rounded-full shadow-[0_10px_30px_-10px_rgba(16,185,129,0.4)] transition-all hover:scale-105 active:scale-95 group w-full sm:w-auto justify-center"
               >
                 <Download size={20} className="group-hover:animate-bounce" /> 
@@ -100,7 +98,7 @@ export default function AutoGrabber() {
                  Project Overview
                </h3>
                <p className="text-slate-600 leading-loose text-lg font-medium relative z-10">
-                 In this lesson, we will explore the mechanics of an <strong>Auto Grabber</strong> using the LEGO 9686 set. Students will learn about <strong>linkage systems</strong> and <strong>reciprocating motion</strong> to create a device that can automatically grasp and release objects. We'll examine how rotational energy from the motor is converted into precise linear movement for the gripper arms.
+                 In this lesson, we will learn how to build a motorized mechanical frog using the Lego 9686 set! Through hands-on practice, students will explore gear transmission, motorized mechanisms, and the structural design needed to convert rotational motion into a walking action. Join us as we bring engineering principles to life!
                </p>
             </div>
             <div className="flex flex-col">
