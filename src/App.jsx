@@ -1,5 +1,5 @@
-import React from 'react';
 import ScrollToTop from './ScrollToTop';
+import React from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { LayoutGrid, Rocket, Gamepad2, Sparkles } from 'lucide-react';
 import Layout from './Layout';
@@ -8,6 +8,9 @@ import AnimalBodyParts from './AnimalBodyParts';
 import AnimalTextures from './AnimalTextures';
 import BeastCreator from './BeastCreator'; 
 import IframePage from './IframePage';
+
+// 🐾 引入我們新建立的 Cat Rescue 英語教案元件
+import CatRescueLesson from './CatRescueLesson';
 
 // ⚠️ 關鍵檢查點：請確認這 5 個檔案真的跟 App.jsx 放在「同一個資料夾」底下！
 import AutoGrabber from './AutoGrabber'; 
@@ -18,7 +21,6 @@ import RubberBandCar from './RubberBandCar';
 
 const containerClasses = "max-w-7xl 3xl:max-w-[1920px] 4xl:max-w-[2800px] mx-auto px-4 w-full";
 
-// 💡 修正 1：更新首頁卡片的 link，指向我們新建立的 React 路由
 const stemProjects = [
   { id: 'p2', title: 'Bow & Arrow', link: '/steam/bow_and_arrow', cover: 'https://i.ibb.co/bjhp6x9d/image.png', desc: 'Mechanical structure & logic', tags: ['SPM', 'Basic']},
   { id: 2, title: 'Rubber Band Car', link: '/steam/rubber_band_car', cover: 'https://i.ibb.co/LD5jgtpF/45.png', desc: 'Mechanical structure & logic', tags: ['SPM', 'Basic'] },
@@ -56,7 +58,6 @@ const StemProjectsGrid = () => {
   );
 };
 
-// 您的原版精美首頁組件
 function Home() {
   return (
     <div className={`${containerClasses} py-8`}>
@@ -67,8 +68,15 @@ function Home() {
 
       <header className="py-6 text-center">
         <h1 className="text-3xl md:text-5xl font-black text-gray-900 mb-3 tracking-tight">Creative Resource Hub</h1>
-        <p className="text-gray-500 text-base md:text-lg font-bold max-w-3xl mx-auto opacity-80">Providing free, professional English and STEAM teaching resources for educators worldwide.</p>
+        <p className="text-gray-500 text-base md:text-lg font-black max-w-3xl mx-auto opacity-80">Providing free, professional English and STEAM teaching resources for educators worldwide.</p>
       </header>
+
+      {/* 🐾 快速入口按鈕：讓您可以直接點擊進入 Cat Rescue 任務頁面 */}
+      <div className="mb-8 text-center">
+        <Link to="/english-cat-rescue" className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-black px-8 py-4 rounded-2xl shadow-lg hover:scale-105 transition-all text-lg">
+          <span>🐱 進入任務一：Cat Rescue Quest (AI 英語教案)</span>
+        </Link>
+      </div>
 
       <div className="flex flex-col lg:flex-row gap-10">
         <div className="lg:w-4/5 w-full">
@@ -156,7 +164,7 @@ function Home() {
               <Link to="/scratch_cat_match" className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-[2.5rem] p-6 text-white cursor-pointer hover:shadow-2xl hover:scale-[1.01] transition-all aspect-square relative overflow-hidden flex flex-col justify-between group shadow-lg text-left">
                 <div className="relative z-10 text-left"><h3 className="text-xl font-black mb-1 leading-tight">🐾 貓翻翻樂</h3><p className="text-yellow-50 text-sm font-bold opacity-90 mt-1">Time Expressions Game</p></div>
                 <div className="mb-0 flex justify-center transform group-hover:scale-110 transition-transform duration-500">
-                   <span className="text-[6.5rem] opacity-30 group-hover:opacity-60">🐱</span>
+                    <span className="text-[6.5rem] opacity-30 group-hover:opacity-60">🐱</span>
                 </div>
               </Link>
             </div>
@@ -192,14 +200,17 @@ export default function App() {
           <Route path="english_texture" element={<AnimalTextures />} />
           <Route path="beast_creator" element={<BeastCreator />} />
           
-          {/* 💡 修正 2：這些是全新的 React 路由 */}
+          {/* 🐾 Cat Rescue 英語教案路由 */}
+          <Route path="english-cat-rescue" element={<CatRescueLesson />} />
+          
+          {/* STEAM 專案路由 */}
           <Route path="steam/bow_and_arrow" element={<BowAndArrow />} />
           <Route path="steam/auto_grabber" element={<AutoGrabber />} />
           <Route path="steam/crazy_frog" element={<CrazyFrog />} />
           <Route path="steam/ping_pong_launcher" element={<PingPongLauncher />} />
           <Route path="steam/rubber_band_car" element={<RubberBandCar />} />
 
-          {/* 💡 修正 3：移除舊的 STEAM Iframe 路由，只保留 Scratch */}
+          {/* Scratch Iframe 路由 */}
           <Route path="scratch_cat_match" element={<IframePage fileUrl="/scratch_cat_match.html" />} />
         </Route>
       </Routes>
