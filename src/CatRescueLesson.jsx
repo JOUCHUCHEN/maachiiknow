@@ -29,6 +29,9 @@ export default function CatRescueLesson() {
   const [flashcards, setFlashcards] = useState([]);
   const [catImage, setCatImage] = useState(null);
   const [isCopied, setIsCopied] = useState(false);
+  
+  // 新增：用來控制 Step 3 目前顯示哪一個類別的對話框
+  const [currentCatIndex, setCurrentCatIndex] = useState(0);
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -85,23 +88,42 @@ export default function CatRescueLesson() {
     setApiError('');
     const termToTranslate = chineseInput;
     const targetCat = selectedCat;
-    const apiKey = "";
+    const apiKey = ""; 
     
     try {
-      const textUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
-      const textPayload = {
-        contents: [{ parts: [{ text: `Translate this Chinese word/phrase to a simple English vocabulary word for a beginner ESL class. Only output the English word/phrase, nothing else, all lowercase. Chinese: "${termToTranslate}"` }] }],
-        systemInstruction: { parts: [{ text: "You are an English teacher for kids. Provide only the translated English word." }] }
-      };
+      let engWord = 'magic';
       
-      const textResult = await fetchWithRetry(textUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(textPayload)
-      });
-      
-      let engWord = textResult?.candidates?.[0]?.content?.parts?.[0]?.text?.trim()?.toLowerCase() || 'unknown';
-      engWord = engWord.replace(/[^a-z\s-]/g, '');
+      // 解決連線逾期：若沒有金鑰，改用內建字典模擬，確保課堂流暢不斷線
+      if (!apiKey) {
+        await new Promise(res => setTimeout(res, 600)); // 模擬等待
+        if (termToTranslate.includes('貓')) engWord = 'cat';
+        else if (termToTranslate.includes('狗')) engWord = 'dog';
+        else if (termToTranslate.includes('黑')) engWord = 'black';
+        else if (termToTranslate.includes('白')) engWord = 'white';
+        else if (termToTranslate.includes('橘')) engWord = 'orange';
+        else if (termToTranslate.includes('大')) engWord = 'big';
+        else if (termToTranslate.includes('小')) engWord = 'small';
+        else if (termToTranslate.includes('怕') || termToTranslate.includes('恐')) engWord = 'scared';
+        else if (termToTranslate.includes('餓')) engWord = 'hungry';
+        else if (termToTranslate.includes('氣')) engWord = 'angry';
+        else if (termToTranslate.includes('可愛')) engWord = 'cute';
+        else engWord = 'magic';
+      } else {
+        const textUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+        const textPayload = {
+          contents: [{ parts: [{ text: `Translate this Chinese word/phrase to a simple English vocabulary word for a beginner ESL class. Only output the English word/phrase, nothing else, all lowercase. Chinese: "${termToTranslate}"` }] }],
+          systemInstruction: { parts: [{ text: "You are an English teacher for kids. Provide only the translated English word." }] }
+        };
+        
+        const textResult = await fetchWithRetry(textUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(textPayload)
+        });
+        
+        engWord = textResult?.candidates?.[0]?.content?.parts?.[0]?.text?.trim()?.toLowerCase() || 'unknown';
+        engWord = engWord.replace(/[^a-z\s-]/g, '');
+      }
 
       if (engWord && !vocabulary[targetCat].includes(engWord)) {
         setVocabulary(prev => ({
@@ -189,18 +211,24 @@ export default function CatRescueLesson() {
       );
     }
 
+    // 解決圖文不符：移除外部 Robohash 圖片，改用內部通用 Emoji
+    const genericEmojis = {
+      cat: '🐱', dog: '🐶', bird: '🐦',
+      street: '🛣️', rain: '🌧️', cold: '❄️',
+      cute: '✨', fast: '⚡', noisy: '🔊',
+      dirty: '💩', clean: '🫧', magic: '🪄'
+    };
+
     return (
-      <img 
-        src={`https://robohash.org/${encodeURIComponent(word)}?set=set4&size=200x200&bgset=bg1`} 
-        alt={word} 
-        className="w-full h-full object-contain rounded-xl bg-gray-50" 
-      />
+      <div className="w-full h-full flex items-center justify-center bg-purple-50 rounded-xl text-6xl shadow-inner">
+         {genericEmojis[w] || '🐾'}
+      </div>
     );
   };
 
   return (
     <div className="min-h-screen bg-amber-50 font-sans text-gray-800 p-4 md:p-8">
-      <div className="max-w-5xl mx-auto space-y-8">
+      <div className="max-w-7xl mx-auto space-y-8">
         
         <header className="text-center space-y-3">
           <div className="inline-block bg-orange-100 text-orange-800 px-4 py-1 rounded-full text-sm font-bold tracking-wider mb-2 border border-orange-200 shadow-sm">
@@ -213,281 +241,292 @@ export default function CatRescueLesson() {
           <p className="text-lg text-gray-600 font-medium">任務一：描述這位神秘的小客人 (Describe the new friend)</p>
         </header>
 
-        <div className="grid grid-cols-1 gap-8">
+        {/* 建立左右雙欄佈局 (左側固定，右側滾動) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          <section className="bg-white p-6 rounded-3xl shadow-lg border-2 border-orange-100 flex flex-col items-center">
-            <div className="w-full flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold text-gray-700 flex items-center">
-                <span className="bg-orange-500 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-lg">1</span>
-                Look & Observe
-              </h2>
-              <label className="cursor-pointer bg-orange-50 hover:bg-orange-100 text-orange-600 px-3 py-1.5 rounded-xl border border-orange-200 text-sm font-bold flex items-center gap-2 transition-colors shadow-sm">
-                <Camera size={18} />
-                <span>上傳照片</span>
+          {/* 左欄：1. Look & Observe 恆置於左手邊 */}
+          <div className="lg:col-span-5 sticky top-8">
+            <section className="bg-white p-6 rounded-3xl shadow-lg border-2 border-orange-100 flex flex-col items-center">
+              <div className="w-full flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold text-gray-700 flex items-center">
+                  <span className="bg-orange-500 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-lg">1</span>
+                  Look & Observe
+                </h2>
+                <label className="cursor-pointer bg-orange-50 hover:bg-orange-100 text-orange-600 px-3 py-1.5 rounded-xl border border-orange-200 text-sm font-bold flex items-center gap-2 transition-colors shadow-sm">
+                  <Camera size={18} />
+                  <span>上傳照片</span>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleImageUpload} 
+                    className="hidden" 
+                  />
+                </label>
+              </div>
+              <p className="text-gray-500 mb-4 w-full text-left">Look at the picture. What do you see?<br/>(看看這張照片，你看到了什麼？)</p>
+              <div className="relative w-full aspect-square rounded-2xl overflow-hidden shadow-inner border border-gray-200 bg-gray-100 group cursor-pointer" onClick={() => document.getElementById('cat-image-input').click()}>
                 <input 
+                  id="cat-image-input"
                   type="file" 
                   accept="image/*" 
                   onChange={handleImageUpload} 
                   className="hidden" 
                 />
-              </label>
-            </div>
-            <p className="text-gray-500 mb-4 w-full text-left">Look at the picture. What do you see? (看看這張照片，你看到了什麼？)</p>
-            <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-inner border border-gray-200 bg-gray-100 group cursor-pointer" onClick={() => document.getElementById('cat-image-input').click()}>
-              <input 
-                id="cat-image-input"
-                type="file" 
-                accept="image/*" 
-                onChange={handleImageUpload} 
-                className="hidden" 
-              />
-              <img 
-                src={catImage || "https://placehold.co/800x600/f8fafc/f97316?text=Image+of+the+Rescued+Cat\n(Click+Here+to+Upload+Photo)"} 
-                alt="Rescued Cat"
-                className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-4 justify-between">
-                <p className="text-white font-semibold">Location: Taichung Streets</p>
-                <span className="bg-black/40 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5">
-                  <Camera size={14} /> 點擊更換照片
-                </span>
-              </div>
-            </div>
-          </section>
-
-          <section className="bg-gradient-to-br from-purple-50 to-indigo-50 p-6 md:p-8 rounded-3xl shadow-lg border-2 border-purple-200">
-            <h2 className="text-2xl font-bold text-purple-900 flex items-center mb-3">
-              <span className="bg-purple-600 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-lg">2</span>
-              AI Magic Dictionary (AI 魔法辭典)
-            </h2>
-            <p className="text-purple-700 mb-6">老師輸入小朋友說的中文，系統自動轉為英文單字與專屬圖卡！</p>
-
-            {apiError && (
-              <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl flex items-center gap-2">
-                <AlertCircle size={20} />
-                <span>{apiError}</span>
-              </div>
-            )}
-
-            <div className="flex flex-col md:flex-row gap-3">
-              <select
-                value={selectedCat}
-                onChange={(e) => setSelectedCat(e.target.value)}
-                className="px-4 py-3 rounded-xl border-2 border-purple-200 focus:outline-none focus:border-purple-400 bg-white font-bold text-gray-700 md:w-48 shadow-sm"
-              >
-                {categories.map(cat => (
-                  <option key={cat.id} value={cat.id}>{cat.label}</option>
-                ))}
-              </select>
-              
-              <div className="flex-1 flex gap-2">
-                <input
-                  type="text"
-                  value={chineseInput}
-                  onChange={(e) => setChineseInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAIGeneration()}
-                  placeholder="輸入小朋友說的中文 (例如：黑白相間、肚子餓)"
-                  className="flex-1 px-4 py-3 rounded-xl border-2 border-purple-200 focus:outline-none focus:border-purple-400 text-lg shadow-inner bg-white"
-                  disabled={isGenerating}
+                <img 
+                  src={catImage || "https://placehold.co/800x800/f8fafc/f97316?text=Image+of+the+Rescued+Cat\n(Click+Here+to+Upload+Photo)"} 
+                  alt="Rescued Cat"
+                  className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
                 />
-                <button 
-                  onClick={handleAIGeneration}
-                  disabled={isGenerating || !chineseInput.trim()}
-                  className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-colors shadow-sm"
-                >
-                  {isGenerating ? <Loader2 className="animate-spin" size={24} /> : <Sparkles size={24} />}
-                  {isGenerating ? '施法中...' : '變魔法!'}
-                </button>
-              </div>
-            </div>
-
-            {flashcards.length > 0 && (
-              <div className="mt-6 pt-6 border-t border-purple-200">
-                <h3 className="text-sm font-bold text-purple-600 uppercase tracking-wider mb-4 flex items-center gap-2">
-                  <ImageIcon size={16} /> Magic Word Cards (單字圖卡)
-                </h3>
-                <div className="flex gap-4 overflow-x-auto pb-4 px-2 -mx-2 snap-x">
-                  {flashcards.map(card => (
-                    <div key={card.id} className="snap-center shrink-0 w-48 bg-white rounded-2xl border-2 border-purple-100 shadow-md overflow-hidden flex flex-col transition-transform hover:-translate-y-1 duration-300">
-                      <div className="h-40 bg-gray-50 flex items-center justify-center overflow-hidden border-b border-gray-100 p-2 relative">
-                        {renderCardVisual(card.cat, card.eng)}
-                        <span className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-xs font-bold text-purple-600 border border-purple-100 shadow-sm z-20">
-                          {categories.find(c => c.id === card.cat)?.label.split(' ')[0]}
-                        </span>
-                      </div>
-                      <div className="p-4 text-center bg-gradient-to-b from-white to-purple-50/30">
-                        <p className="font-black text-xl text-gray-800 capitalize tracking-wide">{card.eng}</p>
-                        <p className="text-sm text-gray-500 font-medium mt-1">{card.chi}</p>
-                      </div>
-                    </div>
-                  ))}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-4 justify-between">
+                  <span className="bg-black/40 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 mx-auto">
+                    <Camera size={14} /> 點擊更換照片
+                  </span>
                 </div>
               </div>
-            )}
-          </section>
+            </section>
+          </div>
 
-          <section className="bg-white p-6 rounded-3xl shadow-lg border-2 border-orange-100">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-700 flex items-center">
-                <span className="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-lg">3</span>
-                Collect Words
-              </h2>
-            </div>
-            <p className="text-gray-500 mb-6">Teacher, type the words students shout out! (老師，請將學生回答的單字輸入在此)</p>
+          {/* 右欄：2, 3, 4, 5 步驟區塊 */}
+          <div className="lg:col-span-7 space-y-8">
             
-            <div className="space-y-5">
-              {categories.map(cat => (
-                <div key={cat.id} className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                  <label className="flex items-center text-sm font-bold text-gray-700 mb-2">
-                    {cat.icon} {cat.label}
+            {/* Step 2: AI Magic Dictionary */}
+            <section className="bg-gradient-to-br from-purple-50 to-indigo-50 p-6 md:p-8 rounded-3xl shadow-lg border-2 border-purple-200">
+              <h2 className="text-2xl font-bold text-purple-900 flex items-center mb-3">
+                <span className="bg-purple-600 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-lg">2</span>
+                AI Magic Dictionary
+              </h2>
+              <p className="text-purple-700 mb-6">老師輸入小朋友說的中文，系統自動轉為英文單字與專屬圖卡！</p>
+
+              {apiError && (
+                <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl flex items-center gap-2">
+                  <AlertCircle size={20} />
+                  <span>{apiError}</span>
+                </div>
+              )}
+
+              <div className="flex flex-col xl:flex-row gap-3">
+                <select
+                  value={selectedCat}
+                  onChange={(e) => setSelectedCat(e.target.value)}
+                  className="px-4 py-3 rounded-xl border-2 border-purple-200 focus:outline-none focus:border-purple-400 bg-white font-bold text-gray-700 shadow-sm"
+                >
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.label}</option>
+                  ))}
+                </select>
+                
+                <div className="flex-1 flex gap-2">
+                  <input
+                    type="text"
+                    value={chineseInput}
+                    onChange={(e) => setChineseInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAIGeneration()}
+                    placeholder="輸入中文 (如：黑白相間)"
+                    className="flex-1 px-4 py-3 rounded-xl border-2 border-purple-200 focus:outline-none focus:border-purple-400 text-lg shadow-inner bg-white"
+                    disabled={isGenerating}
+                  />
+                  <button 
+                    onClick={handleAIGeneration}
+                    disabled={isGenerating || !chineseInput.trim()}
+                    className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-colors shadow-sm whitespace-nowrap"
+                  >
+                    {isGenerating ? <Loader2 className="animate-spin" size={24} /> : <Sparkles size={24} />}
+                    {isGenerating ? '施法中...' : '變魔法!'}
+                  </button>
+                </div>
+              </div>
+
+              {flashcards.length > 0 && (
+                <div className="mt-6 pt-6 border-t border-purple-200">
+                  <h3 className="text-sm font-bold text-purple-600 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <ImageIcon size={16} /> Magic Word Cards
+                  </h3>
+                  <div className="flex gap-4 overflow-x-auto pb-4 px-2 -mx-2 snap-x">
+                    {flashcards.map(card => (
+                      <div key={card.id} className="snap-center shrink-0 w-40 bg-white rounded-2xl border-2 border-purple-100 shadow-md overflow-hidden flex flex-col transition-transform hover:-translate-y-1 duration-300">
+                        <div className="h-32 bg-gray-50 flex items-center justify-center overflow-hidden border-b border-gray-100 p-2 relative">
+                          {renderCardVisual(card.cat, card.eng)}
+                        </div>
+                        <div className="p-3 text-center bg-gradient-to-b from-white to-purple-50/30">
+                          <p className="font-black text-lg text-gray-800 capitalize tracking-wide">{card.eng}</p>
+                          <p className="text-xs text-gray-500 font-medium mt-1">{card.chi}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </section>
+
+            {/* Step 3: Collect Words (單一對話框切換模式) */}
+            <section className="bg-white p-6 rounded-3xl shadow-lg border-2 border-orange-100">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-700 flex items-center">
+                  <span className="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-lg">3</span>
+                  Collect Words
+                </h2>
+                <span className="bg-blue-50 text-blue-600 font-bold px-4 py-1.5 rounded-full text-sm">
+                  Step {currentCatIndex + 1} of {categories.length}
+                </span>
+              </div>
+              <p className="text-gray-500 mb-6">Teacher, type the words students shout out!</p>
+              
+              <div className="bg-gray-50 p-6 md:p-8 rounded-2xl border border-gray-200 shadow-inner flex flex-col min-h-[250px] justify-between">
+                <div>
+                  <label className="flex items-center text-xl font-bold text-gray-800 mb-4">
+                    {categories[currentCatIndex].icon} {categories[currentCatIndex].label}
                   </label>
+                  
                   <div className="flex gap-2">
                     <input
                       type="text"
-                      value={inputs[cat.id]}
-                      onChange={(e) => handleInputChange(cat.id, e.target.value)}
-                      onKeyDown={(e) => handleAddWord(cat.id, e)}
-                      placeholder={cat.placeholder}
-                      className="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all bg-white"
+                      value={inputs[categories[currentCatIndex].id]}
+                      onChange={(e) => handleInputChange(categories[currentCatIndex].id, e.target.value)}
+                      onKeyDown={(e) => handleAddWord(categories[currentCatIndex].id, e)}
+                      placeholder={categories[currentCatIndex].placeholder}
+                      className="flex-1 px-5 py-4 text-xl rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all bg-white"
                     />
                     <button 
-                      onClick={(e) => handleAddWord(cat.id, e)}
-                      className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded-lg transition-colors flex items-center justify-center"
+                      onClick={(e) => handleAddWord(categories[currentCatIndex].id, e)}
+                      className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-xl transition-colors flex items-center justify-center"
                     >
-                      <Plus size={20} />
+                      <Plus size={28} />
                     </button>
                   </div>
                   
-                  <div className="flex flex-wrap gap-2 mt-3 min-h-[32px]">
-                    {vocabulary[cat.id].map(word => (
+                  <div className="flex flex-wrap gap-2 mt-6 min-h-[40px]">
+                    {vocabulary[categories[currentCatIndex].id].map(word => (
                       <span 
                         key={word} 
-                        className="inline-flex items-center bg-white border border-orange-300 text-orange-700 text-sm font-semibold px-3 py-1 rounded-full shadow-sm"
+                        className="inline-flex items-center bg-white border-2 border-orange-300 text-orange-700 text-lg font-semibold px-4 py-1.5 rounded-full shadow-sm"
                       >
                         {word}
                         <button 
-                          onClick={() => handleRemoveWord(cat.id, word)}
-                          className="ml-2 text-orange-400 hover:text-red-500 transition-colors focus:outline-none"
+                          onClick={() => handleRemoveWord(categories[currentCatIndex].id, word)}
+                          className="ml-3 text-orange-400 hover:text-red-500 transition-colors focus:outline-none"
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={16} />
                         </button>
                       </span>
                     ))}
-                    {vocabulary[cat.id].length === 0 && (
-                      <span className="text-xs text-gray-400 italic flex items-center h-full">No words yet...</span>
+                    {vocabulary[categories[currentCatIndex].id].length === 0 && (
+                      <span className="text-gray-400 italic flex items-center h-full">No words yet...</span>
                     )}
                   </div>
                 </div>
-              ))}
-            </div>
-          </section>
+
+                {/* 切換按鈕 */}
+                <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
+                  <button
+                    onClick={() => setCurrentCatIndex(prev => Math.max(0, prev - 1))}
+                    disabled={currentCatIndex === 0}
+                    className="px-5 py-2.5 bg-gray-200 text-gray-700 font-bold rounded-lg disabled:opacity-30 hover:bg-gray-300 transition-colors"
+                  >
+                    ← 上一個
+                  </button>
+                  <button
+                    onClick={() => setCurrentCatIndex(prev => Math.min(categories.length - 1, prev + 1))}
+                    disabled={currentCatIndex === categories.length - 1}
+                    className="px-5 py-2.5 bg-blue-500 text-white font-bold rounded-lg disabled:opacity-30 hover:bg-blue-600 transition-colors"
+                  >
+                    下一個 →
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            {/* Step 4: Magic Sentences */}
+            <section className="bg-white p-6 rounded-3xl shadow-lg border-2 border-orange-100 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-orange-100 rounded-bl-full -z-10 opacity-50"></div>
+              
+              <h2 className="text-2xl font-bold text-gray-700 flex items-center mb-6">
+                <span className="bg-green-500 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-lg">4</span>
+                Magic Sentences
+              </h2>
+              
+              <div className="grid md:grid-cols-2 gap-6 text-xl text-gray-700 font-medium leading-relaxed">
+                <div className="bg-orange-50/50 p-6 rounded-2xl border border-orange-200 shadow-sm">
+                  <p className="mb-2 text-sm font-bold text-orange-400 uppercase tracking-wider">Appearance</p>
+                  <p>Look at the {formatList(vocabulary.animal)}! It's {formatList(vocabulary.color)}.</p>
+                </div>
+                <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-200 shadow-sm">
+                  <p className="mb-2 text-sm font-bold text-blue-400 uppercase tracking-wider">Details</p>
+                  <p>It is a {formatList(vocabulary.size)}, {formatList(vocabulary.age)} {formatList(vocabulary.animal)}.</p>
+                </div>
+                <div className="bg-red-50/50 p-6 rounded-2xl border border-red-200 shadow-sm">
+                  <p className="mb-2 text-sm font-bold text-red-400 uppercase tracking-wider">Feelings</p>
+                  <p>The poor {formatList(vocabulary.animal)} feels {formatList(vocabulary.emotion)}.</p>
+                </div>
+                <div className="bg-purple-50/50 p-6 rounded-2xl border border-purple-200 shadow-sm">
+                  <p className="mb-2 text-sm font-bold text-purple-400 uppercase tracking-wider">Background</p>
+                  <p>It was found in the {formatList(vocabulary.environment)}.</p>
+                </div>
+                <div className="bg-teal-50/50 p-6 rounded-2xl border border-teal-200 shadow-sm md:col-span-2">
+                  <p className="mb-2 text-sm font-bold text-teal-400 uppercase tracking-wider">Other Features</p>
+                  <p>Special traits: {formatList(vocabulary.other)}.</p>
+                </div>
+              </div>
+            </section>
+
+            {/* Step 5: RPG Character Unlocked */}
+            <section className="bg-slate-800 p-6 md:p-8 rounded-3xl shadow-2xl text-white relative border-4 border-slate-700">
+              <h2 className="text-2xl font-bold flex items-center mb-6 text-yellow-400">
+                <span className="bg-yellow-500 text-slate-900 w-8 h-8 rounded-full flex items-center justify-center mr-3 text-lg font-black">5</span>
+                RPG Character Unlocked!
+              </h2>
+              
+              <div className="flex flex-col md:flex-row gap-6 items-start bg-slate-900/50 p-6 rounded-2xl border border-slate-700">
+                <div className="w-full md:w-32 h-32 shrink-0 bg-slate-700 rounded-2xl border-4 border-slate-600 flex items-center justify-center flex-col shadow-inner">
+                   <Wand2 size={48} className="text-slate-400 mb-2" />
+                   <span className="text-xs font-mono text-slate-400">Prompt</span>
+                </div>
+                
+                <div className="flex-1 space-y-4 font-mono w-full">
+                  <div className="border-b border-slate-700 pb-2">
+                    <h3 className="text-xl font-bold text-white mb-1">小貓/小狗待救援處境 (Image Prompt)</h3>
+                    <p className="text-sm text-yellow-500">將這段咒語交給 AI，還原救援現場！（⚠️ 記得要上傳照片喔！）</p>
+                  </div>
+                  
+                  <div className="bg-slate-800 p-4 rounded-xl border border-slate-600 text-slate-300 text-sm md:text-base leading-relaxed break-words">
+                    [IMPORTANT: Please strictly base the animal's appearance, colors, and markings on the uploaded photo!]<br/><br/>
+                    Create a cute, playful, and childlike children's book illustration (NOT realistic) of this rescued {vocabulary.animal.length ? vocabulary.animal.join('/') : '[cat/dog]'} waiting for help.<br/>
+                    The {vocabulary.animal.length ? vocabulary.animal.join('/') : '[cat/dog]'} is {vocabulary.size.length ? vocabulary.size.join(', ') : '[Size]'}, {vocabulary.age.length ? vocabulary.age.join(', ') : '[Age]'}, and has {vocabulary.color.length ? vocabulary.color.join(' and ') : '[Color]'} fur.<br/>
+                    It is currently trapped or found in {vocabulary.environment.length ? vocabulary.environment.join(', ') : '[Place]'}.<br/>
+                    The poor {vocabulary.animal.length ? vocabulary.animal.join('/') : '[cat/dog]'} looks {vocabulary.emotion.length ? vocabulary.emotion.join(' and ') : '[Emotion]'}.<br/>
+                    Special features: {vocabulary.other.length ? vocabulary.other.join(', ') : '[Other traits]'}.<br/>
+                    The atmosphere shows its rescue situation, slightly dramatic but with a warm, comforting light of hope shining on it.
+                  </div>
+                  
+                  <div className="pt-4 flex flex-col sm:flex-row gap-4 items-center">
+                     <button 
+                       onClick={() => {
+                         const promptText = `[IMPORTANT: Please strictly base the animal's appearance, colors, and markings on the uploaded photo!] Create a cute, playful, and childlike children's book illustration (NOT realistic) of this rescued ${vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog'} waiting for help. The ${vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog'} is ${vocabulary.size.length ? vocabulary.size.join(', ') : 'medium'}, ${vocabulary.age.length ? vocabulary.age.join(', ') : 'unknown age'}, and has ${vocabulary.color.length ? vocabulary.color.join(' and ') : 'unspecified'} fur. It is currently trapped or found in ${vocabulary.environment.length ? vocabulary.environment.join(', ') : 'an unknown place'}. The poor ${vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog'} looks ${vocabulary.emotion.length ? vocabulary.emotion.join(' and ') : 'anxious'}. Special features: ${vocabulary.other.length ? vocabulary.other.join(', ') : 'none'}. The atmosphere shows its rescue situation, slightly dramatic but with a warm, comforting light of hope shining on it.`;
+                         navigator.clipboard.writeText(promptText);
+                         setIsCopied(true);
+                         setTimeout(() => setIsCopied(false), 2000);
+                       }}
+                       className="bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-bold py-3 px-6 rounded-lg shadow-[0_4px_0_rgb(161,98,7)] active:translate-y-1 transition-all flex items-center justify-center gap-2 w-full sm:w-auto"
+                     >
+                       {isCopied ? <Check size={20} /> : <Copy size={20} />}
+                       {isCopied ? '已複製 (Copied!)' : '複製prompt'}
+                     </button>
+
+                     <a 
+                       href="https://gemini.google.com/" 
+                       target="_blank" 
+                       rel="noopener noreferrer"
+                       className="text-yellow-400 hover:text-yellow-300 font-bold flex items-center gap-2 transition-colors underline underline-offset-4 w-full sm:w-auto justify-center sm:justify-start"
+                     >
+                       開啟 Gemini 生成圖片 ➔
+                     </a>
+                  </div>
+                </div>
+              </div>
+            </section>
+            
+          </div>
         </div>
-
-        <section className="bg-white p-6 md:p-8 rounded-3xl shadow-lg border-2 border-orange-100 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-orange-100 rounded-bl-full -z-10 opacity-50"></div>
-          
-          <h2 className="text-2xl font-bold text-gray-700 flex items-center mb-6">
-            <span className="bg-green-500 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-lg">4</span>
-            Magic Sentences
-          </h2>
-          <p className="text-gray-500 mb-6">Let's put the words together! (我們來把單字變成句子吧！)</p>
-          
-          <div className="grid md:grid-cols-2 gap-6 text-xl text-gray-700 font-medium leading-relaxed">
-            
-            <div className="bg-orange-50/50 p-6 rounded-2xl border border-orange-200 shadow-sm">
-              <p className="mb-2 text-sm font-bold text-orange-400 uppercase tracking-wider">Appearance</p>
-              <p>Look at the {formatList(vocabulary.animal)}! It's {formatList(vocabulary.color)}.</p>
-            </div>
-
-            <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-200 shadow-sm">
-              <p className="mb-2 text-sm font-bold text-blue-400 uppercase tracking-wider">Details</p>
-              <p>It is a {formatList(vocabulary.size)}, {formatList(vocabulary.age)} {formatList(vocabulary.animal)}.</p>
-            </div>
-
-            <div className="bg-red-50/50 p-6 rounded-2xl border border-red-200 shadow-sm">
-              <p className="mb-2 text-sm font-bold text-red-400 uppercase tracking-wider">Feelings</p>
-              <p>The poor {formatList(vocabulary.animal)} feels {formatList(vocabulary.emotion)}.</p>
-            </div>
-
-            <div className="bg-purple-50/50 p-6 rounded-2xl border border-purple-200 shadow-sm">
-              <p className="mb-2 text-sm font-bold text-purple-400 uppercase tracking-wider">Background</p>
-              <p>It was found in the {formatList(vocabulary.environment)}.</p>
-            </div>
-
-            <div className="bg-teal-50/50 p-6 rounded-2xl border border-teal-200 shadow-sm">
-              <p className="mb-2 text-sm font-bold text-teal-400 uppercase tracking-wider">Other Features</p>
-              <p>Special traits: {formatList(vocabulary.other)}.</p>
-            </div>
-
-          </div>
-        </section>
-
-        <section className="bg-slate-800 p-6 md:p-8 rounded-3xl shadow-2xl text-white relative border-4 border-slate-700 mt-8">
-          <div className="absolute top-4 right-4 flex gap-2">
-            <span className="flex h-3 w-3 rounded-full bg-red-500"></span>
-            <span className="flex h-3 w-3 rounded-full bg-yellow-500"></span>
-            <span className="flex h-3 w-3 rounded-full bg-green-500"></span>
-          </div>
-          
-          <h2 className="text-2xl font-bold flex items-center mb-6 text-yellow-400">
-            <span className="bg-yellow-500 text-slate-900 w-8 h-8 rounded-full flex items-center justify-center mr-3 text-lg font-black">5</span>
-            RPG Character Unlocked!
-          </h2>
-          
-          <div className="flex flex-col md:flex-row gap-8 items-center md:items-start bg-slate-900/50 p-6 rounded-2xl border border-slate-700">
-            <div className="w-40 h-40 shrink-0 bg-slate-700 rounded-2xl border-4 border-slate-600 flex items-center justify-center flex-col shadow-inner">
-               <Wand2 size={64} className="text-slate-400 mb-2" />
-               <span className="text-xs font-mono text-slate-400">Image Prompt</span>
-            </div>
-            
-            <div className="flex-1 space-y-4 font-mono w-full">
-              <div className="border-b border-slate-700 pb-2">
-                <h3 className="text-xl font-bold text-white mb-1">小貓/小狗待救援處境 (Image Prompt)</h3>
-                <p className="text-sm text-yellow-500">將這段咒語交給 AI，還原救援現場！（⚠️ 記得在 Gemini 中要一併上傳真實動物的照片喔！）</p>
-              </div>
-              
-              <div className="bg-slate-800 p-4 rounded-xl border border-slate-600 text-slate-300 text-sm md:text-base leading-relaxed break-words">
-                [IMPORTANT: Please strictly base the animal's appearance, colors, and markings on the uploaded photo!]<br/><br/>
-                Create a cute, playful, and childlike children's book illustration (NOT realistic) of this rescued {vocabulary.animal.length ? vocabulary.animal.join('/') : '[cat/dog]'} waiting for help.<br/>
-                The {vocabulary.animal.length ? vocabulary.animal.join('/') : '[cat/dog]'} is {vocabulary.size.length ? vocabulary.size.join(', ') : '[Size]'}, {vocabulary.age.length ? vocabulary.age.join(', ') : '[Age]'}, and has {vocabulary.color.length ? vocabulary.color.join(' and ') : '[Color]'} fur.<br/>
-                It is currently trapped or found in {vocabulary.environment.length ? vocabulary.environment.join(', ') : '[Place]'}.<br/>
-                The poor {vocabulary.animal.length ? vocabulary.animal.join('/') : '[cat/dog]'} looks {vocabulary.emotion.length ? vocabulary.emotion.join(' and ') : '[Emotion]'}.<br/>
-                Special features: {vocabulary.other.length ? vocabulary.other.join(', ') : '[Other traits]'}.<br/>
-                The atmosphere shows its rescue situation, slightly dramatic but with a warm, comforting light of hope shining on it.
-              </div>
-              
-              <div className="pt-4 flex flex-col sm:flex-row gap-4 items-center">
-                 <button 
-                   onClick={() => {
-                     const promptText = `[IMPORTANT: Please strictly base the animal's appearance, colors, and markings on the uploaded photo!] Create a cute, playful, and childlike children's book illustration (NOT realistic) of this rescued ${vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog'} waiting for help. The ${vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog'} is ${vocabulary.size.length ? vocabulary.size.join(', ') : 'medium'}, ${vocabulary.age.length ? vocabulary.age.join(', ') : 'unknown age'}, and has ${vocabulary.color.length ? vocabulary.color.join(' and ') : 'unspecified'} fur. It is currently trapped or found in ${vocabulary.environment.length ? vocabulary.environment.join(', ') : 'an unknown place'}. The poor ${vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog'} looks ${vocabulary.emotion.length ? vocabulary.emotion.join(' and ') : 'anxious'}. Special features: ${vocabulary.other.length ? vocabulary.other.join(', ') : 'none'}. The atmosphere shows its rescue situation, slightly dramatic but with a warm, comforting light of hope shining on it.`;
-                     navigator.clipboard.writeText(promptText);
-                     setIsCopied(true);
-                     setTimeout(() => setIsCopied(false), 2000);
-                   }}
-                   className="bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-bold py-3 px-6 rounded-lg shadow-[0_4px_0_rgb(161,98,7)] active:shadow-[0_0px_0_rgb(161,98,7)] active:translate-y-1 transition-all flex items-center justify-center gap-2 w-full sm:w-auto"
-                 >
-                   {isCopied ? <Check size={20} /> : <Copy size={20} />}
-                   {isCopied ? '已複製 (Copied!)' : '複製prompt給Gemini'}
-                 </button>
-
-                 <a 
-                   href="https://gemini.google.com/" 
-                   target="_blank" 
-                   rel="noopener noreferrer"
-                   className="text-yellow-400 hover:text-yellow-300 font-bold flex items-center gap-2 transition-colors underline underline-offset-4 w-full sm:w-auto justify-center sm:justify-start"
-                 >
-                   再來點擊這裡開啟 Gemini 並貼上生成圖片 ➔
-                 </a>
-              </div>
-            </div>
-          </div>
-        </section>
-
       </div>
-      
-      <footer className="text-center mt-12 text-gray-400 text-sm">
-        <p>© 2026 Cat Rescue RPG English Project</p>
-      </footer>
     </div>
   );
 }
