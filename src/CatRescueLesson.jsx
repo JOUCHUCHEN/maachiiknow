@@ -1171,7 +1171,7 @@ function PawsAndPlay({
   vetCheck = { ears: 'clean', eyes: 'clean', paws: 'warm', body: 'healthy' },
   catImage = null
 }) {
-  const [gameState, setGameState] = useState('START'); // START, MAP, MINIGAME, PROFILE, CREATOR, VOCAB
+  const [gameState, setGameState] = useState('START'); // START, MAP, MINIGAME, PROFILE
   const [activeCat, setActiveCat] = useState(null);
   
   // Feeding Mini-game state
@@ -1183,16 +1183,6 @@ function PawsAndPlay({
   
   // Car Engine Mini-game state
   const [carStep, setCarStep] = useState(1); // 1: Tap, 2: Food/Lure, 3: Vet Check
-
-  // Creator Form state
-  const [creatorForm, setCreatorForm] = useState({
-    name: 'Happy',
-    danger: 'feed',
-    story: 'Happy was ALONE. No mother cat around. He was cold and hungry in the rain.',
-    x: 16,
-    y: 3,
-    element: '4' // Box
-  });
 
   const canvasRef = useRef(null);
   const requestRef = useRef();
@@ -1417,30 +1407,6 @@ function PawsAndPlay({
     onMouseLeave: (e) => { e.preventDefault(); keysRef.current[keyName] = false; }
   });
 
-  const handleDeploy = () => {
-    const newCat = {
-      id: "cat_" + Date.now(),
-      rescueType: creatorForm.danger,
-      mapX: Number(creatorForm.x),
-      mapY: Number(creatorForm.y),
-      emoji: "🐈",
-      profile: {
-        name: creatorForm.name,
-        englishDesc: `Rescue Mission for ${creatorForm.name}`,
-        story: creatorForm.story,
-      }
-    };
-    
-    const updated = [...gameCats, newCat];
-    setGameCats(updated);
-    gameDataRef.current.cats = updated;
-
-    if (creatorForm.element !== '0' && gameDataRef.current.map[creatorForm.y]?.[creatorForm.x] !== undefined) {
-      gameDataRef.current.map[creatorForm.y][creatorForm.x] = Number(creatorForm.element);
-    }
-    setGameState('MAP');
-  };
-
   return (
     <div className="relative w-full max-w-[660px] h-[660px] flex justify-center items-center bg-gray-900 rounded-3xl overflow-hidden select-none font-sans border-4 border-indigo-800 shadow-2xl">
       <style>{`
@@ -1448,42 +1414,63 @@ function PawsAndPlay({
         .shaking { animation: shake 0.5s infinite; }
       `}</style>
 
-      {/* Top Controls & HUD */}
+      {/* Visual Backpack HUD Container */}
       {gameState === 'MAP' && (
-        <>
-          <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-2">
-            <button onClick={() => setGameState('CREATOR')} className="bg-white/90 border-2 border-indigo-500 text-indigo-600 font-black py-1 px-2.5 rounded-xl shadow text-xs hover:bg-indigo-50 transition transform hover:scale-105">
-              🛠️ AI Creator
-            </button>
-            <button onClick={() => setGameState('VOCAB')} className="bg-white/90 border-2 border-yellow-500 text-yellow-600 font-black py-1 px-2.5 rounded-xl shadow text-xs hover:bg-yellow-50 transition transform hover:scale-105">
-              📚 Mission Deck
-            </button>
-          </div>
-
-          {/* Dynamic Task 1 & Task 2 HUD Panel */}
-          <div className="absolute top-3 right-3 z-10 bg-slate-900/85 backdrop-blur-md border border-slate-700 text-white rounded-2xl p-2.5 text-xs max-w-[240px] space-y-1.5 shadow-lg">
-            <div className="flex items-center gap-1 font-bold text-amber-300 border-b border-slate-700 pb-1">
-              <Briefcase size={14} /> Task 2 Backpack:
-            </div>
-            <div className="flex gap-1 overflow-x-auto">
-              {backpack.length > 0 ? (
-                backpack.map((item) => (
-                  <span key={item.id} className="bg-emerald-950 border border-emerald-500/60 text-emerald-200 px-1.5 py-0.5 rounded text-[10px] whitespace-nowrap flex items-center gap-1">
-                    <span>{item.icon}</span> {item.eng}
-                  </span>
-                ))
-              ) : (
-                <span className="text-gray-400 italic text-[10px]">No items chosen yet</span>
-              )}
+        <div className="absolute top-3 right-3 z-10 flex flex-col items-end">
+          {/* Main Leather Backpack Body */}
+          <div className="bg-gradient-to-b from-amber-800 via-amber-900 to-amber-950 border-2 border-amber-600/80 text-amber-100 rounded-3xl p-3 shadow-2xl backdrop-blur-md w-60 relative overflow-hidden border-b-4 border-b-amber-950">
+            
+            {/* Backpack Top Flap Accent */}
+            <div className="absolute top-0 inset-x-0 h-4 bg-amber-950/70 border-b border-amber-700/60 flex justify-around items-center px-6">
+              <div className="w-2 h-2 rounded-full bg-yellow-500 shadow-inner"></div>
+              <div className="w-2 h-2 rounded-full bg-yellow-500 shadow-inner"></div>
             </div>
 
+            {/* Backpack Header */}
+            <div className="pt-2 pb-1.5 flex items-center justify-between border-b border-amber-700/50 mb-2">
+              <div className="flex items-center gap-1.5 font-black text-xs text-yellow-300 tracking-wider">
+                <span className="text-base drop-shadow">🎒</span> 
+                <span>RESCUE BAG</span>
+              </div>
+              <span className="text-[10px] bg-amber-950 px-2 py-0.5 rounded-full font-bold text-amber-300 border border-amber-700/60">
+                {backpack.length}/3 Items
+              </span>
+            </div>
+
+            {/* 3 Backpack Pocket Slots */}
+            <div className="grid grid-cols-3 gap-1.5 mb-2">
+              {[0, 1, 2].map((slotIdx) => {
+                const item = backpack[slotIdx];
+                return (
+                  <div 
+                    key={slotIdx} 
+                    className="bg-amber-950/80 border border-amber-700/60 rounded-xl p-1.5 text-center flex flex-col items-center justify-center min-h-[50px] shadow-inner relative group"
+                  >
+                    {item ? (
+                      <>
+                        <span className="text-xl mb-0.5 leading-none drop-shadow">{item.icon}</span>
+                        <span className="text-[9px] font-bold text-yellow-200 truncate w-full capitalize">{item.eng}</span>
+                      </>
+                    ) : (
+                      <span className="text-[10px] text-amber-700 font-mono">Empty</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Task 1 Animal Traits Bag-Tag */}
             {vocabulary.color.length > 0 && (
-              <div className="text-[10px] text-indigo-200 pt-0.5">
-                <span className="font-bold text-indigo-400">🏷️ Task 1 Traits:</span> {vocabulary.color.join(', ')} {vocabulary.animal[0] || 'cat'} ({vocabulary.emotion.join(', ') || 'scared'})
+              <div className="bg-yellow-100 text-amber-950 rounded-xl p-1.5 text-[10px] font-bold flex items-center gap-1 shadow-md border border-yellow-300">
+                <Tag size={12} className="text-amber-700 shrink-0" />
+                <span className="truncate">
+                  Target: {vocabulary.color.join('/')} {vocabulary.animal[0] || 'cat'}
+                </span>
               </div>
             )}
+
           </div>
-        </>
+        </div>
       )}
 
       <canvas ref={canvasRef} width={640} height={640} className="w-full h-full rounded-2xl bg-gray-800" style={{ imageRendering: 'pixelated' }} />
@@ -1536,8 +1523,8 @@ function PawsAndPlay({
 
               {/* Backpack Tool Quick Selector inside Mini-Game */}
               {backpack.length > 0 && (
-                <div className="mb-4 bg-emerald-50 p-2.5 rounded-xl border border-emerald-200 text-left">
-                  <p className="text-[11px] font-bold text-emerald-800 mb-1 flex items-center gap-1">
+                <div className="mb-4 bg-amber-900 text-amber-100 p-2.5 rounded-2xl border-2 border-amber-700 text-left shadow-lg">
+                  <p className="text-[11px] font-bold text-yellow-300 mb-1 flex items-center gap-1">
                     <Briefcase size={12} /> Use Task 2 Backpack Item:
                   </p>
                   <div className="flex flex-wrap gap-1.5">
@@ -1545,13 +1532,13 @@ function PawsAndPlay({
                       <button
                         key={item.id}
                         onClick={() => setUsedItemMsg(`✨ Used ${item.eng} (${item.chi})! Rescue bonus +1`)}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] px-2 py-1 rounded-lg shadow transition"
+                        className="bg-amber-800 hover:bg-amber-700 text-amber-100 font-bold text-[10px] px-2 py-1 rounded-lg border border-amber-600 shadow transition flex items-center gap-1"
                       >
-                        {item.icon} {item.eng}
+                        <span>{item.icon}</span> <span>{item.eng}</span>
                       </button>
                     ))}
                   </div>
-                  {usedItemMsg && <p className="text-[10px] text-emerald-700 font-bold mt-1 animate-pulse">{usedItemMsg}</p>}
+                  {usedItemMsg && <p className="text-[10px] text-yellow-300 font-bold mt-1 animate-pulse">{usedItemMsg}</p>}
                 </div>
               )}
 
@@ -1606,20 +1593,20 @@ function PawsAndPlay({
 
               {/* Backpack Tools for Engine Rescue */}
               {backpack.length > 0 && (
-                <div className="mb-3 bg-emerald-50 p-2 rounded-xl border border-emerald-200 text-left">
-                  <p className="text-[10px] font-bold text-emerald-800 mb-1">🎒 Use Backpack Equipment:</p>
+                <div className="mb-3 bg-amber-900 text-amber-100 p-2 rounded-2xl border-2 border-amber-700 text-left shadow-lg">
+                  <p className="text-[10px] font-bold text-yellow-300 mb-1">🎒 Use Backpack Equipment:</p>
                   <div className="flex flex-wrap gap-1">
                     {backpack.map((item) => (
                       <button
                         key={item.id}
                         onClick={() => setUsedItemMsg(`✨ Used ${item.eng} to safely rescue!`)}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] px-2 py-0.5 rounded shadow"
+                        className="bg-amber-800 hover:bg-amber-700 text-amber-100 font-bold text-[10px] px-2 py-0.5 rounded-lg border border-amber-600 shadow"
                       >
                         {item.icon} {item.eng}
                       </button>
                     ))}
                   </div>
-                  {usedItemMsg && <p className="text-[10px] text-emerald-700 font-bold mt-1">{usedItemMsg}</p>}
+                  {usedItemMsg && <p className="text-[10px] text-yellow-300 font-bold mt-1">{usedItemMsg}</p>}
                 </div>
               )}
 
@@ -1711,159 +1698,6 @@ function PawsAndPlay({
               >
                 Back to Map (回到地圖冒險)
               </button>
-            </div>
-          )}
-
-          {/* Creator Panel */}
-          {gameState === 'CREATOR' && (
-            <div className="bg-white p-5 rounded-2xl w-full max-w-sm text-left shadow-2xl border-4 border-indigo-500 max-h-[85vh] overflow-y-auto">
-              <div className="flex justify-between items-center mb-3">
-                <h2 className="text-xl font-black text-indigo-600">🛠️ Cat Story Creator</h2>
-                <button onClick={() => setGameState('MAP')} className="text-gray-500 hover:text-red-500 font-bold text-lg">✕</button>
-              </div>
-              
-              <div className="space-y-3 text-xs font-sans">
-                <div>
-                  <label className="block font-bold text-gray-700 mb-1">Cat's Name</label>
-                  <input type="text" value={creatorForm.name} onChange={e => setCreatorForm({...creatorForm, name: e.target.value})} className="w-full p-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500 outline-none" />
-                </div>
-                <div>
-                  <label className="block font-bold text-gray-700 mb-1">1. Danger (Situation)</label>
-                  <select value={creatorForm.danger} onChange={e => setCreatorForm({...creatorForm, danger: e.target.value})} className="w-full p-2 border-2 border-gray-300 rounded-lg outline-none">
-                    <option value="feed">Cold & Alone (Lost Kitten)</option>
-                    <option value="car_engine">Trapped in Car Engine (Street Cat)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block font-bold text-gray-700 mb-1">3. Story (Magic Sentences)</label>
-                  <textarea value={creatorForm.story} onChange={e => setCreatorForm({...creatorForm, story: e.target.value})} className="w-full p-2 border-2 border-gray-300 rounded-lg outline-none min-h-[60px]" />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block font-bold text-gray-700 mb-1">Map X (0-19)</label>
-                    <input type="number" min="0" max="19" value={creatorForm.x} onChange={e => setCreatorForm({...creatorForm, x: e.target.value})} className="w-full p-2 border-2 border-gray-300 rounded-lg outline-none" />
-                  </div>
-                  <div>
-                    <label className="block font-bold text-gray-700 mb-1">Map Y (0-19)</label>
-                    <input type="number" min="0" max="19" value={creatorForm.y} onChange={e => setCreatorForm({...creatorForm, y: e.target.value})} className="w-full p-2 border-2 border-gray-300 rounded-lg outline-none" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block font-bold text-gray-700 mb-1">5. Add Map Element</label>
-                  <select value={creatorForm.element} onChange={e => setCreatorForm({...creatorForm, element: e.target.value})} className="w-full p-2 border-2 border-gray-300 rounded-lg outline-none">
-                    <option value="0">None (Grass)</option>
-                    <option value="4">📦 Cardboard Box</option>
-                    <option value="5">🚗 Car</option>
-                  </select>
-                </div>
-                <button onClick={handleDeploy} className="w-full bg-green-500 text-white font-bold py-2.5 rounded-xl shadow hover:bg-green-600 transition mt-2">🚀 Deploy to Game!</button>
-              </div>
-            </div>
-          )}
-
-          {/* Mission Deck: Vocab & Grammar */}
-          {gameState === 'VOCAB' && (
-            <div className="bg-white p-5 rounded-2xl w-full max-w-md text-left shadow-2xl border-4 border-yellow-400 max-h-[85vh] overflow-y-auto">
-              <div className="flex justify-between items-center mb-3 sticky top-0 bg-white/95 backdrop-blur z-10 pb-2 border-b">
-                <h2 className="text-xl font-black text-yellow-600">📚 Mission Deck</h2>
-                <button onClick={() => setGameState('MAP')} className="text-gray-500 hover:text-red-500 font-bold text-lg">✕</button>
-              </div>
-              
-              <div className="text-gray-600 mb-3 font-bold text-xs bg-yellow-50 p-2.5 rounded-lg">
-                💡 點擊任何英文單字或句子收聽發音 (Click to listen)
-              </div>
-
-              <div className="space-y-4">
-                
-                {/* Block 1: Feeding */}
-                <div className="border-2 border-blue-200 bg-blue-50 rounded-xl p-3">
-                  <h3 className="text-sm font-bold text-blue-800 mb-1.5">🍼 1. Feeding & Care</h3>
-                  <div className="flex flex-wrap gap-1.5 mb-2 border-b border-blue-200 pb-2">
-                    {['Warm', 'Cold', 'Bottle', 'Milk', 'Blanket'].map(w => (
-                      <button key={w} onClick={() => speak(w)} className="bg-white border border-blue-300 text-blue-700 px-2 py-0.5 rounded-full text-xs font-bold shadow hover:bg-blue-100">{w}</button>
-                    ))}
-                  </div>
-                  <h4 className="text-xs font-black text-blue-600 mb-1">Grade 3 Grammar</h4>
-                  <ul className="space-y-1 text-xs">
-                    <li onClick={() => speak('Happy was cold.')} className="bg-white p-1.5 rounded border border-blue-100 cursor-pointer hover:bg-blue-100 font-bold text-gray-700">
-                      Happy was <span className="text-blue-600">cold</span>.
-                    </li>
-                    <li onClick={() => speak('Heat the milk!')} className="bg-white p-1.5 rounded border border-blue-100 cursor-pointer hover:bg-blue-100 font-bold text-gray-700">
-                      <span className="text-blue-600">Heat</span> the milk!
-                    </li>
-                    <li onClick={() => speak('Don\'t touch the kitten!')} className="bg-white p-1.5 rounded border border-blue-100 cursor-pointer hover:bg-red-100 font-bold text-red-700">
-                      <span className="text-red-600">Don't</span> touch the kitten!
-                    </li>
-                  </ul>
-                </div>
-
-                {/* Block 2: Medical */}
-                <div className="border-2 border-green-200 bg-green-50 rounded-xl p-3">
-                  <h3 className="text-sm font-bold text-green-800 mb-1.5">🩹 2. Medical Rescue</h3>
-                  <div className="flex flex-wrap gap-1.5 mb-2 border-b border-green-200 pb-2">
-                    {['Bandage', 'Medicine', 'Vet', 'Clean', 'Heal'].map(w => (
-                      <button key={w} onClick={() => speak(w)} className="bg-white border border-green-300 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold shadow hover:bg-green-100">{w}</button>
-                    ))}
-                  </div>
-                  <h4 className="text-xs font-black text-green-600 mb-1">Grade 3 Grammar</h4>
-                  <ul className="space-y-1 text-xs">
-                    <li onClick={() => speak('Mimi was hurt.')} className="bg-white p-1.5 rounded border border-green-100 cursor-pointer hover:bg-green-100 font-bold text-gray-700">
-                      Mimi was <span className="text-green-600">hurt</span>.
-                    </li>
-                    <li onClick={() => speak('Clean a tail!')} className="bg-white p-1.5 rounded border border-green-100 cursor-pointer hover:bg-green-100 font-bold text-gray-700">
-                      <span className="text-green-600">Clean</span> a tail!
-                    </li>
-                    <li onClick={() => speak('Don\'t use human medicine!')} className="bg-white p-1.5 rounded border border-green-100 cursor-pointer hover:bg-red-100 font-bold text-red-700">
-                      <span className="text-red-600">Don't</span> use human medicine!
-                    </li>
-                  </ul>
-                </div>
-
-                {/* Block 3: Tool */}
-                <div className="border-2 border-amber-200 bg-amber-50 rounded-xl p-3">
-                  <h3 className="text-sm font-bold text-amber-800 mb-1.5">🪜 3. Tool Rescue</h3>
-                  <div className="flex flex-wrap gap-1.5 mb-2 border-b border-amber-200 pb-2">
-                    {['Ladder', 'Flashlight', 'Treat', 'Up', 'Down'].map(w => (
-                      <button key={w} onClick={() => speak(w)} className="bg-white border border-amber-300 text-amber-700 px-2 py-0.5 rounded-full text-xs font-bold shadow hover:bg-amber-100">{w}</button>
-                    ))}
-                  </div>
-                  <h4 className="text-xs font-black text-amber-600 mb-1">Grade 3 Grammar</h4>
-                  <ul className="space-y-1 text-xs">
-                    <li onClick={() => speak('The cat is up in the tree.')} className="bg-white p-1.5 rounded border border-amber-100 cursor-pointer hover:bg-amber-100 font-bold text-gray-700">
-                      The cat is <span className="text-amber-600">UP in</span> the tree.
-                    </li>
-                    <li onClick={() => speak('Use a ladder!')} className="bg-white p-1.5 rounded border border-amber-100 cursor-pointer hover:bg-amber-100 font-bold text-gray-700">
-                      <span className="text-amber-600">Use</span> a ladder!
-                    </li>
-                    <li onClick={() => speak('Don\'t scare the cat!')} className="bg-white p-1.5 rounded border border-amber-100 cursor-pointer hover:bg-red-100 font-bold text-red-700">
-                      <span className="text-red-600">Don't</span> scare the cat!
-                    </li>
-                  </ul>
-                </div>
-
-                {/* Block 4: TNR */}
-                <div className="border-2 border-indigo-200 bg-indigo-50 rounded-xl p-3">
-                  <h3 className="text-sm font-bold text-indigo-800 mb-1.5">🥅 4. TNR (誘捕)</h3>
-                  <div className="flex flex-wrap gap-1.5 mb-2 border-b border-indigo-200 pb-2">
-                    {['Safe', 'Wait', 'Catch', 'Release'].map(w => (
-                      <button key={w} onClick={() => speak(w)} className="bg-white border border-indigo-300 text-indigo-700 px-2 py-0.5 rounded-full text-xs font-bold shadow hover:bg-indigo-100">{w}</button>
-                    ))}
-                  </div>
-                  <h4 className="text-xs font-black text-indigo-600 mb-1">Grade 3 Grammar</h4>
-                  <ul className="space-y-1 text-xs">
-                    <li onClick={() => speak('The cat is safe.')} className="bg-white p-1.5 rounded border border-indigo-100 cursor-pointer hover:bg-indigo-100 font-bold text-gray-700">
-                      The cat is <span className="text-indigo-600">safe</span>.
-                    </li>
-                    <li onClick={() => speak('Wait for the cat!')} className="bg-white p-1.5 rounded border border-indigo-100 cursor-pointer hover:bg-indigo-100 font-bold text-gray-700">
-                      <span className="text-indigo-600">Wait</span> for the cat!
-                    </li>
-                    <li onClick={() => speak('Don\'t open the cage!')} className="bg-white p-1.5 rounded border border-indigo-100 cursor-pointer hover:bg-red-100 font-bold text-red-700">
-                      <span className="text-red-600">Don't</span> open the cage!
-                    </li>
-                  </ul>
-                </div>
-
-              </div>
             </div>
           )}
 
