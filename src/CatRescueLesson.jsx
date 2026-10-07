@@ -1408,84 +1408,113 @@ function PawsAndPlay({
   });
 
   return (
-    <div className="relative w-full max-w-[660px] h-[660px] flex justify-center items-center bg-gray-900 rounded-3xl overflow-hidden select-none font-sans border-4 border-indigo-800 shadow-2xl">
+    <div className="relative w-full max-w-5xl aspect-[16/9] flex bg-gray-950 rounded-3xl overflow-hidden select-none font-sans border-4 border-indigo-800 shadow-2xl">
       <style>{`
         @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 25% { transform: translate(-1px, -2px) rotate(-5deg); } 50% { transform: translate(-3px, 0px) rotate(5deg); } 75% { transform: translate(3px, 2px) rotate(0deg); } 100% { transform: translate(1px, -1px) rotate(0deg); } }
         .shaking { animation: shake 0.5s infinite; }
       `}</style>
 
-      {/* Visual Backpack HUD Container */}
-      {gameState === 'MAP' && (
-        <div className="absolute top-3 right-3 z-10 flex flex-col items-end">
-          {/* Main Leather Backpack Body */}
-          <div className="bg-gradient-to-b from-amber-800 via-amber-900 to-amber-950 border-2 border-amber-600/80 text-amber-100 rounded-3xl p-3 shadow-2xl backdrop-blur-md w-60 relative overflow-hidden border-b-4 border-b-amber-950">
-            
-            {/* Backpack Top Flap Accent */}
-            <div className="absolute top-0 inset-x-0 h-4 bg-amber-950/70 border-b border-amber-700/60 flex justify-around items-center px-6">
-              <div className="w-2 h-2 rounded-full bg-yellow-500 shadow-inner"></div>
-              <div className="w-2 h-2 rounded-full bg-yellow-500 shadow-inner"></div>
-            </div>
+      {/* LEFT: Game Canvas Area */}
+      <div className="relative flex-1 h-full bg-gray-900 flex items-center justify-center p-2 overflow-hidden">
+        <canvas 
+          ref={canvasRef} 
+          width={640} 
+          height={640} 
+          className="h-full max-h-full aspect-square rounded-2xl bg-gray-800 object-contain shadow-inner" 
+          style={{ imageRendering: 'pixelated' }} 
+        />
 
-            {/* Backpack Header */}
-            <div className="pt-2 pb-1.5 flex items-center justify-between border-b border-amber-700/50 mb-2">
-              <div className="flex items-center gap-1.5 font-black text-xs text-yellow-300 tracking-wider">
-                <span className="text-base drop-shadow">🎒</span> 
-                <span>RESCUE BAG</span>
+        {/* Touch D-Pad placed over canvas area on mobile */}
+        {gameState === 'MAP' && (
+          <div className="absolute bottom-3 right-3 grid grid-cols-3 grid-rows-3 gap-1 md:hidden z-10 opacity-80">
+            <div className="col-start-2 flex justify-center items-center bg-white/30 border-2 border-white/60 text-white rounded-full w-9 h-9 text-lg active:bg-white/60 cursor-pointer backdrop-blur-sm" {...dpadProps('ArrowUp')}>▲</div>
+            <div className="col-start-1 row-start-2 flex justify-center items-center bg-white/30 border-2 border-white/60 text-white rounded-full w-9 h-9 text-lg active:bg-white/60 cursor-pointer backdrop-blur-sm" {...dpadProps('ArrowLeft')}>◀</div>
+            <div className="col-start-3 row-start-2 flex justify-center items-center bg-white/30 border-2 border-white/60 text-white rounded-full w-9 h-9 text-lg active:bg-white/60 cursor-pointer backdrop-blur-sm" {...dpadProps('ArrowRight')}>▶</div>
+            <div className="col-start-2 row-start-3 flex justify-center items-center bg-white/30 border-2 border-white/60 text-white rounded-full w-9 h-9 text-lg active:bg-white/60 cursor-pointer backdrop-blur-sm" {...dpadProps('ArrowDown')}>▼</div>
+          </div>
+        )}
+      </div>
+
+      {/* RIGHT: Dedicated Rescue Bag Sidebar Panel (道具欄) */}
+      <div className="w-60 sm:w-72 md:w-80 h-full bg-gradient-to-b from-amber-900 via-amber-950 to-slate-950 border-l-4 border-amber-700/80 p-3.5 sm:p-4 flex flex-col justify-between overflow-y-auto z-10 shadow-2xl shrink-0">
+        
+        <div className="space-y-3">
+          {/* Rescue Bag Header */}
+          <div className="flex items-center justify-between border-b-2 border-amber-700/60 pb-2">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl drop-shadow">🎒</span>
+              <div>
+                <h3 className="font-extrabold text-amber-200 text-xs sm:text-sm tracking-wider uppercase">Rescue Bag</h3>
+                <p className="text-[10px] text-amber-400 font-medium">救援後背包道具欄</p>
               </div>
-              <span className="text-[10px] bg-amber-950 px-2 py-0.5 rounded-full font-bold text-amber-300 border border-amber-700/60">
-                {backpack.length}/3 Items
-              </span>
             </div>
+            <span className="bg-amber-950 border border-amber-600/80 text-yellow-300 font-mono font-bold text-xs px-2 py-0.5 rounded-full">
+              {backpack.length}/3
+            </span>
+          </div>
 
-            {/* 3 Backpack Pocket Slots */}
-            <div className="grid grid-cols-3 gap-1.5 mb-2">
+          {/* Rescue Backpack Equipment Slots */}
+          <div className="space-y-2">
+            <p className="text-xs font-bold text-amber-300 flex items-center gap-1">
+              <span>📦</span> 裝備格子 (Equipment Slots)
+            </p>
+            <div className="grid grid-cols-1 gap-2">
               {[0, 1, 2].map((slotIdx) => {
                 const item = backpack[slotIdx];
                 return (
                   <div 
                     key={slotIdx} 
-                    className="bg-amber-950/80 border border-amber-700/60 rounded-xl p-1.5 text-center flex flex-col items-center justify-center min-h-[50px] shadow-inner relative group"
+                    className={`p-2.5 rounded-xl border flex items-center gap-3 transition-all ${
+                      item 
+                        ? 'bg-amber-900/90 border-amber-500/80 text-amber-100 shadow-md' 
+                        : 'bg-amber-950/40 border-amber-800/40 text-amber-700 border-dashed'
+                    }`}
                   >
-                    {item ? (
-                      <>
-                        <span className="text-xl mb-0.5 leading-none drop-shadow">{item.icon}</span>
-                        <span className="text-[9px] font-bold text-yellow-200 truncate w-full capitalize">{item.eng}</span>
-                      </>
-                    ) : (
-                      <span className="text-[10px] text-amber-700 font-mono">Empty</span>
-                    )}
+                    <div className="w-9 h-9 rounded-lg bg-amber-950 border border-amber-700/60 flex items-center justify-center text-xl shrink-0 shadow-inner">
+                      {item ? item.icon : <span className="text-[10px] text-amber-800 font-mono">#{slotIdx + 1}</span>}
+                    </div>
+                    <div className="overflow-hidden flex-1">
+                      {item ? (
+                        <>
+                          <p className="font-bold text-xs text-yellow-200 capitalize truncate">{item.eng}</p>
+                          <p className="text-[10px] text-amber-400 truncate">{item.chi}</p>
+                        </>
+                      ) : (
+                        <p className="text-xs text-amber-700 font-mono italic">Empty Slot</p>
+                      )}
+                    </div>
                   </div>
                 );
               })}
             </div>
-
-            {/* Task 1 Animal Traits Bag-Tag */}
-            {vocabulary.color.length > 0 && (
-              <div className="bg-yellow-100 text-amber-950 rounded-xl p-1.5 text-[10px] font-bold flex items-center gap-1 shadow-md border border-yellow-300">
-                <Tag size={12} className="text-amber-700 shrink-0" />
-                <span className="truncate">
-                  Target: {vocabulary.color.join('/')} {vocabulary.animal[0] || 'cat'}
-                </span>
-              </div>
-            )}
-
           </div>
+
+          {/* Task 1 Target Animal Traits Tag */}
+          {vocabulary.color.length > 0 && (
+            <div className="bg-yellow-950/80 border border-yellow-600/60 rounded-xl p-2.5 text-xs text-yellow-200 space-y-1 shadow">
+              <p className="font-bold text-yellow-400 text-[11px] flex items-center gap-1">
+                <Tag size={12} /> Task 1 目標救援特徵
+              </p>
+              <p className="text-[11px] text-amber-200 leading-tight">
+                Target: <span className="font-bold text-white capitalize">{vocabulary.color.join('/') || 'Rescued'} {vocabulary.animal[0] || 'Cat'}</span>
+              </p>
+              {vocabulary.emotion.length > 0 && (
+                <p className="text-[10px] text-amber-300">
+                  Feeling: {vocabulary.emotion.join(', ')}
+                </p>
+              )}
+            </div>
+          )}
         </div>
-      )}
 
-      <canvas ref={canvasRef} width={640} height={640} className="w-full h-full rounded-2xl bg-gray-800" style={{ imageRendering: 'pixelated' }} />
-
-      {/* Touch D-Pad */}
-      {gameState === 'MAP' && (
-        <div className="absolute bottom-4 right-4 grid grid-cols-3 grid-rows-3 gap-1 md:hidden z-10 opacity-80">
-          <div className="col-start-2 flex justify-center items-center bg-white/30 border-2 border-white/60 text-white rounded-full w-10 h-10 text-xl active:bg-white/60 cursor-pointer backdrop-blur-sm" {...dpadProps('ArrowUp')}>▲</div>
-          <div className="col-start-1 row-start-2 flex justify-center items-center bg-white/30 border-2 border-white/60 text-white rounded-full w-10 h-10 text-xl active:bg-white/60 cursor-pointer backdrop-blur-sm" {...dpadProps('ArrowLeft')}>◀</div>
-          <div className="col-start-3 row-start-2 flex justify-center items-center bg-white/30 border-2 border-white/60 text-white rounded-full w-10 h-10 text-xl active:bg-white/60 cursor-pointer backdrop-blur-sm" {...dpadProps('ArrowRight')}>▶</div>
-          <div className="col-start-2 row-start-3 flex justify-center items-center bg-white/30 border-2 border-white/60 text-white rounded-full w-10 h-10 text-xl active:bg-white/60 cursor-pointer backdrop-blur-sm" {...dpadProps('ArrowDown')}>▼</div>
+        {/* Footer Hint */}
+        <div className="pt-2 border-t border-amber-800/60 text-[10px] text-amber-400 space-y-0.5">
+          <p className="font-bold text-amber-300">💡 操作提示：</p>
+          <p className="leading-tight">地圖移動尋找 🐈，遭遇小貓即可使用此後背包內的道具展開救援！</p>
         </div>
-      )}
+      </div>
 
-      {/* Overlays */}
+      {/* OVERLAYS: Start, Mini-game, Profile modals */}
       {gameState !== 'MAP' && (
         <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-20 overflow-y-auto p-4">
           
