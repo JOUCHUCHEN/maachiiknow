@@ -441,7 +441,16 @@ export default function CatRescueLesson() {
         {/* ==================== GAME TAB ==================== */}
         {activeTab === 'game' && (
           <div className="w-full flex justify-center">
-            <PawsAndPlay gameCats={gameCats} setGameCats={setGameCats} />
+            <PawsAndPlay 
+              gameCats={gameCats} 
+              setGameCats={setGameCats} 
+              vocabulary={vocabulary}
+              backpack={backpack}
+              actionChoice1={actionChoice1}
+              actionChoice2={actionChoice2}
+              vetCheck={vetCheck}
+              catImage={catImage}
+            />
           </div>
         )}
 
@@ -1152,18 +1161,28 @@ export default function CatRescueLesson() {
   );
 }
 
-function PawsAndPlay({ gameCats, setGameCats }) {
+function PawsAndPlay({ 
+  gameCats, 
+  setGameCats,
+  vocabulary = { animal: [], color: [], size: [], age: [], emotion: [], environment: [], other: [] },
+  backpack = [],
+  actionChoice1 = null,
+  actionChoice2 = null,
+  vetCheck = { ears: 'clean', eyes: 'clean', paws: 'warm', body: 'healthy' },
+  catImage = null
+}) {
   const [gameState, setGameState] = useState('START'); // START, MAP, MINIGAME, PROFILE, CREATOR, VOCAB
   const [activeCat, setActiveCat] = useState(null);
   
   // Feeding Mini-game state
-  const [feedStep, setFeedStep] = useState(1); // 1: Observe, 2: Heat, 3: Feed, 4: Blanket
+  const [feedStep, setFeedStep] = useState(1); // 1: Observe, 2: Heat, 3: Feed, 4: Vet Check
   const [temperature, setTemperature] = useState(0);
   const [isHeating, setIsHeating] = useState(false);
   const [tempMsg, setTempMsg] = useState('');
+  const [usedItemMsg, setUsedItemMsg] = useState('');
   
   // Car Engine Mini-game state
-  const [carStep, setCarStep] = useState(1); // 1: Tap, 2: Food
+  const [carStep, setCarStep] = useState(1); // 1: Tap, 2: Food/Lure, 3: Vet Check
 
   // Creator Form state
   const [creatorForm, setCreatorForm] = useState({
@@ -1204,19 +1223,22 @@ function PawsAndPlay({ gameCats, setGameCats }) {
   const generateImagePrompt = (cat) => {
     let situation = "";
     if (cat.rescueType === 'feed') {
-      situation = "alone and cold inside a cardboard box during a heavy rain";
+      situation = `alone and cold in ${vocabulary.environment.join(', ') || 'a box in the rain'}`;
     } else if (cat.rescueType === 'car_engine') {
       situation = "hiding under the hood of a car, peeking out nervously";
     } else {
       situation = "waiting to be rescued on the street";
     }
-    return `Create a heartwarming children's storybook illustration of a small street cat named ${cat.profile.name}. The cat is ${situation}. The style should be emotional but hopeful, with soft lighting and cute details. (Based on magic sentences: ${cat.profile.story})`;
+
+    const itemsStr = backpack.map(i => i.eng).join(', ') || 'canned food and blanket';
+    return `Create a heartwarming children's storybook illustration of a small rescued ${vocabulary.animal[0] || 'cat'} named ${cat.profile.name}. The cat is ${situation}. Rescued using ${itemsStr}. The style should be emotional but hopeful, with soft lighting and cute details. (Story: ${cat.profile.story})`;
   };
 
   const startMiniGame = (cat) => {
     for (let k in keysRef.current) keysRef.current[k] = false;
     setActiveCat(cat);
     setGameState('MINIGAME');
+    setUsedItemMsg('');
     
     if (cat.rescueType === 'feed') {
       setFeedStep(1); setTemperature(0); setTempMsg('');
@@ -1426,16 +1448,42 @@ function PawsAndPlay({ gameCats, setGameCats }) {
         .shaking { animation: shake 0.5s infinite; }
       `}</style>
 
-      {/* Top Controls */}
+      {/* Top Controls & HUD */}
       {gameState === 'MAP' && (
-        <div className="absolute top-4 left-4 z-10 flex gap-2">
-          <button onClick={() => setGameState('CREATOR')} className="bg-white/90 border-2 border-indigo-500 text-indigo-600 font-black py-1.5 px-3 rounded-xl shadow text-xs hover:bg-indigo-50 transition transform hover:scale-105">
-            🛠️ AI Creator
-          </button>
-          <button onClick={() => setGameState('VOCAB')} className="bg-white/90 border-2 border-yellow-500 text-yellow-600 font-black py-1.5 px-3 rounded-xl shadow text-xs hover:bg-yellow-50 transition transform hover:scale-105">
-            📚 Mission Deck
-          </button>
-        </div>
+        <>
+          <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-2">
+            <button onClick={() => setGameState('CREATOR')} className="bg-white/90 border-2 border-indigo-500 text-indigo-600 font-black py-1 px-2.5 rounded-xl shadow text-xs hover:bg-indigo-50 transition transform hover:scale-105">
+              🛠️ AI Creator
+            </button>
+            <button onClick={() => setGameState('VOCAB')} className="bg-white/90 border-2 border-yellow-500 text-yellow-600 font-black py-1 px-2.5 rounded-xl shadow text-xs hover:bg-yellow-50 transition transform hover:scale-105">
+              📚 Mission Deck
+            </button>
+          </div>
+
+          {/* Dynamic Task 1 & Task 2 HUD Panel */}
+          <div className="absolute top-3 right-3 z-10 bg-slate-900/85 backdrop-blur-md border border-slate-700 text-white rounded-2xl p-2.5 text-xs max-w-[240px] space-y-1.5 shadow-lg">
+            <div className="flex items-center gap-1 font-bold text-amber-300 border-b border-slate-700 pb-1">
+              <Briefcase size={14} /> Task 2 Backpack:
+            </div>
+            <div className="flex gap-1 overflow-x-auto">
+              {backpack.length > 0 ? (
+                backpack.map((item) => (
+                  <span key={item.id} className="bg-emerald-950 border border-emerald-500/60 text-emerald-200 px-1.5 py-0.5 rounded text-[10px] whitespace-nowrap flex items-center gap-1">
+                    <span>{item.icon}</span> {item.eng}
+                  </span>
+                ))
+              ) : (
+                <span className="text-gray-400 italic text-[10px]">No items chosen yet</span>
+              )}
+            </div>
+
+            {vocabulary.color.length > 0 && (
+              <div className="text-[10px] text-indigo-200 pt-0.5">
+                <span className="font-bold text-indigo-400">🏷️ Task 1 Traits:</span> {vocabulary.color.join(', ')} {vocabulary.animal[0] || 'cat'} ({vocabulary.emotion.join(', ') || 'scared'})
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       <canvas ref={canvasRef} width={640} height={640} className="w-full h-full rounded-2xl bg-gray-800" style={{ imageRendering: 'pixelated' }} />
@@ -1459,11 +1507,19 @@ function PawsAndPlay({ gameCats, setGameCats }) {
             <div className="bg-white p-6 rounded-2xl w-full max-w-sm text-center shadow-2xl border-4 border-indigo-500">
               <h1 className="text-3xl font-black text-indigo-600 mb-1">Paws & Play</h1>
               <p className="text-gray-600 font-bold mb-4 text-xs">Street Cat Heroes 2D RPG</p>
-              <div className="text-left text-xs text-gray-600 mb-6 space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
+              
+              {/* Connected Task Status Indicator */}
+              <div className="mb-4 bg-indigo-50 p-3 rounded-xl border border-indigo-200 text-left text-xs space-y-1">
+                <p className="font-bold text-indigo-900">🔗 Task Integration Active:</p>
+                <p className="text-indigo-700">• Task 1 Target: <span className="font-bold">{vocabulary.color.join(' ') || 'Rescued'} {vocabulary.animal[0] || 'cat'}</span></p>
+                <p className="text-indigo-700">• Task 2 Items: <span className="font-bold">{backpack.map(i => i.eng).join(', ') || 'Standard Kit'}</span></p>
+              </div>
+
+              <div className="text-left text-xs text-gray-600 mb-6 space-y-1.5 bg-slate-50 p-3 rounded-xl border border-slate-200">
                 <p>🎮 <b>How to play:</b></p>
                 <p>1. Use Keyboard (WASD / Arrow Keys) or Touch D-Pad.</p>
                 <p>2. Walk up to stray cats (🐈) on the map.</p>
-                <p>3. Complete rescue mini-games and learn English!</p>
+                <p>3. Use your Task 2 Backpack items during rescue mini-games!</p>
               </div>
               <button onClick={() => setGameState('MAP')} className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition">Start Game 🚀</button>
             </div>
@@ -1473,14 +1529,38 @@ function PawsAndPlay({ gameCats, setGameCats }) {
           {gameState === 'MINIGAME' && activeCat?.rescueType === 'feed' && (
             <div className="bg-white p-6 rounded-2xl w-full max-w-sm text-center shadow-2xl border-4 border-blue-400 relative">
               <div className="absolute top-3 right-4 text-xs font-bold text-gray-700 tracking-widest">🐟 ({feedStep}/4)</div>
-              <h2 className="text-2xl font-black text-blue-800 mb-2 mt-4">Feeding & Care</h2>
-              <div className={`text-6xl mb-4 flex justify-center transition-transform ${feedStep <= 2 ? 'shaking' : ''}`}>{feedStep <= 2 ? '🐱📦' : feedStep === 3 ? '🐱🍼' : '🐱🛌'}</div>
+              <h2 className="text-2xl font-black text-blue-800 mb-1 mt-2">Feeding & Rescue</h2>
+              <p className="text-xs text-blue-600 mb-3 font-medium">Target: {vocabulary.color.join(' ') || 'stray'} {vocabulary.animal[0] || 'cat'} in {vocabulary.environment[0] || 'rain'}</p>
+              
+              <div className={`text-6xl mb-3 flex justify-center transition-transform ${feedStep <= 2 ? 'shaking' : ''}`}>{feedStep <= 2 ? '🐱📦' : feedStep === 3 ? '🐱🍼' : '🩺🐱'}</div>
+
+              {/* Backpack Tool Quick Selector inside Mini-Game */}
+              {backpack.length > 0 && (
+                <div className="mb-4 bg-emerald-50 p-2.5 rounded-xl border border-emerald-200 text-left">
+                  <p className="text-[11px] font-bold text-emerald-800 mb-1 flex items-center gap-1">
+                    <Briefcase size={12} /> Use Task 2 Backpack Item:
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {backpack.map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => setUsedItemMsg(`✨ Used ${item.eng} (${item.chi})! Rescue bonus +1`)}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] px-2 py-1 rounded-lg shadow transition"
+                      >
+                        {item.icon} {item.eng}
+                      </button>
+                    ))}
+                  </div>
+                  {usedItemMsg && <p className="text-[10px] text-emerald-700 font-bold mt-1 animate-pulse">{usedItemMsg}</p>}
+                </div>
+              )}
+
               {feedStep === 1 && (
                 <>
                   <p className="text-gray-600 mb-4 text-xs font-bold">Step 1: Observe! Is the mother cat here?</p>
                   <div className="flex gap-2">
                     <button onClick={() => setTempMsg("DON'T TOUCH! The mother cat will abandon the kitten.")} className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-2 rounded-xl text-xs shadow">👀 Yes</button>
-                    <button onClick={() => { setTempMsg("Good! The kitten is alone."); setTimeout(() => setFeedStep(2), 1500); }} className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-2 rounded-xl text-xs shadow">🚫 No</button>
+                    <button onClick={() => { setTempMsg("Good! The kitten is alone."); setTimeout(() => setFeedStep(2), 1200); }} className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-2 rounded-xl text-xs shadow">🚫 No</button>
                   </div>
                   <p className={`text-xs font-bold mt-2 h-8 ${tempMsg.includes("DON'T") ? 'text-red-600' : 'text-green-600'}`}>{tempMsg}</p>
                 </>
@@ -1498,14 +1578,19 @@ function PawsAndPlay({ gameCats, setGameCats }) {
               )}
               {feedStep === 3 && (
                 <>
-                  <p className="text-gray-600 mb-4 text-xs font-bold">Step 3: Aim for a mouth.</p>
-                  <button onClick={() => setFeedStep(4)} className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2.5 px-4 rounded-xl shadow text-xs active:scale-95">🍼 Use Bottle on a mouth</button>
+                  <p className="text-gray-600 mb-4 text-xs font-bold">Step 3: Feed gently and wrap in a warm blanket.</p>
+                  <button onClick={() => setFeedStep(4)} className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2.5 px-4 rounded-xl shadow text-xs active:scale-95">🍼 Feed Milk & Care</button>
                 </>
               )}
               {feedStep === 4 && (
                 <>
-                  <p className="text-gray-600 mb-4 text-xs font-bold">Step 4: Keep a tummy warm.</p>
-                  <button onClick={finishMiniGame} className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2.5 px-4 rounded-xl shadow text-xs active:scale-95">🛌 Put Blanket on a tummy</button>
+                  <p className="text-gray-600 mb-2 text-xs font-bold">Step 4: Vet Check-up (連動 Task 2 檢測結果)</p>
+                  <div className="bg-slate-100 p-2.5 rounded-xl border border-slate-300 text-xs text-left mb-3 space-y-1">
+                    <p>👂 Ears: <span className="font-bold text-emerald-700">{vetCheck.ears}</span></p>
+                    <p>👀 Eyes: <span className="font-bold text-emerald-700">{vetCheck.eyes}</span></p>
+                    <p>🐾 Paws: <span className="font-bold text-emerald-700">{vetCheck.paws}</span></p>
+                  </div>
+                  <button onClick={finishMiniGame} className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2.5 px-4 rounded-xl shadow text-xs active:scale-95">🏥 Complete Rescue & Vet Check</button>
                 </>
               )}
             </div>
@@ -1514,44 +1599,100 @@ function PawsAndPlay({ gameCats, setGameCats }) {
           {/* Mini-Game: Car Engine */}
           {gameState === 'MINIGAME' && activeCat?.rescueType === 'car_engine' && (
             <div className="bg-white p-6 rounded-2xl w-full max-w-sm text-center shadow-2xl border-4 border-red-400 relative">
-              <h2 className="text-2xl font-black text-red-800 mb-2">Car Rescue!</h2>
-              <p className="text-gray-600 mb-4 text-xs font-bold">{carStep === 1 ? "The cat is under the hood! Very dangerous! First, alert her." : "Great! She peeked out. Now use wet food to lure her out!"}</p>
-              <div className="text-5xl mb-6 transition-transform" style={{ transform: carStep === 2 ? 'scale(1.2)' : 'none' }}>{carStep === 1 ? '🚗' : '🐈💕'}</div>
-              <div className="flex gap-2">
-                <button onClick={() => setCarStep(2)} disabled={carStep === 2} className={`flex-1 font-bold py-2.5 px-2 rounded-xl text-xs shadow ${carStep === 1 ? 'bg-yellow-500 text-white hover:bg-yellow-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}>👋 Tap Hood</button>
-                <button onClick={finishMiniGame} disabled={carStep === 1} className={`flex-1 font-bold py-2.5 px-2 rounded-xl text-xs shadow ${carStep === 2 ? 'bg-pink-500 text-white hover:bg-pink-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}>🐟 Use Food</button>
-              </div>
+              <h2 className="text-2xl font-black text-red-800 mb-1">Car Engine Rescue!</h2>
+              <p className="text-xs text-red-600 mb-3 font-medium">Action strategy from Task 2: {actionChoice1 === 'slow' ? 'Walk Slowly (🚶‍♂️)' : 'Approach Carefully'}</p>
+              
+              <div className="text-5xl mb-4 transition-transform" style={{ transform: carStep >= 2 ? 'scale(1.2)' : 'none' }}>{carStep === 1 ? '🚗' : carStep === 2 ? '🐈💕' : '🩺🐱'}</div>
+
+              {/* Backpack Tools for Engine Rescue */}
+              {backpack.length > 0 && (
+                <div className="mb-3 bg-emerald-50 p-2 rounded-xl border border-emerald-200 text-left">
+                  <p className="text-[10px] font-bold text-emerald-800 mb-1">🎒 Use Backpack Equipment:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {backpack.map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => setUsedItemMsg(`✨ Used ${item.eng} to safely rescue!`)}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] px-2 py-0.5 rounded shadow"
+                      >
+                        {item.icon} {item.eng}
+                      </button>
+                    ))}
+                  </div>
+                  {usedItemMsg && <p className="text-[10px] text-emerald-700 font-bold mt-1">{usedItemMsg}</p>}
+                </div>
+              )}
+
+              {carStep === 1 && (
+                <>
+                  <p className="text-gray-600 mb-4 text-xs font-bold">The cat is inside the car engine! First, tap the hood to alert her.</p>
+                  <button onClick={() => setCarStep(2)} className="w-full bg-yellow-500 text-white font-bold py-2.5 px-2 rounded-xl text-xs shadow hover:bg-yellow-600">👋 Tap Car Hood</button>
+                </>
+              )}
+              {carStep === 2 && (
+                <>
+                  <p className="text-gray-600 mb-4 text-xs font-bold">She peeked out! Use wet food or a blanket to lure her into the carrier.</p>
+                  <button onClick={() => setCarStep(3)} className="w-full bg-pink-500 text-white font-bold py-2.5 px-2 rounded-xl text-xs shadow hover:bg-pink-600">🥫 Give Food & Carrier</button>
+                </>
+              )}
+              {carStep === 3 && (
+                <>
+                  <p className="text-gray-600 mb-2 text-xs font-bold">Vet Preliminary Check (Task 2 Results)</p>
+                  <div className="bg-slate-100 p-2 rounded-xl border border-slate-300 text-xs text-left mb-3 space-y-1">
+                    <p>❤️ Health Status: <span className="font-bold text-emerald-700">{vetCheck.body}</span></p>
+                    <p>🐾 Paws Condition: <span className="font-bold text-emerald-700">{vetCheck.paws}</span></p>
+                  </div>
+                  <button onClick={finishMiniGame} className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2.5 px-4 rounded-xl shadow text-xs active:scale-95">🎉 Complete Rescue Mission!</button>
+                </>
+              )}
             </div>
           )}
 
-          {/* Profile Card & Prompt Generator */}
+          {/* Profile Card & Combined Task Report */}
           {gameState === 'PROFILE' && activeCat && (
             <div className="bg-white p-6 rounded-2xl w-full max-w-sm text-center shadow-2xl border-4 border-indigo-500 relative max-h-[85vh] overflow-y-auto">
               
-              <div className="bg-indigo-100 text-indigo-800 text-xs font-black px-3 py-1 rounded-full inline-block mb-3">
-                🎉 RPG Character Unlocked!
+              <div className="bg-indigo-100 text-indigo-800 text-xs font-black px-3 py-1 rounded-full inline-block mb-2">
+                🎉 RPG Character Rescued!
               </div>
+
+              {/* Show Task 1 Uploaded Photo if available */}
+              {catImage && (
+                <div className="w-24 h-24 mx-auto mb-3 rounded-2xl overflow-hidden border-2 border-indigo-300 shadow-md">
+                  <img src={catImage} alt="Uploaded Cat" className="w-full h-full object-cover" />
+                </div>
+              )}
+
               <h2 className="text-2xl font-black text-gray-800 mb-2">{activeCat.profile.name}</h2>
               
-              <div className="text-left bg-gray-50 p-3 rounded-lg mb-4 text-xs text-gray-700 leading-relaxed border border-gray-200">
-                <span className="font-bold text-indigo-600 block mb-1">✨ Magic Sentences (故事):</span>
+              {/* Task 1 Sentence Summary */}
+              <div className="text-left bg-orange-50 p-3 rounded-xl mb-3 text-xs text-gray-700 leading-relaxed border border-orange-200">
+                <span className="font-bold text-orange-600 block mb-1">✨ Task 1 Observation Story:</span>
                 {activeCat.profile.story}
               </div>
 
-              <div className="text-left bg-indigo-50 p-3 rounded-lg mb-4 text-xs border-2 border-indigo-200">
-                <span className="font-bold text-indigo-800 block mb-2">🖼️ 圖像生成指令 (Image Prompt):</span>
-                <p className="text-gray-600 italic mb-3 bg-white p-2 rounded border border-indigo-100 text-[11px] select-all">
+              {/* Task 2 Rescue Report Summary */}
+              <div className="text-left bg-emerald-50 p-3 rounded-xl mb-3 text-xs text-emerald-950 leading-relaxed border border-emerald-200">
+                <span className="font-bold text-emerald-800 block mb-1">🎒 Task 2 Rescue Report:</span>
+                <p>• Equipment Used: <span className="font-bold">{backpack.map(i => i.eng).join(', ') || 'Standard Kit'}</span></p>
+                <p>• Vet Status: Ears <span className="font-bold">{vetCheck.ears}</span>, Body <span className="font-bold">{vetCheck.body}</span></p>
+              </div>
+
+              {/* Gemini Image Prompt Generator */}
+              <div className="text-left bg-indigo-50 p-3 rounded-xl mb-4 text-xs border-2 border-indigo-200">
+                <span className="font-bold text-indigo-800 block mb-1.5">🖼️ 雙任務合成 Gemini 繪本 Prompt:</span>
+                <p className="text-gray-600 italic mb-2.5 bg-white p-2 rounded border border-indigo-100 text-[11px] select-all">
                   "{generateImagePrompt(activeCat)}"
                 </p>
                 
                 <button 
                   onClick={() => {
                     navigator.clipboard.writeText(generateImagePrompt(activeCat));
-                    alert("已複製指令！現在可以貼上給 Gemini 囉！(Copied!)");
+                    alert("已複製雙任務整合 Prompt！現在可以貼上給 Gemini 囉！(Copied!)");
                   }}
-                  className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-3 rounded-xl text-xs shadow transition mb-2 flex justify-center items-center gap-2"
+                  className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-3 rounded-xl text-xs shadow transition mb-1.5 flex justify-center items-center gap-2"
                 >
-                  📋 複製 prompt 給 Gemini
+                  📋 複製整合 Prompt 給 Gemini
                 </button>
                 
                 <a 
@@ -1566,9 +1707,9 @@ function PawsAndPlay({ gameCats, setGameCats }) {
               
               <button 
                 onClick={() => { setActiveCat(null); setGameState('MAP'); }} 
-                className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-xl text-xs transition"
+                className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2.5 px-4 rounded-xl text-xs transition"
               >
-                Back to Map (回到地圖)
+                Back to Map (回到地圖冒險)
               </button>
             </div>
           )}
