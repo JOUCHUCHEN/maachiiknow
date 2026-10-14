@@ -95,7 +95,6 @@ export default function CatRescueLesson() {
   // Deploying Cat to Game state
   const [deployX, setDeployX] = useState(8);
   const [deployY, setDeployY] = useState(8);
-  const [deployCatName, setDeployCatName] = useState('Lucky');
   const [deployCatDanger, setDeployCatDanger] = useState('feed');
   const [deploySuccessMsg, setDeploySuccessMsg] = useState('');
 
@@ -360,10 +359,11 @@ export default function CatRescueLesson() {
   const pixelAvatarPrompt = `[IMPORTANT: Strictly base on the cat in the uploaded photo!] Create a cute 16x16 or 32x32 retro pixel art video game sprite avatar icon of this ${currentAnimalName}. Retro 8-bit / 16-bit arcade style, front view, vibrant colors, clear dark outline, centered on a clean flat background.`;
 
   const handleDeployToMap = () => {
-    const nameToUse = deployCatName.trim() || 'Lucky';
     const animalType = vocabulary.animal.length ? vocabulary.animal[0] : 'cat';
     const colorDesc = vocabulary.color.length ? vocabulary.color.join(' and ') : 'rescued';
     const placeDesc = vocabulary.environment.length ? vocabulary.environment.join(', ') : 'street';
+    const emotionDesc = vocabulary.emotion.length ? vocabulary.emotion.join(', ') : 'scared';
+    const autoName = `Unnamed ${colorDesc} ${animalType}`.trim();
 
     const newCatObj = {
       id: `cat_custom_${Date.now()}`,
@@ -372,14 +372,14 @@ export default function CatRescueLesson() {
       mapY: Number(deployY),
       emoji: animalType.includes('dog') ? '🐕' : '🐈',
       profile: {
-        name: nameToUse,
-        englishDesc: `${nameToUse} is a ${colorDesc} ${animalType} found in ${placeDesc}.`,
-        story: `${nameToUse} was rescued from ${placeDesc}! Features: ${vocabulary.color.join(', ') || 'special markings'}, feeling ${vocabulary.emotion.join(', ') || 'anxious'}. Help save ${nameToUse}!`
+        name: autoName,
+        englishDesc: `${autoName} found in ${placeDesc}.`,
+        story: `An unnamed ${colorDesc} ${animalType} trapped in ${placeDesc}! Features: ${vocabulary.color.join(', ') || 'special markings'}, feeling ${emotionDesc}. Help save this little animal!`
       }
     };
 
     setGameCats(prev => [...prev, newCatObj]);
-    setDeploySuccessMsg(`🎉 成功將「${nameToUse}」放置到 2D 遊戲地圖 (X:${deployX}, Y:${deployY})！可以切換到 [RPG 遊戲] 分頁開始尋找牠了！`);
+    setDeploySuccessMsg(`🎉 成功將待拯救小動物「${autoName}」放置到 2D 遊戲地圖 (X:${deployX}, Y:${deployY})！可以切換到 [RPG 遊戲] 分頁開始尋找牠了！`);
     setTimeout(() => setDeploySuccessMsg(''), 5000);
   };
 
@@ -810,7 +810,7 @@ export default function CatRescueLesson() {
                     </div>
                   </section>
 
-                  {/* Step 6 (NEW): Deploy Cat to RPG Map Panel */}
+                  {/* Step 6: Deploy Cat to RPG Map Panel (No Cat Name Input Box - Linked to Task 1) */}
                   <section className="bg-slate-900 p-6 rounded-3xl border-4 border-indigo-600 text-white shadow-2xl">
                     <h2 className="text-2xl font-bold text-yellow-400 flex items-center gap-2 mb-2">
                       <MapPin size={26} className="text-indigo-400" />
@@ -869,15 +869,14 @@ export default function CatRescueLesson() {
 
                       {/* Deploy Options Form */}
                       <div className="space-y-4 text-sm font-sans">
-                        <div>
-                          <label className="block text-slate-300 font-bold mb-1">小貓/小狗名字 (Cat Name)</label>
-                          <input
-                            type="text"
-                            value={deployCatName}
-                            onChange={(e) => setDeployCatName(e.target.value)}
-                            placeholder="如: Lucky, Mimi"
-                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-indigo-400"
-                          />
+                        <div className="p-3 bg-amber-950/60 border border-amber-600/60 rounded-xl text-amber-200">
+                          <p className="font-bold text-amber-300 text-xs mb-1">🐾 待救援角色狀態 (Cat Status)</p>
+                          <p className="text-sm font-semibold">
+                            名字：<span className="text-yellow-400">尚未命名 (Unnamed)</span>
+                          </p>
+                          <p className="text-xs text-amber-300/80 mt-1">
+                            💡 小小提示：因為還在 Task 1 搜集特徵階段，貓咪尚未被救援，等完成 Task 2 救援後再由小朋友幫牠取名！
+                          </p>
                         </div>
 
                         <div>
@@ -887,9 +886,16 @@ export default function CatRescueLesson() {
                             onChange={(e) => setDeployCatDanger(e.target.value)}
                             className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-indigo-400"
                           >
-                            <option value="feed">🥛 孤單發抖 (Cold & Alone - Feeding Mission)</option>
-                            <option value="car_engine">🚗 躲車底引擎室 (Car Engine Rescue)</option>
+                            <option value="feed">
+                              🥛 {vocabulary.environment.length ? `情境: ${vocabulary.environment.join(', ')}` : '孤單發抖'} ({vocabulary.emotion.join(', ') || 'Cold & Alone'} - Feeding Mission)
+                            </option>
+                            <option value="car_engine">
+                              🚗 {vocabulary.environment.length ? `危險地點: ${vocabulary.environment.join(', ')}` : '躲車底/引擎室'} (Car Engine / Danger Spot Rescue)
+                            </option>
                           </select>
+                          <p className="text-[11px] text-indigo-300 mt-1">
+                            🎯 關卡已根據小朋友輸入的環境「{vocabulary.environment.join(', ') || '未指定'}」與情緒「{vocabulary.emotion.join(', ') || '未指定'}」自動配對！
+                          </p>
                         </div>
 
                         <div className="p-3 bg-slate-800/80 rounded-xl border border-slate-700 text-xs text-slate-300 space-y-1">
@@ -1180,6 +1186,7 @@ function PawsAndPlay({
   const [isHeating, setIsHeating] = useState(false);
   const [tempMsg, setTempMsg] = useState('');
   const [usedItemMsg, setUsedItemMsg] = useState('');
+  const [isCopiedMergedPrompt, setIsCopiedMergedPrompt] = useState(false);
   
   // Car Engine Mini-game state
   const [carStep, setCarStep] = useState(1); // 1: Tap, 2: Food/Lure, 3: Vet Check
@@ -1435,7 +1442,7 @@ function PawsAndPlay({
         )}
       </div>
 
-      {/* RIGHT: Dedicated Rescue Bag Sidebar Panel (道具欄) */}
+      {/* RIGHT: Dedicated Rescue Bag Sidebar Panel */}
       <div className="w-60 sm:w-72 md:w-80 h-full bg-gradient-to-b from-amber-900 via-amber-950 to-slate-950 border-l-4 border-amber-700/80 p-3.5 sm:p-4 flex flex-col justify-between overflow-y-auto z-10 shadow-2xl shrink-0">
         
         <div className="space-y-3">
@@ -1701,10 +1708,17 @@ function PawsAndPlay({
                   "{generateImagePrompt(activeCat)}"
                 </p>
                 
+                {isCopiedMergedPrompt && (
+                  <p className="text-[11px] text-emerald-600 font-bold text-center mb-1 animate-pulse">
+                    ✓ 已複製雙任務整合 Prompt！
+                  </p>
+                )}
+
                 <button 
                   onClick={() => {
                     navigator.clipboard.writeText(generateImagePrompt(activeCat));
-                    alert("已複製雙任務整合 Prompt！現在可以貼上給 Gemini 囉！(Copied!)");
+                    setIsCopiedMergedPrompt(true);
+                    setTimeout(() => setIsCopiedMergedPrompt(false), 2000);
                   }}
                   className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-3 rounded-xl text-xs shadow transition mb-1.5 flex justify-center items-center gap-2"
                 >
