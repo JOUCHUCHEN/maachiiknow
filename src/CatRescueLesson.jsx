@@ -810,7 +810,7 @@ export default function CatRescueLesson() {
                     </div>
                   </section>
 
-                  {/* Step 6: Deploy Cat to RPG Map Panel (No Cat Name Input Box - Linked to Task 1) */}
+                  {/* Step 6: Deploy Cat to RPG Map Panel */}
                   <section className="bg-slate-900 p-6 rounded-3xl border-4 border-indigo-600 text-white shadow-2xl">
                     <h2 className="text-2xl font-bold text-yellow-400 flex items-center gap-2 mb-2">
                       <MapPin size={26} className="text-indigo-400" />
@@ -868,44 +868,15 @@ export default function CatRescueLesson() {
                       </div>
 
                       {/* Deploy Options Form */}
-                      <div className="space-y-4 text-sm font-sans">
-                        <div className="p-3 bg-amber-950/60 border border-amber-600/60 rounded-xl text-amber-200">
-                          <p className="font-bold text-amber-300 text-xs mb-1">🐾 待救援角色狀態 (Cat Status)</p>
-                          <p className="text-sm font-semibold">
-                            名字：<span className="text-yellow-400">尚未命名 (Unnamed)</span>
-                          </p>
-                          <p className="text-xs text-amber-300/80 mt-1">
-                            💡 小小提示：因為還在 Task 1 搜集特徵階段，貓咪尚未被救援，等完成 Task 2 救援後再由小朋友幫牠取名！
-                          </p>
-                        </div>
-
-                        <div>
-                          <label className="block text-slate-300 font-bold mb-1">救援情境關卡 (Rescue Mission Type)</label>
-                          <select
-                            value={deployCatDanger}
-                            onChange={(e) => setDeployCatDanger(e.target.value)}
-                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-indigo-400"
-                          >
-                            <option value="feed">
-                              🥛 {vocabulary.environment.length ? `情境: ${vocabulary.environment.join(', ')}` : '孤單發抖'} ({vocabulary.emotion.join(', ') || 'Cold & Alone'} - Feeding Mission)
-                            </option>
-                            <option value="car_engine">
-                              🚗 {vocabulary.environment.length ? `危險地點: ${vocabulary.environment.join(', ')}` : '躲車底/引擎室'} (Car Engine / Danger Spot Rescue)
-                            </option>
-                          </select>
-                          <p className="text-[11px] text-indigo-300 mt-1">
-                            🎯 關卡已根據小朋友輸入的環境「{vocabulary.environment.join(', ') || '未指定'}」與情緒「{vocabulary.emotion.join(', ') || '未指定'}」自動配對！
-                          </p>
-                        </div>
-
-                        <div className="p-3 bg-slate-800/80 rounded-xl border border-slate-700 text-xs text-slate-300 space-y-1">
-                          <p><span className="text-yellow-400 font-bold">目前定位:</span> X={deployX}, Y={deployY}</p>
-                          <p><span className="text-yellow-400 font-bold">特徵狀態:</span> {vocabulary.color.join('/') || '無特別指定'} / {vocabulary.emotion.join('/') || '無'}</p>
+                      <div className="space-y-4 text-sm font-sans flex flex-col justify-center h-full">
+                        <div className="p-4 bg-slate-800/80 rounded-xl border border-slate-700 text-xs text-slate-300 space-y-2">
+                          <p><span className="text-yellow-400 font-bold text-sm">目前定位:</span> X={deployX}, Y={deployY}</p>
+                          <p><span className="text-yellow-400 font-bold text-sm">特徵狀態:</span> {vocabulary.color.join('/') || '無特別指定'} / {vocabulary.emotion.join('/') || '無'}</p>
                         </div>
 
                         <button
                           onClick={handleDeployToMap}
-                          className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl shadow-lg transition flex items-center justify-center gap-2"
+                          className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-xl shadow-lg transition flex items-center justify-center gap-2 text-base"
                         >
                           <Play size={18} /> 🚀 置入角色至 RPG 地圖 (Deploy Cat)
                         </button>
