@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Camera, Plus, Trash2, ArrowRight, Sparkles, Cat, Heart, ShieldAlert, Loader2, 
   Image as ImageIcon, Wand2, Tag, Key, AlertCircle, Copy, Check, Briefcase, 
-  Stethoscope, CheckCircle2, ShieldCheck, Award, Gamepad2, MapPin, Play, Grid
+  Stethoscope, CheckCircle2, ShieldCheck, Award, Gamepad2, MapPin, Play, Grid,
+  RotateCcw, AlertTriangle, ChevronRight, HelpCircle
 } from 'lucide-react';
 
 const TILE_SIZE = 32;
@@ -98,10 +99,8 @@ export default function CatRescueLesson() {
   const [deployCatDanger, setDeployCatDanger] = useState('feed');
   const [deploySuccessMsg, setDeploySuccessMsg] = useState('');
 
-  // Task 2 Backpack & Interactive States
+  // Task 2 Backpack States
   const [backpack, setBackpack] = useState([]);
-  const [actionChoice1, setActionChoice1] = useState(null); // 'slow' | 'fast'
-  const [actionChoice2, setActionChoice2] = useState(null); // 'food' | 'shout'
   const [vetCheck, setVetCheck] = useState({
     ears: 'dirty',
     eyes: 'clean',
@@ -113,6 +112,14 @@ export default function CatRescueLesson() {
   const [customRescueItems, setCustomRescueItems] = useState([]);
   const [customItemEng, setCustomItemEng] = useState('');
   const [customItemChi, setCustomItemChi] = useState('');
+
+  // Combined Proposal 1 + 2: Branching Decision Tree + Smart Dynamic Generator State
+  const [decisionStep, setDecisionStep] = useState(1); // 1: Approach, 2: Action/Item, 3: Outcome
+  const [trustMeter, setTrustMeter] = useState(50); // Trust level 0-100
+  const [approachChoice, setApproachChoice] = useState(null); // 'slow' | 'fast'
+  const [actionChoice, setActionChoice] = useState(null); // 'backpack_item' | 'shout' | 'grab'
+  const [selectedTool, setSelectedTool] = useState(null);
+  const [feedbackMessage, setFeedbackMessage] = useState('');
 
   // Game Shared Cats State
   const [gameCats, setGameCats] = useState(INITIAL_CATS_DATA);
@@ -353,6 +360,8 @@ export default function CatRescueLesson() {
   };
 
   const currentAnimalName = vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog';
+  const currentEnvName = vocabulary.environment.length ? vocabulary.environment.join('/') : 'street';
+  const currentEmotionName = vocabulary.emotion.length ? vocabulary.emotion.join('/') : 'scared';
 
   const task2Prompt = `[IMPORTANT: MUST strictly match the animal's exact breed, facial markings, and fur color in the uploaded photo!] Create a heartwarming, joyful, and childlike children's book illustration (NOT realistic) of this rescued ${currentAnimalName} successfully saved and happy! The ${currentAnimalName} is now inside a cozy warm room, happily eating ${backpack.map(i => i.eng).join(', ') || 'canned food'}, wrapped in a warm blanket. Its paws and ears are gently checked by a friendly vet. The ${currentAnimalName} looks safe, loved, purring, and extremely happy. Soft pastel colors, warm lighting of hope.`;
 
@@ -446,8 +455,8 @@ export default function CatRescueLesson() {
               setGameCats={setGameCats} 
               vocabulary={vocabulary}
               backpack={backpack}
-              actionChoice1={actionChoice1}
-              actionChoice2={actionChoice2}
+              actionChoice1={approachChoice}
+              actionChoice2={actionChoice}
               vetCheck={vetCheck}
               catImage={catImage}
             />
@@ -868,15 +877,15 @@ export default function CatRescueLesson() {
                       </div>
 
                       {/* Deploy Options Form */}
-                      <div className="space-y-4 text-sm font-sans flex flex-col justify-center h-full">
-                        <div className="p-4 bg-slate-800/80 rounded-xl border border-slate-700 text-xs text-slate-300 space-y-2">
-                          <p><span className="text-yellow-400 font-bold text-sm">目前定位:</span> X={deployX}, Y={deployY}</p>
-                          <p><span className="text-yellow-400 font-bold text-sm">特徵狀態:</span> {vocabulary.color.join('/') || '無特別指定'} / {vocabulary.emotion.join('/') || '無'}</p>
+                      <div className="space-y-4 text-sm font-sans">
+                        <div className="p-3 bg-slate-800/80 rounded-xl border border-slate-700 text-xs text-slate-300 space-y-1">
+                          <p><span className="text-yellow-400 font-bold">目前定位:</span> X={deployX}, Y={deployY}</p>
+                          <p><span className="text-yellow-400 font-bold">特徵狀態:</span> {vocabulary.color.join('/') || '無特別指定'} / {vocabulary.emotion.join('/') || '無'}</p>
                         </div>
 
                         <button
                           onClick={handleDeployToMap}
-                          className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-xl shadow-lg transition flex items-center justify-center gap-2 text-base"
+                          className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl shadow-lg transition flex items-center justify-center gap-2"
                         >
                           <Play size={18} /> 🚀 置入角色至 RPG 地圖 (Deploy Cat)
                         </button>
@@ -970,67 +979,255 @@ export default function CatRescueLesson() {
                     </div>
                   </section>
 
-                  {/* Step 2B: Choose Your Action */}
+                  {/* Step 2B: Choose Your Action - Smart Dynamic Generator + Branching Decision Tree */}
                   <section className="bg-white p-6 rounded-3xl shadow-lg border-2 border-emerald-100 space-y-6">
-                    <h2 className="text-2xl font-bold text-emerald-900 flex items-center">
-                      <span className="bg-emerald-600 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-lg">2B</span>
-                      Choose Your Action (救援行動抉擇)
-                    </h2>
-                    <p className="text-gray-500 text-sm">遇到現場狀況，引導小朋友選擇正確的動作 (Verbs)：</p>
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                      <div>
+                        <h2 className="text-2xl font-bold text-emerald-900 flex items-center">
+                          <span className="bg-emerald-600 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-lg">2B</span>
+                          Choose Your Action (智慧多階救援分歧劇情)
+                        </h2>
+                        <p className="text-gray-500 text-sm mt-1">
+                          結合 Task 1 的動物：<span className="font-bold text-emerald-700">{currentAnimalName}</span>、地點：<span className="font-bold text-emerald-700">{currentEnvName}</span>，展開互動式 RPG 救援！
+                        </p>
+                      </div>
+                      
+                      <button
+                        onClick={() => {
+                          setDecisionStep(1);
+                          setTrustMeter(50);
+                          setApproachChoice(null);
+                          setActionChoice(null);
+                          setSelectedTool(null);
+                          setFeedbackMessage('');
+                        }}
+                        className="bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-bold px-3.5 py-2 rounded-xl border border-emerald-300 transition shadow-sm flex items-center gap-1.5"
+                      >
+                        <RotateCcw size={14} />
+                        <span>重新開始分歧劇情 (Reset)</span>
+                      </button>
+                    </div>
 
-                    <div className="bg-emerald-50/60 p-5 rounded-2xl border border-emerald-200">
-                      <p className="font-bold text-emerald-900 mb-1">狀況一：動物看起來非常緊張！(The animal is scared!)</p>
-                      <p className="text-xs text-emerald-700 mb-3">你該怎麼靠近牠？</p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <button
-                          onClick={() => setActionChoice1('slow')}
-                          className={`p-3 rounded-xl font-bold border-2 text-left flex items-center justify-between transition-all ${
-                            actionChoice1 === 'slow' ? 'bg-emerald-600 text-white border-emerald-700' : 'bg-white border-gray-200 hover:border-emerald-300'
-                          }`}
-                        >
-                          <span>🚶‍♂️ Walk slowly (慢慢走)</span>
-                          {actionChoice1 === 'slow' && <span className="text-xs bg-emerald-800 px-2 py-0.5 rounded">正確! ❤️</span>}
-                        </button>
-                        <button
-                          onClick={() => setActionChoice1('fast')}
-                          className={`p-3 rounded-xl font-bold border-2 text-left flex items-center justify-between transition-all ${
-                            actionChoice1 === 'fast' ? 'bg-red-500 text-white border-red-600' : 'bg-white border-gray-200 hover:border-red-300'
-                          }`}
-                        >
-                          <span>🏃‍♂️ Run fast (快速跑)</span>
-                          {actionChoice1 === 'fast' && <span className="text-xs bg-red-700 px-2 py-0.5 rounded">小動物嚇跑了 💨</span>}
-                        </button>
+                    {/* Task 1 Dynamic Context Card */}
+                    <div className="bg-gradient-to-r from-emerald-900 to-teal-900 text-white p-4 rounded-2xl shadow-md border border-emerald-700">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-xs font-bold bg-amber-400 text-slate-950 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                          <Sparkles size={12} /> Task 1 即時動態聯動情境
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-emerald-200">信任度 (Trust Meter):</span>
+                          <span className={`text-sm font-black font-mono px-2 py-0.5 rounded ${trustMeter >= 70 ? 'bg-emerald-500 text-white' : trustMeter <= 30 ? 'bg-red-500 text-white' : 'bg-yellow-500 text-slate-950'}`}>
+                            {trustMeter}%
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <p className="text-sm md:text-base font-bold text-emerald-100 mt-2">
+                        🚨 現場緊急狀況：一隻在「{currentEnvName}」的 {currentAnimalName}，看起來非常「{currentEmotionName}」！
+                      </p>
+                      
+                      {/* Trust Meter Progress Bar */}
+                      <div className="w-full bg-slate-950/60 h-2.5 rounded-full overflow-hidden mt-3 border border-emerald-600/50">
+                        <div 
+                          className={`h-full transition-all duration-500 ${trustMeter >= 70 ? 'bg-emerald-400' : trustMeter <= 30 ? 'bg-red-400' : 'bg-yellow-400'}`}
+                          style={{ width: `${trustMeter}%` }}
+                        ></div>
                       </div>
                     </div>
 
-                    <div className="bg-emerald-50/60 p-5 rounded-2xl border border-emerald-200">
-                      <p className="font-bold text-emerald-900 mb-1">狀況二：牠躲在車底不肯出來！(Hiding under the car!)</p>
-                      <p className="text-xs text-emerald-700 mb-3">你該怎麼吸引牠？</p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <button
-                          onClick={() => setActionChoice2('food')}
-                          className={`p-3 rounded-xl font-bold border-2 text-left flex items-center justify-between transition-all ${
-                            actionChoice2 === 'food' ? 'bg-emerald-600 text-white border-emerald-700' : 'bg-white border-gray-200 hover:border-emerald-300'
-                          }`}
-                        >
-                          <span>罐頭/食物 (Give food)</span>
-                          {actionChoice2 === 'food' && <span className="text-xs bg-emerald-800 px-2 py-0.5 rounded">好香! 🥩</span>}
-                        </button>
-                        <button
-                          onClick={() => setActionChoice2('shout')}
-                          className={`p-3 rounded-xl font-bold border-2 text-left flex items-center justify-between transition-all ${
-                            actionChoice2 === 'shout' ? 'bg-red-500 text-white border-red-600' : 'bg-white border-gray-200 hover:border-red-300'
-                          }`}
-                        >
-                          <span>🔊 Shout "Come out!" (大聲叫)</span>
-                          {actionChoice2 === 'shout' && <span className="text-xs bg-red-700 px-2 py-0.5 rounded">躲更深了 🙀</span>}
-                        </button>
+                    {/* Multi-Step Decision Steps */}
+                    <div className="space-y-6">
+                      
+                      {/* STEP 1: Approach Selection */}
+                      <div className={`p-5 rounded-2xl border-2 transition-all ${decisionStep === 1 ? 'bg-emerald-50/80 border-emerald-400 shadow-sm' : decisionStep > 1 ? 'bg-slate-50 border-slate-200 opacity-90' : 'bg-slate-50 border-slate-200'}`}>
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-bold text-emerald-950 text-base flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-full bg-emerald-600 text-white text-xs flex items-center justify-center font-bold">1</span>
+                            Step 1: 選擇靠近方式 (Approaching)
+                          </h3>
+                          {decisionStep > 1 && <span className="text-xs font-bold text-emerald-600 flex items-center gap-1"><CheckCircle2 size={14}/> 已完成</span>}
+                        </div>
+                        <p className="text-xs text-gray-600 mb-3">請選擇小朋友該如何接近緊張的動物？</p>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <button
+                            onClick={() => {
+                              setApproachChoice('slow');
+                              setTrustMeter(75);
+                              setDecisionStep(2);
+                              setFeedbackMessage('❤️ 太棒了！輕聲慢步靠近讓動物放下警戒，信任度上升！');
+                            }}
+                            disabled={decisionStep !== 1}
+                            className={`p-3.5 rounded-xl font-bold border-2 text-left transition-all ${
+                              approachChoice === 'slow' 
+                                ? 'bg-emerald-600 text-white border-emerald-700 shadow' 
+                                : decisionStep === 1 
+                                ? 'bg-white text-gray-700 border-gray-200 hover:border-emerald-400' 
+                                : 'bg-gray-100 text-gray-500 border-gray-200'
+                            }`}
+                          >
+                            <p className="text-sm">🚶‍♂️ Walk slowly & softly (輕聲慢步靠近)</p>
+                            <p className="text-[11px] opacity-80 mt-1 font-normal">適合緊張的動物，提升信任度 ❤️</p>
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setApproachChoice('fast');
+                              setTrustMeter(25);
+                              setFeedbackMessage('⚠️ 快速衝過去嚇到了小動物！動物警戒度大幅提升，請試著改用柔和方式！');
+                            }}
+                            disabled={decisionStep !== 1}
+                            className={`p-3.5 rounded-xl font-bold border-2 text-left transition-all ${
+                              approachChoice === 'fast' 
+                                ? 'bg-red-500 text-white border-red-600 shadow' 
+                                : decisionStep === 1 
+                                ? 'bg-white text-gray-700 border-gray-200 hover:border-red-300' 
+                                : 'bg-gray-100 text-gray-500 border-gray-200'
+                            }`}
+                          >
+                            <p className="text-sm">🏃‍♂️ Run fast & shout (快速衝過去並大叫)</p>
+                            <p className="text-[11px] opacity-80 mt-1 font-normal">動作太大會嚇跑動物 💨</p>
+                          </button>
+                        </div>
                       </div>
+
+                      {/* STEP 2: Action & Backpack Item Selection */}
+                      {decisionStep >= 2 && (
+                        <div className={`p-5 rounded-2xl border-2 transition-all ${decisionStep === 2 ? 'bg-emerald-50/80 border-emerald-400 shadow-sm' : 'bg-slate-50 border-slate-200'}`}>
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-bold text-emerald-950 text-base flex items-center gap-2">
+                              <span className="w-6 h-6 rounded-full bg-emerald-600 text-white text-xs flex items-center justify-center font-bold">2</span>
+                              Step 2: 選擇救援動作與背包道具 (Action & Backpack Tools)
+                            </h3>
+                            {decisionStep > 2 && <span className="text-xs font-bold text-emerald-600 flex items-center gap-1"><CheckCircle2 size={14}/> 已完成</span>}
+                          </div>
+                          <p className="text-xs text-gray-600 mb-3">選用背包（Task 2A）裡的道具引誘或協助救援：</p>
+
+                          {backpack.length === 0 ? (
+                            <div className="bg-amber-50 p-3 rounded-xl border border-amber-200 text-xs text-amber-800 flex items-center gap-2 mb-3">
+                              <HelpCircle size={16} className="text-amber-600 shrink-0" />
+                              <span>背包裡目前沒有裝備！您可以先至上方 <b>Step 2A 救援裝備庫</b> 選擇道具，或直接選擇基本動作。</span>
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-3">
+                              {backpack.map((item) => (
+                                <button
+                                  key={item.id}
+                                  onClick={() => {
+                                    setActionChoice('backpack_item');
+                                    setSelectedTool(item);
+                                    setTrustMeter(95);
+                                    setDecisionStep(3);
+                                    setFeedbackMessage(`🎉 太讚了！使用背包裡的【${item.eng} (${item.chi})】順利安撫小動物，完成救援！`);
+                                  }}
+                                  disabled={decisionStep !== 2}
+                                  className={`p-3 rounded-xl border-2 text-left flex items-center gap-2.5 transition-all ${
+                                    selectedTool?.id === item.id 
+                                      ? 'bg-emerald-600 text-white border-emerald-700 shadow' 
+                                      : 'bg-white text-gray-700 border-gray-200 hover:border-emerald-300'
+                                  }`}
+                                >
+                                  <span className="text-2xl">{item.icon}</span>
+                                  <div>
+                                    <p className="text-xs font-bold capitalize">{item.eng}</p>
+                                    <p className="text-[10px] text-gray-400">{item.chi}</p>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                            <button
+                              onClick={() => {
+                                setActionChoice('feed_treat');
+                                setSelectedTool({ eng: 'treats', chi: '點心/罐頭' });
+                                setTrustMeter(90);
+                                setDecisionStep(3);
+                                setFeedbackMessage('🥩 拿食物輕輕餵食！香味誘使動物踏出安全範圍，順利救援成功！');
+                              }}
+                              disabled={decisionStep !== 2}
+                              className="p-3 rounded-xl font-bold border-2 border-gray-200 bg-white hover:border-emerald-300 text-left text-xs"
+                            >
+                              🥩 Offer treats/food (給予罐頭或零食引誘)
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                setActionChoice('shout');
+                                setTrustMeter(15);
+                                setFeedbackMessage('❌ 警報！大聲叫喊反而嚇壞動物，請使用情態助動詞引導孩子：*You should not shout at a scared animal!*');
+                              }}
+                              disabled={decisionStep !== 2}
+                              className="p-3 rounded-xl font-bold border-2 border-gray-200 bg-white hover:border-red-300 text-left text-xs text-red-700"
+                            >
+                              🔊 Shout "Come here!" (大聲尖叫叫牠出來)
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Feedback Banner */}
+                      {feedbackMessage && (
+                        <div className={`p-4 rounded-2xl border flex items-start gap-2.5 text-xs font-bold ${feedbackMessage.includes('⚠️') || feedbackMessage.includes('❌') ? 'bg-red-50 border-red-300 text-red-800' : 'bg-emerald-100 border-emerald-300 text-emerald-950'}`}>
+                          {feedbackMessage.includes('⚠️') || feedbackMessage.includes('❌') ? <AlertTriangle size={18} className="text-red-500 shrink-0 mt-0.5" /> : <Sparkles size={18} className="text-emerald-600 shrink-0 mt-0.5" />}
+                          <div className="space-y-1">
+                            <p className="text-sm">{feedbackMessage}</p>
+                            {(feedbackMessage.includes('⚠️') || feedbackMessage.includes('❌')) && (
+                              <p className="font-mono text-[11px] text-red-600 bg-red-100/80 p-2 rounded-lg mt-1 border border-red-200">
+                                💡 英文句型引導 (Modal Verbs Practice):<br/>
+                                <span className="font-bold">"You should walk slowly."</span> / <span className="font-bold">"You must not shout!"</span>
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* STEP 3: RPG Branching Decision Result & Sentence Synthesis */}
+                      {decisionStep === 3 && (
+                        <div className="bg-gradient-to-br from-emerald-900 to-slate-900 text-white p-5 rounded-2xl border-2 border-emerald-500 space-y-4 shadow-xl">
+                          <div className="flex items-center justify-between border-b border-emerald-700/80 pb-2">
+                            <h3 className="font-bold text-yellow-300 text-base flex items-center gap-2">
+                              <Award size={20} className="text-yellow-400" />
+                              Step 3: 救援成功與英文情態助動詞句型 (Grammar Guidance)
+                            </h3>
+                            <span className="bg-emerald-600 text-white text-xs px-2.5 py-0.5 rounded-full font-bold">RPG Rescue Clear!</span>
+                          </div>
+
+                          <div className="bg-slate-950/70 p-4 rounded-xl border border-emerald-800/80 space-y-2 text-xs md:text-sm font-mono leading-relaxed">
+                            <p className="text-emerald-300 font-bold">📜 救援分歧劇情戰報 (Rescue Branch Log):</p>
+                            <p>1. Target Animal: <span className="text-yellow-300">{currentAnimalName}</span> found in <span className="text-yellow-300">{currentEnvName}</span> ({currentEmotionName}).</p>
+                            <p>2. Approach: <span className="text-emerald-400">Walked slowly and softly</span> (Trust: {trustMeter}%).</p>
+                            <p>3. Rescue Tool: Used <span className="text-emerald-400">{selectedTool?.eng || 'canned food'}</span> from backpack!</p>
+                          </div>
+
+                          <div className="bg-emerald-950/90 p-4 rounded-xl border border-emerald-600 text-xs md:text-sm text-emerald-100 space-y-1.5">
+                            <p className="font-bold text-yellow-300">💡 課堂句型（Modal Verbs: Should / Must）：</p>
+                            <p>• To save a scared {currentAnimalName}, you <span className="font-bold text-yellow-300 underline">should walk slowly</span>.</p>
+                            <p>• You <span className="font-bold text-yellow-300 underline">can use {selectedTool?.eng || 'canned food'}</span> to lure the animal safely.</p>
+                          </div>
+
+                          <div className="pt-2 flex justify-end">
+                            <button
+                              onClick={() => {
+                                // Direct scroll or focus logic to 2C
+                                const el = document.getElementById('step-vet-check');
+                                if (el) el.scrollIntoView({ behavior: 'smooth' });
+                              }}
+                              className="bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-bold px-5 py-2.5 rounded-xl text-xs transition shadow-md flex items-center gap-1.5"
+                            >
+                              <span>前往 Step 2C 獸醫檢查 (Next: Vet Check)</span>
+                              <ChevronRight size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
                     </div>
                   </section>
 
                   {/* Step 2C: Vet Check-up */}
-                  <section className="bg-white p-6 rounded-3xl shadow-lg border-2 border-emerald-100">
+                  <section id="step-vet-check" className="bg-white p-6 rounded-3xl shadow-lg border-2 border-emerald-100">
                     <h2 className="text-2xl font-bold text-emerald-900 flex items-center mb-2">
                       <span className="bg-emerald-600 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-lg">2C</span>
                       Vet Check-up (獸醫初步檢查)
@@ -1074,7 +1271,7 @@ export default function CatRescueLesson() {
                     </h2>
                     <div className="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-200 space-y-3 text-lg text-emerald-950 font-medium">
                       <p>We brought a <span className="font-bold text-emerald-700 underline">{backpack.length ? backpack.map(i => i.eng).join(', ') : 'carrier and blanket'}</span> to rescue the {currentAnimalName}.</p>
-                      <p>We <span className="font-bold text-emerald-700 underline">{actionChoice1 === 'slow' ? 'walked slowly' : 'approached'}</span> and gave it <span className="font-bold text-emerald-700 underline">{actionChoice2 === 'food' ? 'delicious food' : 'a warm welcome'}</span>.</p>
+                      <p>We <span className="font-bold text-emerald-700 underline">{approachChoice === 'slow' ? 'walked slowly' : 'approached carefully'}</span> and gave it <span className="font-bold text-emerald-700 underline">{selectedTool?.eng || 'delicious food'}</span>.</p>
                       <p>At the vet: Its ears are <span className="font-bold text-emerald-700 underline">{vetCheck.ears}</span>, but its body is <span className="font-bold text-emerald-700 underline">{vetCheck.body}</span> now!</p>
                     </div>
                   </section>
@@ -1179,14 +1376,6 @@ function PawsAndPlay({
     targetX: 7, targetY: 17, 
     moving: false, speed: 2
   });
-
-  const speak = (text) => {
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'en-US';
-      window.speechSynthesis.speak(utterance);
-    }
-  };
 
   const generateImagePrompt = (cat) => {
     let situation = "";
