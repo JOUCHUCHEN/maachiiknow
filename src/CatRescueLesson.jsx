@@ -336,8 +336,9 @@ export default function CatRescueLesson() {
 
     if (category === 'size') {
       let sizeClass = "scale-100";
-      if (['small', 'tiny', 'little', 'mini'].includes(w)) sizeClass = "scale-50";
-      if (['big', 'large', 'huge', 'fat', 'giant'].includes(w)) sizeClass = "scale-150";
+      const cleanW = w.replace('-sized', '');
+      if (['small', 'tiny', 'little', 'mini'].includes(cleanW)) sizeClass = "scale-50";
+      if (['big', 'large', 'huge', 'fat', 'giant'].includes(cleanW)) sizeClass = "scale-150";
       return (
         <div className="w-full h-full flex items-center justify-center bg-blue-50 rounded-xl overflow-hidden shadow-inner">
           <Cat size={60} className={`text-blue-500 transition-transform duration-500 ${sizeClass}`} />
@@ -746,11 +747,11 @@ export default function CatRescueLesson() {
                       </div>
                       <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-200 shadow-sm">
                         <p className="mb-2 text-sm font-bold text-blue-400 uppercase tracking-wider">Details</p>
-                        <p>It is a {formatList(vocabulary.size)}, {formatList(vocabulary.age)} {formatList(vocabulary.animal)}.</p>
+                        <p>It is a {vocabulary.size.length ? formatList(vocabulary.size.map(s => s.endsWith('-sized') ? s : `${s}-sized`)) : <span className="text-gray-400 border-b-2 border-dashed border-gray-300 px-4">________-sized</span>}, {formatList(vocabulary.age)} {formatList(vocabulary.animal)}.</p>
                       </div>
                       <div className="bg-red-50/50 p-6 rounded-2xl border border-red-200 shadow-sm">
                         <p className="mb-2 text-sm font-bold text-red-400 uppercase tracking-wider">Feelings</p>
-                        <p>The poor {formatList(vocabulary.animal)} looks {formatList(vocabulary.emotion)}.</p>
+                        <p>The poor {formatList(vocabulary.animal)} feels {formatList(vocabulary.emotion)}.</p>
                       </div>
                       <div className="bg-purple-50/50 p-6 rounded-2xl border border-purple-200 shadow-sm">
                         <p className="mb-2 text-sm font-bold text-purple-400 uppercase tracking-wider">Background</p>
@@ -785,7 +786,7 @@ export default function CatRescueLesson() {
                         <div className="bg-slate-800 p-4 rounded-xl border border-slate-600 text-slate-300 text-sm md:text-base leading-relaxed break-words">
                           [IMPORTANT: Please strictly base the animal's appearance, colors, and markings on the uploaded photo!]<br/><br/>
                           Create a cute, playful, and childlike children's book illustration (NOT realistic) of this rescued {vocabulary.animal.length ? vocabulary.animal.join('/') : '[cat/dog]'} waiting for help.<br/>
-                          The {vocabulary.animal.length ? vocabulary.animal.join('/') : '[cat/dog]'} is {vocabulary.size.length ? vocabulary.size.join(', ') : '[Size]'}, {vocabulary.age.length ? vocabulary.age.join(', ') : '[Age]'}, and has {vocabulary.color.length ? vocabulary.color.join(' and ') : '[Color]'} fur.<br/>
+                          The {vocabulary.animal.length ? vocabulary.animal.join('/') : '[cat/dog]'} is {vocabulary.size.length ? vocabulary.size.map(s => s.endsWith('-sized') ? s : `${s}-sized`).join(', ') : '[Size]-sized'}, {vocabulary.age.length ? vocabulary.age.join(', ') : '[Age]'}, and has {vocabulary.color.length ? vocabulary.color.join(' and ') : '[Color]'} fur.<br/>
                           It is currently trapped or found in {vocabulary.environment.length ? vocabulary.environment.join(', ') : '[Place]'}.<br/>
                           The poor {vocabulary.animal.length ? vocabulary.animal.join('/') : '[cat/dog]'} looks {vocabulary.emotion.length ? vocabulary.emotion.join(' and ') : '[Emotion]'}.<br/>
                           Special features: {vocabulary.other.length ? vocabulary.other.join(', ') : '[Other traits]'}.<br/>
@@ -795,7 +796,7 @@ export default function CatRescueLesson() {
                         <div className="pt-4 flex flex-col sm:flex-row gap-4 items-center">
                            <button 
                              onClick={() => {
-                               const promptText = `[IMPORTANT: Please strictly base the animal's appearance, colors, and markings on the uploaded photo!] Create a cute, playful, and childlike children's book illustration (NOT realistic) of this rescued ${vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog'} waiting for help. The ${vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog'} is ${vocabulary.size.length ? vocabulary.size.join(', ') : 'medium'}, ${vocabulary.age.length ? vocabulary.age.join(', ') : 'unknown age'}, and has ${vocabulary.color.length ? vocabulary.color.join(' and ') : 'unspecified'} fur. It is currently trapped or found in ${vocabulary.environment.length ? vocabulary.environment.join(', ') : 'an unknown place'}. The poor ${vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog'} looks ${vocabulary.emotion.length ? vocabulary.emotion.join(' and ') : 'anxious'}. Special features: ${vocabulary.other.length ? vocabulary.other.join(', ') : 'none'}. The atmosphere shows its rescue situation, slightly dramatic but with a warm, comforting light of hope shining on it.`;
+                               const promptText = `[IMPORTANT: Please strictly base the animal's appearance, colors, and markings on the uploaded photo!] Create a cute, playful, and childlike children's book illustration (NOT realistic) of this rescued ${vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog'} waiting for help. The ${vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog'} is ${vocabulary.size.length ? vocabulary.size.map(s => s.endsWith('-sized') ? s : `${s}-sized`).join(', ') : 'medium-sized'}, ${vocabulary.age.length ? vocabulary.age.join(', ') : 'unknown age'}, and has ${vocabulary.color.length ? vocabulary.color.join(' and ') : 'unspecified'} fur. It is currently trapped or found in ${vocabulary.environment.length ? vocabulary.environment.join(', ') : 'an unknown place'}. The poor ${vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog'} looks ${vocabulary.emotion.length ? vocabulary.emotion.join(' and ') : 'anxious'}. Special features: ${vocabulary.other.length ? vocabulary.other.join(', ') : 'none'}. The atmosphere shows its rescue situation, slightly dramatic but with a warm, comforting light of hope shining on it.`;
                                navigator.clipboard.writeText(promptText);
                                setIsCopied(true);
                                setTimeout(() => setIsCopied(false), 2000);
