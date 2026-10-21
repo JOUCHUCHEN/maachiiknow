@@ -354,6 +354,48 @@ export default function CatRescueLesson() {
     );
   };
 
+  const formatLocationSentence = (arr) => {
+    if (!arr || arr.length === 0) {
+      return (
+        <span>
+          It's in the <span className="text-gray-400 border-b-2 border-dashed border-gray-300 px-4">________</span>.
+        </span>
+      );
+    }
+
+    const formattedPlaces = arr.map(item => {
+      const lower = item.trim().toLowerCase();
+      if (/^(in|on|at|under|behind|inside|near|by)\b/.test(lower)) {
+        return lower;
+      }
+      let prep = 'in the';
+      if (['street', 'road', 'roof', 'balcony', 'top', 'wall', 'ground', 'sidewalk'].some(w => lower.includes(w))) {
+        prep = 'on the';
+      } else if (['tree', 'table', 'car hood', 'bed', 'bridge', 'bench'].some(w => lower.includes(w))) {
+        prep = 'under the';
+      } else if (['car engine', 'box', 'cardboard', 'park', 'alley', 'rain', 'drain', 'house', 'room', 'cage', 'bush', 'forest'].some(w => lower.includes(w))) {
+        prep = 'in the';
+      }
+      return `${prep} ${lower}`;
+    });
+
+    if (formattedPlaces.length === 1) {
+      return (
+        <span>
+          It's <span className="font-bold text-orange-600 border-b-2 border-orange-400 px-1">{formattedPlaces[0]}</span>.
+        </span>
+      );
+    }
+
+    const last = formattedPlaces[formattedPlaces.length - 1];
+    const initial = formattedPlaces.slice(0, formattedPlaces.length - 1).join(', ');
+    return (
+      <span>
+        It's <span className="font-bold text-orange-600 border-b-2 border-orange-400 px-1">{initial} and {last}</span>.
+      </span>
+    );
+  };
+
   const categories = [
     { id: 'animal', label: 'Cat or Dog (貓或狗)', icon: <Cat size={18} className="mr-2 text-indigo-500"/>, placeholder: 'e.g., cat, dog' },
     { id: 'color', label: 'Color (顏色)', icon: <Sparkles size={18} className="mr-2 text-yellow-500"/>, placeholder: 'e.g., black, white, orange' },
@@ -553,7 +595,44 @@ export default function CatRescueLesson() {
         {/* ==================== TASK 3: ADOPTION FLYER TAB ==================== */}
         {activeTab === 'task3' && (
           <div className="max-w-4xl mx-auto space-y-6">
-            <section className="bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900 text-white p-6 md:p-8 rounded-3xl shadow-2xl border-4 border-purple-600 space-y-6">
+            {gameCats.length > 0 ? (
+              <section className="bg-white p-8 md:p-12 rounded-3xl shadow-xl border-4 border-purple-200 text-center space-y-6">
+                <div className="w-20 h-20 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner">
+                  🔒
+                </div>
+                <div className="space-y-2">
+                  <h2 className="text-2xl md:text-3xl font-black text-purple-900">
+                    Task 3 領養宣傳單尚未解鎖 (Adoption Flyer Locked)
+                  </h2>
+                  <p className="text-gray-600 text-sm md:text-base max-w-xl mx-auto">
+                    請先前往 <span className="font-bold text-indigo-600">[2D RPG 遊戲 (Paws & Play)]</span> 完成所有待救援動物的任務！
+                  </p>
+                </div>
+
+                <div className="bg-purple-50 p-4 rounded-2xl border border-purple-200 max-w-md mx-auto text-left text-xs space-y-2">
+                  <div className="flex items-center justify-between font-bold text-purple-900">
+                    <span>🎮 遊戲救援進度 (Game Rescue Progress):</span>
+                    <span className="text-purple-700 font-mono text-sm">{gameCats.length} 隻待救援</span>
+                  </div>
+                  <div className="w-full bg-purple-200 h-2.5 rounded-full overflow-hidden">
+                    <div 
+                      className="bg-purple-600 h-full transition-all duration-500"
+                      style={{ width: `${Math.max(0, ((INITIAL_CATS_DATA.length - gameCats.length) / INITIAL_CATS_DATA.length) * 100)}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-gray-500 text-[11px]">全數完成遊戲地圖上的浪浪救援後，系統將會自動解鎖這份專業英文領養宣傳單！</p>
+                </div>
+
+                <button
+                  onClick={() => setActiveTab('game')}
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold px-8 py-3.5 rounded-2xl shadow-lg hover:shadow-indigo-300/50 transition-all text-sm inline-flex items-center gap-2 scale-105"
+                >
+                  <Gamepad2 size={20} className="text-yellow-300" />
+                  <span>前往 2D RPG 遊戲展開救援 ➔</span>
+                </button>
+              </section>
+            ) : (
+              <section className="bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900 text-white p-6 md:p-8 rounded-3xl shadow-2xl border-4 border-purple-600 space-y-6">
               
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-purple-700/80 pb-4">
                 <div>
@@ -709,6 +788,7 @@ export default function CatRescueLesson() {
               </div>
 
             </section>
+            )}
           </div>
         )}
 
@@ -1006,7 +1086,7 @@ export default function CatRescueLesson() {
                       </div>
                       <div className="bg-purple-50/50 p-6 rounded-2xl border border-purple-200 shadow-sm">
                         <p className="mb-2 text-sm font-bold text-purple-400 uppercase tracking-wider">Background</p>
-                        <p>It was found in the {formatList(vocabulary.environment)}.</p>
+                        <p>{formatLocationSentence(vocabulary.environment)}</p>
                       </div>
                       <div className="bg-teal-50/50 p-6 rounded-2xl border border-teal-200 shadow-sm md:col-span-2">
                         <p className="mb-2 text-sm font-bold text-teal-400 uppercase tracking-wider">Other Features</p>
@@ -1990,6 +2070,30 @@ function PawsAndPlay({
           <p className="leading-tight">地圖移動尋找 🐈，遭遇小貓即可使用此後背包內的道具展開救援！</p>
         </div>
       </div>
+
+      {/* Victory Celebration when Game is Completed */}
+      {gameState === 'MAP' && gameCats.length === 0 && (
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-md flex justify-center items-center z-30 p-4 text-center">
+          <div className="bg-gradient-to-b from-purple-900 to-indigo-950 border-4 border-yellow-400 p-6 md:p-8 rounded-3xl max-w-md text-white shadow-2xl space-y-4">
+            <div className="text-6xl animate-bounce">🏆</div>
+            <h2 className="text-2xl md:text-3xl font-black text-yellow-300">
+              ALL ANIMALS RESCUED!
+            </h2>
+            <p className="text-xs md:text-sm text-purple-200 leading-relaxed">
+              恭喜完成 2D RPG 遊戲！地圖上所有的浪浪都被你安全救援了！
+            </p>
+            <div className="bg-purple-900/60 p-3 rounded-xl border border-purple-500 text-xs text-yellow-200 font-bold">
+              ✨ Task 3 愛心領養宣傳單 (Adoption Flyer) 已成功解鎖！
+            </div>
+            <button
+              onClick={() => setActiveTab('task3')}
+              className="w-full bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-black py-3 px-6 rounded-xl shadow-lg transition flex items-center justify-center gap-2 text-sm"
+            >
+              <HeartHandshake size={20} /> 前往 Task 3 製作領養宣傳單 ➔
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* OVERLAYS: Start, Mini-game, Profile modals */}
       {gameState !== 'MAP' && (
