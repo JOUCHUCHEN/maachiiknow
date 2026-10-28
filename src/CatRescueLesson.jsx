@@ -1076,6 +1076,10 @@ export default function CatRescueLesson() {
                         <p className="mb-2 text-sm font-bold text-orange-400 uppercase tracking-wider">Appearance</p>
                         <p>Look at the {formatList(vocabulary.animal)}! It's {formatList(vocabulary.color)}.</p>
                       </div>
+                      <div className="bg-purple-50/50 p-6 rounded-2xl border border-purple-200 shadow-sm">
+                        <p className="mb-2 text-sm font-bold text-purple-400 uppercase tracking-wider">Background</p>
+                        <p>{formatLocationSentence(vocabulary.environment)}</p>
+                      </div>
                       <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-200 shadow-sm">
                         <p className="mb-2 text-sm font-bold text-blue-400 uppercase tracking-wider">Details</p>
                         <p>It is a {vocabulary.size.length ? formatList(vocabulary.size.map(s => s.endsWith('-sized') ? s : `${s}-sized`)) : <span className="text-gray-400 border-b-2 border-dashed border-gray-300 px-4">________-sized</span>}, {formatList(vocabulary.age)} {formatList(vocabulary.animal)}.</p>
@@ -1083,10 +1087,6 @@ export default function CatRescueLesson() {
                       <div className="bg-red-50/50 p-6 rounded-2xl border border-red-200 shadow-sm">
                         <p className="mb-2 text-sm font-bold text-red-400 uppercase tracking-wider">Feelings</p>
                         <p>The poor {formatList(vocabulary.animal)} looks {formatList(vocabulary.emotion)}.</p>
-                      </div>
-                      <div className="bg-purple-50/50 p-6 rounded-2xl border border-purple-200 shadow-sm">
-                        <p className="mb-2 text-sm font-bold text-purple-400 uppercase tracking-wider">Background</p>
-                        <p>{formatLocationSentence(vocabulary.environment)}</p>
                       </div>
                       <div className="bg-teal-50/50 p-6 rounded-2xl border border-teal-200 shadow-sm md:col-span-2">
                         <p className="mb-2 text-sm font-bold text-teal-400 uppercase tracking-wider">Other Features</p>
