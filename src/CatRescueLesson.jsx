@@ -1082,7 +1082,7 @@ export default function CatRescueLesson() {
                       </div>
                       <div className="bg-red-50/50 p-6 rounded-2xl border border-red-200 shadow-sm">
                         <p className="mb-2 text-sm font-bold text-red-400 uppercase tracking-wider">Feelings</p>
-                        <p>The poor {formatList(vocabulary.animal)} feels {formatList(vocabulary.emotion)}.</p>
+                        <p>The poor {formatList(vocabulary.animal)} looks {formatList(vocabulary.emotion)}.</p>
                       </div>
                       <div className="bg-purple-50/50 p-6 rounded-2xl border border-purple-200 shadow-sm">
                         <p className="mb-2 text-sm font-bold text-purple-400 uppercase tracking-wider">Background</p>
