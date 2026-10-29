@@ -396,13 +396,14 @@ export default function CatRescueLesson() {
     );
   };
 
+  // Re-ordered categories to place Danger/Place (危險/環境) / Background right between Appearance (Animal & Color) and Details (Size & Age)
   const categories = [
     { id: 'animal', label: 'Cat or Dog (貓或狗)', icon: <Cat size={18} className="mr-2 text-indigo-500"/>, placeholder: 'e.g., cat, dog' },
     { id: 'color', label: 'Color (顏色)', icon: <Sparkles size={18} className="mr-2 text-yellow-500"/>, placeholder: 'e.g., black, white, orange' },
+    { id: 'environment', label: 'Danger/Place (危險/環境)', icon: <ShieldAlert size={18} className="mr-2 text-purple-500"/>, placeholder: 'e.g., street, rain, cold' },
     { id: 'size', label: 'Size (大小)', icon: <Cat size={18} className="mr-2 text-blue-500"/>, placeholder: 'e.g., small, tiny, big' },
     { id: 'age', label: 'Age (年紀)', icon: <Heart size={18} className="mr-2 text-pink-500"/>, placeholder: 'e.g., young, baby, old' },
     { id: 'emotion', label: 'Feelings (情緒)', icon: <Heart size={18} className="mr-2 text-red-500"/>, placeholder: 'e.g., scared, sad, hungry' },
-    { id: 'environment', label: 'Danger/Place (危險/環境)', icon: <ShieldAlert size={18} className="mr-2 text-purple-500"/>, placeholder: 'e.g., street, rain, cold' },
     { id: 'other', label: 'Other (其他)', icon: <Tag size={18} className="mr-2 text-teal-500"/>, placeholder: 'e.g., cute, fast, noisy' }
   ];
 
@@ -523,7 +524,7 @@ export default function CatRescueLesson() {
           <p className="text-base md:text-lg text-gray-600 font-medium">從「觀察描述」到「展開救援與健康檢查」，最後完成「領養宣傳單」！</p>
         </header>
 
-        {}
+        {/* Tab Bar */}
         <div className="flex justify-center border-b border-orange-200 pb-2">
           <div className="bg-orange-100 p-1.5 rounded-2xl flex flex-wrap justify-center gap-2 shadow-inner">
             <button
@@ -683,7 +684,6 @@ export default function CatRescueLesson() {
                 </div>
               </div>
 
-              {}
               {/* PRINTABLE ADOPTION FLYER POSTER */}
               <div className="bg-white text-gray-800 p-6 md:p-8 rounded-3xl shadow-2xl border-4 border-amber-300 relative overflow-hidden font-sans">
                 <div className="absolute top-0 right-0 bg-yellow-400 text-slate-950 font-black text-xs px-6 py-2 rounded-bl-2xl uppercase tracking-widest shadow">
@@ -839,7 +839,6 @@ export default function CatRescueLesson() {
                 </div>
               </section>
 
-              {}
               {/* Task 2 Live Backpack (Shown on Task 2 tab) */}
               {activeTab === 'task2' && (
                 <section className="bg-emerald-900 text-white p-5 rounded-3xl shadow-xl border-4 border-emerald-800">
@@ -1062,7 +1061,7 @@ export default function CatRescueLesson() {
                     </div>
                   </section>
 
-                  {/* Step 4: Magic Sentences */}
+                  {/* Step 4: Magic Sentences - Placed Danger/Place (Background) right between Appearance and Details */}
                   <section className="bg-white p-6 rounded-3xl shadow-lg border-2 border-orange-100 relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-orange-100 rounded-bl-full -z-10 opacity-50"></div>
                     
@@ -1077,7 +1076,7 @@ export default function CatRescueLesson() {
                         <p>Look at the {formatList(vocabulary.animal)}! It's {formatList(vocabulary.color)}.</p>
                       </div>
                       <div className="bg-purple-50/50 p-6 rounded-2xl border border-purple-200 shadow-sm">
-                        <p className="mb-2 text-sm font-bold text-purple-400 uppercase tracking-wider">Background</p>
+                        <p className="mb-2 text-sm font-bold text-purple-400 uppercase tracking-wider">Danger/Place (Background)</p>
                         <p>{formatLocationSentence(vocabulary.environment)}</p>
                       </div>
                       <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-200 shadow-sm">
@@ -1095,7 +1094,7 @@ export default function CatRescueLesson() {
                     </div>
                   </section>
 
-                  {/* Step 5: RPG Character Unlocked */}
+                  {/* Step 5: RPG Character Unlocked - Prompt adjusted to place Danger/Place (Background) between Appearance and Details */}
                   <section className="bg-slate-800 p-6 md:p-8 rounded-3xl shadow-2xl text-white relative border-4 border-slate-700">
                     <h2 className="text-2xl font-bold flex items-center mb-6 text-yellow-400">
                       <span className="bg-yellow-500 text-slate-900 w-8 h-8 rounded-full flex items-center justify-center mr-3 text-lg font-black">5</span>
@@ -1117,8 +1116,9 @@ export default function CatRescueLesson() {
                         <div className="bg-slate-800 p-4 rounded-xl border border-slate-600 text-slate-300 text-sm md:text-base leading-relaxed break-words">
                           [IMPORTANT: Please strictly base the animal's appearance, colors, and markings on the uploaded photo!]<br/><br/>
                           Create a cute, playful, and childlike children's book illustration (NOT realistic) of this rescued {vocabulary.animal.length ? vocabulary.animal.join('/') : '[cat/dog]'} waiting for help.<br/>
-                          The {vocabulary.animal.length ? vocabulary.animal.join('/') : '[cat/dog]'} is {vocabulary.size.length ? vocabulary.size.map(s => s.endsWith('-sized') ? s : `${s}-sized`).join(', ') : '[Size]-sized'}, {vocabulary.age.length ? vocabulary.age.join(', ') : '[Age]'}, and has {vocabulary.color.length ? vocabulary.color.join(' and ') : '[Color]'} fur.<br/>
+                          It has {vocabulary.color.length ? vocabulary.color.join(' and ') : '[Color]'} fur.<br/>
                           It is currently trapped or found in {vocabulary.environment.length ? vocabulary.environment.join(', ') : '[Place]'}.<br/>
+                          The {vocabulary.animal.length ? vocabulary.animal.join('/') : '[cat/dog]'} is {vocabulary.size.length ? vocabulary.size.map(s => s.endsWith('-sized') ? s : `${s}-sized`).join(', ') : '[Size]-sized'} and {vocabulary.age.length ? vocabulary.age.join(', ') : '[Age]'}.<br/>
                           The poor {vocabulary.animal.length ? vocabulary.animal.join('/') : '[cat/dog]'} looks {vocabulary.emotion.length ? vocabulary.emotion.join(' and ') : '[Emotion]'}.<br/>
                           Special features: {vocabulary.other.length ? vocabulary.other.join(', ') : '[Other traits]'}.<br/>
                           The atmosphere shows its rescue situation, slightly dramatic but with a warm, comforting light of hope shining on it.
@@ -1127,7 +1127,7 @@ export default function CatRescueLesson() {
                         <div className="pt-4 flex flex-col sm:flex-row gap-4 items-center">
                            <button 
                              onClick={() => {
-                               const promptText = `[IMPORTANT: Please strictly base the animal's appearance, colors, and markings on the uploaded photo!] Create a cute, playful, and childlike children's book illustration (NOT realistic) of this rescued ${vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog'} waiting for help. The ${vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog'} is ${vocabulary.size.length ? vocabulary.size.map(s => s.endsWith('-sized') ? s : `${s}-sized`).join(', ') : 'medium-sized'}, ${vocabulary.age.length ? vocabulary.age.join(', ') : 'unknown age'}, and has ${vocabulary.color.length ? vocabulary.color.join(' and ') : 'unspecified'} fur. It is currently trapped or found in ${vocabulary.environment.length ? vocabulary.environment.join(', ') : 'an unknown place'}. The poor ${vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog'} looks ${vocabulary.emotion.length ? vocabulary.emotion.join(' and ') : 'anxious'}. Special features: ${vocabulary.other.length ? vocabulary.other.join(', ') : 'none'}. The atmosphere shows its rescue situation, slightly dramatic but with a warm, comforting light of hope shining on it.`;
+                               const promptText = `[IMPORTANT: Please strictly base the animal's appearance, colors, and markings on the uploaded photo!] Create a cute, playful, and childlike children's book illustration (NOT realistic) of this rescued ${vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog'} waiting for help. It has ${vocabulary.color.length ? vocabulary.color.join(' and ') : 'unspecified'} fur. It is currently trapped or found in ${vocabulary.environment.length ? vocabulary.environment.join(', ') : 'an unknown place'}. The ${vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog'} is ${vocabulary.size.length ? vocabulary.size.map(s => s.endsWith('-sized') ? s : `${s}-sized`).join(', ') : 'medium-sized'} and ${vocabulary.age.length ? vocabulary.age.join(', ') : 'unknown age'}. The poor ${vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog'} looks ${vocabulary.emotion.length ? vocabulary.emotion.join(' and ') : 'anxious'}. Special features: ${vocabulary.other.length ? vocabulary.other.join(', ') : 'none'}. The atmosphere shows its rescue situation, slightly dramatic but with a warm, comforting light of hope shining on it.`;
                                navigator.clipboard.writeText(promptText);
                                setIsCopied(true);
                                setTimeout(() => setIsCopied(false), 2000);
@@ -1278,7 +1278,6 @@ export default function CatRescueLesson() {
                       })}
                     </div>
 
-                    {}
                     {/* Bi-directional Custom Rescue Item Generator */}
                     <div className="bg-emerald-50/80 p-4 rounded-2xl border border-emerald-200">
                       <p className="font-bold text-emerald-900 text-sm mb-1 flex items-center gap-1.5">
@@ -1570,7 +1569,6 @@ export default function CatRescueLesson() {
                     </div>
                   </section>
 
-                  {}
                   {/* Step 2C: Vet Check-up (With Infectious Disease Check & Vaccination) */}
                   <section id="step-vet-check" className="bg-white p-6 rounded-3xl shadow-lg border-2 border-emerald-100 space-y-6">
                     <div>
@@ -2003,7 +2001,6 @@ function PawsAndPlay({
         )}
       </div>
 
-      {}
       {/* RIGHT: Dynamic Rescue Bag Sidebar Panel */}
       <div className="w-60 sm:w-72 md:w-80 h-full bg-gradient-to-b from-amber-900 via-amber-950 to-slate-950 border-l-4 border-amber-700/80 p-3.5 sm:p-4 flex flex-col justify-between overflow-y-auto z-10 shadow-2xl shrink-0">
         
@@ -2121,7 +2118,6 @@ function PawsAndPlay({
             </div>
           )}
 
-          {}
           {/* Mini-Game: Feeding */}
           {gameState === 'MINIGAME' && activeCat?.rescueType === 'feed' && (
             <div className="bg-white p-6 rounded-2xl w-full max-w-sm text-center shadow-2xl border-4 border-blue-400 relative">
@@ -2184,8 +2180,8 @@ function PawsAndPlay({
                   <div className="bg-slate-100 p-2.5 rounded-xl border border-slate-300 text-xs text-left mb-3 space-y-1">
                     <p>🧪 Disease Test: <span className="font-bold text-emerald-700">{vetCheck.disease}</span></p>
                     <p>💉 Vaccine: <span className="font-bold text-emerald-700">{vetCheck.vaccine}</span></p>
-                    <p>👂 Ears: <span className="font-bold text-emerald-700">{vetCheck.ears}</span></p>
-                    <p>👀 Eyes: <span className="font-bold text-emerald-700">{vetCheck.eyes}</span></p>
+                    <p>耳 Ears: <span className="font-bold text-emerald-700">{vetCheck.ears}</span></p>
+                    <p>眼 Eyes: <span className="font-bold text-emerald-700">{vetCheck.eyes}</span></p>
                   </div>
                   <button onClick={finishMiniGame} className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2.5 px-4 rounded-xl shadow text-xs active:scale-95">🏥 Complete Rescue & Vet Check</button>
                 </>
@@ -2245,7 +2241,6 @@ function PawsAndPlay({
             </div>
           )}
 
-          {}
           {/* Profile Card & Task 3 Adoption Entry Modal */}
           {gameState === 'PROFILE' && activeCat && (
             <div className="bg-white p-6 rounded-2xl w-full max-w-sm text-center shadow-2xl border-4 border-indigo-500 relative max-h-[85vh] overflow-y-auto">
