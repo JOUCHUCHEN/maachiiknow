@@ -240,9 +240,37 @@ export default function CatRescueLesson() {
     setBackpack(prev => prev.filter(i => i.id !== itemId));
   };
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
+      const isHeic = file.type === 'image/heic' || file.type === 'image/heif' || file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
+      if (isHeic) {
+        try {
+          if (!window.heic2any) {
+            await new Promise((resolve, reject) => {
+              const script = document.createElement('script');
+              script.src = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
+              script.onload = resolve;
+              script.onerror = reject;
+              document.head.appendChild(script);
+            });
+          }
+          const convertedBlob = await window.heic2any({
+            blob: file,
+            toType: 'image/jpeg',
+            quality: 0.8
+          });
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setCatImage(reader.result);
+          };
+          reader.readAsDataURL(Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob);
+          return;
+        } catch (err) {
+          console.error("HEIC conversion error:", err);
+        }
+      }
+
       const reader = new FileReader();
       reader.onloadend = () => {
         setCatImage(reader.result);
