@@ -89,6 +89,8 @@ export default function CatRescueLesson() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [flashcards, setFlashcards] = useState([]);
   const [catImage, setCatImage] = useState(null);
+  const [isConvertingImage, setIsConvertingImage] = useState(false);
+  const [imageUploadError, setImageUploadError] = useState('');
   const [isCopied, setIsCopied] = useState(false);
   const [isAvatarPromptCopied, setIsAvatarPromptCopied] = useState(false);
   
@@ -241,42 +243,67 @@ export default function CatRescueLesson() {
   };
 
   const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const isHeic = file.type === 'image/heic' || file.type === 'image/heif' || file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
-      if (isHeic) {
-        try {
-          if (!window.heic2any) {
-            await new Promise((resolve, reject) => {
-              const script = document.createElement('script');
-              script.src = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
-              script.onload = resolve;
-              script.onerror = reject;
-              document.head.appendChild(script);
-            });
-          }
-          const convertedBlob = await window.heic2any({
-            blob: file,
-            toType: 'image/jpeg',
-            quality: 0.8
-          });
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            setCatImage(reader.result);
-          };
-          reader.readAsDataURL(Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob);
-          return;
-        } catch (err) {
-          console.error("HEIC conversion error:", err);
-        }
-      }
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setCatImage(reader.result);
-      };
-      reader.readAsDataURL(file);
+    setImageUploadError('');
+
+    const fileName = file.name.toLowerCase();
+    const isHeic = file.type === 'image/heic' || 
+                   file.type === 'image/heif' || 
+                   fileName.endsWith('.heic') || 
+                   fileName.endsWith('.heif');
+
+    if (isHeic) {
+      setIsConvertingImage(true);
+      try {
+        if (!window.heic2any) {
+          await new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/heic2any@0.0.4/dist/heic2any.min.js';
+            script.onload = resolve;
+            script.onerror = () => reject(new Error("HEIC 轉換套件載入失敗"));
+            document.head.appendChild(script);
+          });
+        }
+
+        const convertedBlob = await window.heic2any({
+          blob: file,
+          toType: 'image/jpeg',
+          quality: 0.85
+        });
+
+        const targetBlob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setCatImage(reader.result);
+          setIsConvertingImage(false);
+        };
+        reader.onerror = () => {
+          setImageUploadError("無法讀取轉換後的圖片。");
+          setIsConvertingImage(false);
+        };
+        reader.readAsDataURL(targetBlob);
+        return;
+      } catch (err) {
+        console.error("HEIC conversion error:", err);
+        setImageUploadError("HEIC 照片轉碼失敗。建議將 iPhone 拍照設定「格式」改為「最相容」(JPEG) 後再拍攝上傳。");
+        setIsConvertingImage(false);
+        return;
+      }
     }
+
+    setIsConvertingImage(true);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setCatImage(reader.result);
+      setIsConvertingImage(false);
+    };
+    reader.onerror = () => {
+      setImageUploadError("照片讀取失敗，請重新選擇。");
+      setIsConvertingImage(false);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleInputChange = (category, value) => {
@@ -839,29 +866,44 @@ export default function CatRescueLesson() {
                     <span>上傳照片</span>
                     <input 
                       type="file" 
-                      accept="image/*" 
+                      accept="image/*,.heic,.heif" 
                       onChange={handleImageUpload} 
                       className="hidden" 
                     />
                   </label>
                 </div>
                 <p className="text-gray-500 mb-4 w-full text-left">Look at the picture. What do you see?<br/>(看看這張照片，你看到了什麼？)</p>
+                
+                {imageUploadError && (
+                  <div className="mb-4 w-full bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded-xl text-xs flex items-center gap-2">
+                    <AlertCircle size={16} className="shrink-0" />
+                    <span>{imageUploadError}</span>
+                  </div>
+                )}
+
                 <div className="relative w-full aspect-square rounded-2xl overflow-hidden shadow-inner border border-gray-200 bg-gray-100 group cursor-pointer" onClick={() => document.getElementById('cat-image-input-main').click()}>
                   <input 
                     id="cat-image-input-main"
                     type="file" 
-                    accept="image/*" 
+                    accept="image/*,.heic,.heif" 
                     onChange={handleImageUpload} 
                     className="hidden" 
                   />
+                  {isConvertingImage && (
+                    <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center z-20 space-y-2 p-4 text-center">
+                      <Loader2 size={36} className="animate-spin text-orange-500" />
+                      <p className="text-xs font-bold text-orange-700">正在處理與轉碼照片中...</p>
+                      <p className="text-[10px] text-gray-500">(iPhone HEIC 照片需要 1-3 秒進行即時解碼轉換)</p>
+                    </div>
+                  )}
                   <img 
                     src={catImage || "https://placehold.co/800x800/f8fafc/f97316?text=Image+of+the+Rescued+Cat\n(Click+Here+to+Upload+Photo)"} 
                     alt="Rescued Cat"
                     className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-4 justify-between">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-4 justify-between pointer-events-none">
                     <span className="bg-black/40 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 mx-auto">
-                      <Camera size={14} /> 點擊更換照片
+                      <Camera size={14} /> 點擊更換照片 (支援 HEIC / JPG / PNG)
                     </span>
                   </div>
                 </div>
