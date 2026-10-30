@@ -653,6 +653,7 @@ export default function CatRescueLesson() {
               backpack={backpack}
               actionChoice1={approachChoice}
               actionChoice2={actionChoice}
+              selectedTool={selectedTool}
               vetCheck={vetCheck}
               catImage={catImage}
               adoptionPetName={adoptionPetName}
@@ -1629,13 +1630,28 @@ export default function CatRescueLesson() {
                             <p>3. Rescue Tool: Used <span className="text-emerald-400">{selectedTool?.eng || 'canned food'}</span> from backpack!</p>
                           </div>
 
-                          <div className="bg-emerald-950/90 p-4 rounded-xl border border-emerald-600 text-xs md:text-sm text-emerald-100 space-y-1.5">
-                            <p className="font-bold text-yellow-300">💡 課堂句型（Modal Verbs: Should / Must）：</p>
-                            <p>• To save a scared {currentAnimalName}, you <span className="font-bold text-yellow-300 underline">should walk slowly</span>.</p>
-                            <p>• You <span className="font-bold text-yellow-300 underline">can use {selectedTool?.eng || 'canned food'}</span> to lure the animal safely.</p>
+                          <div className="bg-emerald-950/90 p-4 rounded-xl border border-emerald-600 text-xs md:text-sm text-emerald-100 space-y-2">
+                            <p className="font-bold text-yellow-300">💡 課堂生成救援任務句型 (Modal Verbs Practice)：</p>
+                            <div className="bg-emerald-900/80 p-3 rounded-xl border border-yellow-400/40 font-mono text-yellow-200 text-xs md:text-sm space-y-1">
+                              <p>• To save a scared {currentAnimalName}, you <span className="font-bold text-yellow-300 underline">should walk slowly</span>.</p>
+                              <p>• You <span className="font-bold text-yellow-300 underline">can use {selectedTool?.eng || 'canned food'}</span> to lure the animal safely.</p>
+                              <p className="pt-1.5 text-yellow-300 font-bold border-t border-emerald-700/80">
+                                🎯 2D RPG 遊戲任務要求句型：<br/>
+                                <span className="text-white bg-slate-950 px-2.5 py-1.5 rounded-lg inline-block mt-1 border border-yellow-400/50 shadow-inner">
+                                  "You should walk slowly and use {selectedTool?.eng || (backpack[0] ? backpack[0].eng : 'canned food')} to rescue the {currentAnimalName}!"
+                                </span>
+                              </p>
+                            </div>
                           </div>
 
-                          <div className="pt-2 flex justify-end">
+                          <div className="pt-2 flex flex-col sm:flex-row gap-3 justify-end">
+                            <button
+                              onClick={() => setActiveTab('game')}
+                              className="bg-indigo-600 hover:bg-indigo-500 text-white font-black px-6 py-3 rounded-xl text-xs transition shadow-lg flex items-center justify-center gap-2 border border-indigo-400 scale-105"
+                            >
+                              <Gamepad2 size={18} className="text-yellow-300" />
+                              <span>帶著救援句型任務，直接進入 2D RPG 遊戲 ➔</span>
+                            </button>
                             <button
                               onClick={() => {
                                 const el = document.getElementById('step-vet-check');
@@ -1643,7 +1659,7 @@ export default function CatRescueLesson() {
                               }}
                               className="bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-bold px-5 py-2.5 rounded-xl text-xs transition shadow-md flex items-center gap-1.5"
                             >
-                              <span>前往 Step 2C 獸醫檢查 (Next: Vet Check)</span>
+                              <span>前往 Step 2C 獸醫檢查</span>
                               <ChevronRight size={16} />
                             </button>
                           </div>
@@ -1830,6 +1846,7 @@ function PawsAndPlay({
   backpack = [],
   actionChoice1 = null,
   actionChoice2 = null,
+  selectedTool = null,
   vetCheck = { ears: 'clean', eyes: 'clean', paws: 'warm', body: 'healthy', disease: 'negative', vaccine: 'vaccinated' },
   catImage = null,
   adoptionPetName = 'Lucky',
@@ -1855,6 +1872,10 @@ function PawsAndPlay({
   const keysRef = useRef({ ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, w: false, a: false, s: false, d: false });
   
   const gameDataRef = useRef({ cats: [...gameCats], map: JSON.parse(JSON.stringify(INITIAL_MAP_DATA)) });
+
+  const currentAnimal = vocabulary.animal[0] || 'cat';
+  const currentToolName = selectedTool?.eng || (backpack[0] ? backpack[0].eng : 'canned food');
+  const missionSentence = `You should walk slowly and use ${currentToolName} to rescue the ${currentAnimal}!`;
 
   useEffect(() => {
     gameDataRef.current.cats = [...gameCats];
@@ -2113,7 +2134,7 @@ function PawsAndPlay({
                 No items equipped
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-2 max-h-56 overflow-y-auto pr-1">
+              <div className="grid grid-cols-1 gap-2 max-h-44 overflow-y-auto pr-1">
                 {backpack.map((item, slotIdx) => (
                   <div 
                     key={`${item.id}_${slotIdx}`} 
@@ -2130,6 +2151,16 @@ function PawsAndPlay({
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Task 2 Active Sentence Mission Badge */}
+          <div className="bg-indigo-950/90 border-2 border-yellow-400/80 rounded-2xl p-2.5 text-xs text-yellow-200 space-y-1 shadow-lg">
+            <p className="font-bold text-yellow-300 text-[11px] flex items-center gap-1">
+              <Gamepad2 size={14} className="text-yellow-400" /> Task 2 救援句型任務
+            </p>
+            <p className="text-[11px] font-mono text-white bg-slate-900/90 p-2 rounded-xl border border-indigo-700/60 leading-snug">
+              "{missionSentence}"
+            </p>
           </div>
 
           {/* Task 1 Target Animal Traits Tag */}
@@ -2207,6 +2238,17 @@ function PawsAndPlay({
             <div className="bg-white p-6 rounded-2xl w-full max-w-sm text-center shadow-2xl border-4 border-blue-400 relative">
               <div className="absolute top-3 right-4 text-xs font-bold text-gray-700 tracking-widest">🐟 ({feedStep}/4)</div>
               <h2 className="text-2xl font-black text-blue-800 mb-1 mt-2">Feeding & Rescue</h2>
+              
+              {/* Mission Sentence Banner */}
+              <div className="mb-3 bg-indigo-950 text-indigo-100 p-2.5 rounded-2xl border-2 border-yellow-400 text-left shadow-lg">
+                <p className="text-[10px] font-bold text-yellow-300 mb-0.5 flex items-center gap-1">
+                  🎯 觸發救援任務句型 (Triggered Mission):
+                </p>
+                <p className="text-[11px] font-mono font-bold text-white leading-tight">
+                  "{missionSentence}"
+                </p>
+              </div>
+
               <p className="text-xs text-blue-600 mb-3 font-medium">Target: {vocabulary.color.join(' ') || 'stray'} {vocabulary.animal[0] || 'cat'} in {vocabulary.environment[0] || 'rain'}</p>
               
               <div className={`text-6xl mb-3 flex justify-center transition-transform ${feedStep <= 2 ? 'shaking' : ''}`}>{feedStep <= 2 ? '🐱📦' : feedStep === 3 ? '🐱🍼' : '🩺🐱'}</div>
@@ -2277,6 +2319,17 @@ function PawsAndPlay({
           {gameState === 'MINIGAME' && activeCat?.rescueType === 'car_engine' && (
             <div className="bg-white p-6 rounded-2xl w-full max-w-sm text-center shadow-2xl border-4 border-red-400 relative">
               <h2 className="text-2xl font-black text-red-800 mb-1">Car Engine Rescue!</h2>
+              
+              {/* Mission Sentence Banner */}
+              <div className="mb-3 bg-indigo-950 text-indigo-100 p-2.5 rounded-2xl border-2 border-yellow-400 text-left shadow-lg">
+                <p className="text-[10px] font-bold text-yellow-300 mb-0.5 flex items-center gap-1">
+                  🎯 觸發救援任務句型 (Triggered Mission):
+                </p>
+                <p className="text-[11px] font-mono font-bold text-white leading-tight">
+                  "{missionSentence}"
+                </p>
+              </div>
+
               <p className="text-xs text-red-600 mb-3 font-medium">Action strategy from Task 2: {actionChoice1 === 'slow' ? 'Walk Slowly (🚶‍♂️)' : 'Approach Carefully'}</p>
               
               <div className="text-5xl mb-4 transition-transform" style={{ transform: carStep >= 2 ? 'scale(1.2)' : 'none' }}>{carStep === 1 ? '🚗' : carStep === 2 ? '🐈💕' : '🩺🐱'}</div>
