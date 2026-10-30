@@ -534,7 +534,7 @@ export default function CatRescueLesson() {
 
   const task2Prompt = `[IMPORTANT: MUST strictly match the animal's exact breed, facial markings, and fur color in the uploaded photo!] Create a heartwarming, joyful, and childlike children's book illustration (NOT realistic) of this rescued ${currentAnimalName} successfully saved and happy! The ${currentAnimalName} is now inside a cozy warm room, happily eating ${backpack.map(i => i.eng).join(', ') || 'canned food'}, wrapped in a warm blanket. Infectious disease check: ${diseaseLabelMap[vetCheck.disease]}, Vaccine: ${vaccineLabelMap[vetCheck.vaccine]}. Its paws and ears are gently checked by a friendly vet. Soft pastel colors, warm lighting of hope.`;
 
-  const pixelAvatarPrompt = `[IMPORTANT: Strictly base on the cat in the uploaded photo!] Create a cute 16x16 or 32x32 retro pixel art video game sprite avatar icon of this ${currentAnimalName}. Retro 8-bit / 16-bit arcade style, front view, vibrant colors, clear dark outline, centered on a clean flat background.`;
+  const avatarPrompt = `[IMPORTANT: Strictly focus on and crop the pet's face from the uploaded photo!] Create a clean, clear, front-facing portrait headshot avatar of this ${currentAnimalName}. Front view, head and shoulders centered, clear soft lighting, clean flat background, sharp focus on the pet's face and eyes matching the uploaded image.`;
 
   const flyerImagePrompt = `[IMPORTANT: Base on the rescued animal in the uploaded photo!] Create a professional, cute, and heartwarming adoption poster illustration of a rescued ${currentAnimalName} named "${adoptionPetName}". Bright cheerful background, banner saying "ADOPT ME!", featuring medical health badge: Disease Test ${diseaseLabelMap[vetCheck.disease]}, ${vaccineLabelMap[vetCheck.vaccine]}. Loving children's storybook art style, clean vector feel.`;
 
@@ -947,32 +947,32 @@ export default function CatRescueLesson() {
               {/* ==================== TASK 1 CONTENT ==================== */}
               {activeTab === 'task1' && (
                 <>
-                  {/* Step 1.5: Pixel Art Avatar Generator */}
+                  {/* Step 1.5: Front Portrait Avatar Generator */}
                   <section className="bg-gradient-to-br from-indigo-900 to-slate-900 p-6 rounded-3xl shadow-xl border-2 border-indigo-700 text-white">
                     <div className="flex justify-between items-center mb-3">
                       <h2 className="text-xl font-bold flex items-center gap-2 text-indigo-300">
                         <Sparkles size={22} className="text-yellow-400" />
-                        像素頭像生成指令 (Pixel Art Avatar Prompt)
+                        正面大頭照生成指令 (Front Portrait Avatar Prompt)
                       </h2>
-                      <span className="bg-indigo-800 text-indigo-200 text-xs px-2.5 py-1 rounded-full font-mono">16x16 / 32x32</span>
+                      <span className="bg-indigo-800 text-indigo-200 text-xs px-2.5 py-1 rounded-full font-mono">Pet Headshot</span>
                     </div>
-                    <p className="text-xs text-indigo-200 mb-4">將小朋友上傳的照片，轉換成 2D 像素遊戲風格的可愛頭像！</p>
+                    <p className="text-xs text-indigo-200 mb-4">擷取小朋友上傳的照片，專注於小動物臉部特徵，生成一張清晰的正面大頭照！</p>
                     
                     <div className="bg-slate-950 p-4 rounded-xl border border-indigo-800/60 font-mono text-xs text-indigo-100 leading-relaxed mb-4">
-                      {pixelAvatarPrompt}
+                      {avatarPrompt}
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-3">
                       <button
                         onClick={() => {
-                          navigator.clipboard.writeText(pixelAvatarPrompt);
+                          navigator.clipboard.writeText(avatarPrompt);
                           setIsAvatarPromptCopied(true);
                           setTimeout(() => setIsAvatarPromptCopied(false), 2000);
                         }}
                         className="bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-bold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2"
                       >
                         {isAvatarPromptCopied ? <Check size={16} /> : <Copy size={16} />}
-                        {isAvatarPromptCopied ? '已複製頭像 Prompt！' : '複製像素頭像 Prompt'}
+                        {isAvatarPromptCopied ? '已複製大頭照 Prompt！' : '複製正面大頭照 Prompt'}
                       </button>
 
                       <a
@@ -981,7 +981,7 @@ export default function CatRescueLesson() {
                         rel="noopener noreferrer"
                         className="text-yellow-400 hover:text-yellow-300 text-sm font-bold flex items-center gap-1.5 justify-center underline underline-offset-4"
                       >
-                        開啟 Gemini 生成像素頭像 ➔
+                        開啟 Gemini 生成正面大頭照 ➔
                       </a>
                     </div>
                   </section>
