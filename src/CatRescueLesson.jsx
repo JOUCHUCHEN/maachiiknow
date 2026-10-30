@@ -59,6 +59,35 @@ const INITIAL_MAP_DATA = [
   [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
 ];
 
+// Helper function to remove white / near-white background from avatar image
+const removeWhiteBackground = (dataUrl, threshold = 220) => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imgData.data;
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        if (r >= threshold && g >= threshold && b >= threshold) {
+          data[i + 3] = 0; // Set alpha to 0 (Transparent)
+        }
+      }
+      ctx.putImageData(imgData, 0, 0);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+};
+
 export default function CatRescueLesson() {
   const [activeTab, setActiveTab] = useState('task1'); // 'task1' | 'task2' | 'task3' | 'game'
 
@@ -101,6 +130,8 @@ export default function CatRescueLesson() {
   const [deployY, setDeployY] = useState(8);
   const [deployCatDanger, setDeployCatDanger] = useState('feed');
   const [deploySuccessMsg, setDeploySuccessMsg] = useState('');
+  const [deployAvatarImage, setDeployAvatarImage] = useState(null);
+  const [isProcessingAvatar, setIsProcessingAvatar] = useState(false);
 
   // Task 2 Backpack States - NO ITEM LIMIT
   const [backpack, setBackpack] = useState([]);
@@ -552,6 +583,26 @@ export default function CatRescueLesson() {
 
   const flyerImagePrompt = `[IMPORTANT: Base on the rescued animal in the uploaded photo!] Create a professional, cute, and heartwarming adoption poster illustration of a rescued ${currentAnimalName} named "${adoptionPetName}". Bright cheerful background, banner saying "ADOPT ME!", featuring medical health badge: Disease Test ${diseaseLabelMap[vetCheck.disease]}, ${vaccineLabelMap[vetCheck.vaccine]}. Loving children's storybook art style, clean vector feel.`;
 
+  const handleAvatarUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsProcessingAvatar(true);
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      try {
+        const transparentPng = await removeWhiteBackground(reader.result, 220);
+        setDeployAvatarImage(transparentPng);
+      } catch (err) {
+        console.error("Avatar background removal error:", err);
+        setDeployAvatarImage(reader.result);
+      } finally {
+        setIsProcessingAvatar(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleDeployToMap = () => {
     const animalType = vocabulary.animal.length ? vocabulary.animal[0] : 'cat';
     const colorDesc = vocabulary.color.length ? vocabulary.color.join(' and ') : 'rescued';
@@ -565,6 +616,7 @@ export default function CatRescueLesson() {
       mapX: Number(deployX),
       mapY: Number(deployY),
       emoji: animalType.includes('dog') ? '🐕' : '🐈',
+      avatarUrl: deployAvatarImage,
       profile: {
         name: autoName,
         englishDesc: `${autoName} found in ${placeDesc}.`,
@@ -573,7 +625,7 @@ export default function CatRescueLesson() {
     };
 
     setGameCats(prev => [...prev, newCatObj]);
-    setDeploySuccessMsg(`🎉 成功將待拯救小動物「${autoName}」放置到 2D 遊戲地圖 (X:${deployX}, Y:${deployY})！可以切換到 [RPG 遊戲] 分頁開始尋找牠了！`);
+    setDeploySuccessMsg(`🎉 成功將待拯救小動物「${autoName}」置入 2D 遊戲地圖 (X:${deployX}, Y:${deployY})！可以切換到 [RPG 遊戲] 分頁開始尋找牠了！`);
     setTimeout(() => setDeploySuccessMsg(''), 5000);
   };
 
@@ -1300,6 +1352,35 @@ export default function CatRescueLesson() {
                           <p><span className="text-yellow-400 font-bold">特徵狀態:</span> {vocabulary.color.join('/') || '無特別指定'} / {vocabulary.emotion.join('/') || '無'}</p>
                         </div>
 
+                        {/* Avatar Image Upload & Auto Background Removal Panel */}
+                        <div className="p-3 bg-slate-800/80 rounded-xl border border-slate-700 text-xs space-y-2">
+                          <label className="block font-bold text-yellow-300 flex items-center justify-between">
+                            <span className="flex items-center gap-1.5"><Camera size={14} /> 植入生成好的頭像 (Upload Avatar)</span>
+                            <span className="text-[10px] text-emerald-400 font-normal">✨ 自動去除白色背景</span>
+                          </label>
+                          <div className="flex items-center gap-3">
+                            <label className="cursor-pointer bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow">
+                              <Camera size={14} />
+                              <span>上傳頭像照片</span>
+                              <input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+                            </label>
+                            {isProcessingAvatar && (
+                              <span className="text-[11px] text-yellow-300 flex items-center gap-1">
+                                <Loader2 size={14} className="animate-spin"/> 正在轉換透明背景...
+                              </span>
+                            )}
+                            {deployAvatarImage && !isProcessingAvatar && (
+                              <div className="flex items-center gap-2">
+                                <div className="w-9 h-9 rounded-lg border border-indigo-400 bg-slate-950 overflow-hidden flex items-center justify-center p-0.5 shadow-inner">
+                                  <img src={deployAvatarImage} alt="Avatar Preview" className="w-full h-full object-contain" />
+                                </div>
+                                <span className="text-[11px] text-emerald-400 font-bold">✓ 已成功去背</span>
+                                <button onClick={() => setDeployAvatarImage(null)} className="text-[11px] text-red-400 hover:text-red-300 underline ml-1">重設</button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
                         <button
                           onClick={handleDeployToMap}
                           className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl shadow-lg transition flex items-center justify-center gap-2"
@@ -1869,6 +1950,7 @@ function PawsAndPlay({
 
   const canvasRef = useRef(null);
   const requestRef = useRef();
+  const avatarCacheRef = useRef({});
   const keysRef = useRef({ ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, w: false, a: false, s: false, d: false });
   
   const gameDataRef = useRef({ cats: [...gameCats], map: JSON.parse(JSON.stringify(INITIAL_MAP_DATA)) });
@@ -1879,6 +1961,18 @@ function PawsAndPlay({
 
   useEffect(() => {
     gameDataRef.current.cats = [...gameCats];
+    
+    // Preload custom transparent avatar images for canvas rendering
+    gameCats.forEach(cat => {
+      if (cat.avatarUrl && !avatarCacheRef.current[cat.id]) {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.onload = () => {
+          avatarCacheRef.current[cat.id] = img;
+        };
+        img.src = cat.avatarUrl;
+      }
+    });
   }, [gameCats]);
 
   const playerRef = useRef({
@@ -1979,9 +2073,27 @@ function PawsAndPlay({
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     data.cats.forEach(cat => {
+      const cx = cat.mapX * TILE_SIZE;
+      const cy = cat.mapY * TILE_SIZE;
+
       ctx.fillStyle = 'rgba(0,0,0,0.3)';
-      ctx.beginPath(); ctx.ellipse(cat.mapX * TILE_SIZE + 16, cat.mapY * TILE_SIZE + 24, 10, 4, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.fillText(cat.emoji || "🐈", cat.mapX * TILE_SIZE + 16, cat.mapY * TILE_SIZE + 16 + bounce);
+      ctx.beginPath(); 
+      ctx.ellipse(cx + 16, cy + 24, 10, 4, 0, 0, Math.PI * 2); 
+      ctx.fill();
+
+      const customImg = avatarCacheRef.current[cat.id];
+      if (customImg && customImg.complete) {
+        // Draw custom transparent headshot avatar directly onto the 2D game grid canvas!
+        ctx.drawImage(customImg, cx + 2, cy + 2 + bounce, 28, 28);
+      } else if (cat.avatarUrl) {
+        // Fallback for image preloading
+        const img = new Image();
+        img.src = cat.avatarUrl;
+        avatarCacheRef.current[cat.id] = img;
+        ctx.fillText(cat.emoji || "🐈", cx + 16, cy + 16 + bounce);
+      } else {
+        ctx.fillText(cat.emoji || "🐈", cx + 16, cy + 16 + bounce);
+      }
     });
   };
 
