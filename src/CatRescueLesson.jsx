@@ -138,94 +138,102 @@ export default function CatRescueLesson() {
   // Game Shared Cats State
   const [gameCats, setGameCats] = useState(INITIAL_CATS_DATA);
 
+  const translationTimeoutRef = useRef(null);
+
   const translateBiDirectional = async (text, direction) => {
     if (!text.trim()) return '';
     setIsTranslatingItem(true);
     
     try {
-      let resultText = '';
-      const apiKey = "";
+      const term = text.toLowerCase().trim();
+      const dict = {
+        '手電筒': 'flashlight', 'flashlight': '手電筒',
+        '零食': 'treats', '點心': 'treats', '零食/點心': 'treats', 'treats': '零食/點心',
+        '項圈': 'collar', 'collar': '項圈',
+        '毛巾': 'towel', 'towel': '毛巾',
+        '籠子': 'cage', 'cage': '籠子',
+        '牽繩': 'leash', 'leash': '牽繩',
+        '溫水': 'warm water', 'warm water': '溫水',
+        '繃帶': 'bandage', 'bandage': '繃帶',
+        '玩具': 'toy', 'toy': '玩具',
+        '藥品': 'medicine', 'medicine': '藥品',
+        '罐頭': 'canned food', 'canned food': '罐頭',
+        '保暖毯': 'warm blanket', 'warm blanket': '保暖毯',
+        '手套': 'safety gloves', 'safety gloves': '防咬手套',
+        '乾淨水': 'fresh water', 'fresh water': '乾淨水',
+        '網子': 'net', 'net': '網子',
+        '剪刀': 'scissors', 'scissors': '剪刀',
+        '乾糧': 'dry food', 'dry food': '乾糧',
+        '箱子': 'box', 'box': '箱子',
+        '誘捕籠': 'trap cage', 'trap cage': '誘捕籠'
+      };
 
-      if (!apiKey) {
-        await new Promise(res => setTimeout(res, 400));
-        // Fallback dictionary Heuristics
-        const term = text.toLowerCase().trim();
-        const dict = {
-          'flashlight': '手電筒', '手電筒': 'flashlight',
-          'treats': '零食/點心', '零食': 'treats', '點心': 'treats',
-          'collar': '項圈', '項圈': 'collar',
-          'towel': '毛巾', '毛巾': 'towel',
-          'cage': '籠子', '籠子': 'cage',
-          'leash': '牽繩', '牽繩': 'leash',
-          'warm water': '溫水', '溫水': 'warm water',
-          'bandage': '繃帶', '繃帶': 'bandage',
-          'toy': '玩具', '玩具': 'toy',
-          'medicine': '藥品', '藥品': 'medicine'
-        };
-
-        if (dict[term]) {
-          resultText = dict[term];
-        } else if (direction === 'chiToEng') {
-          resultText = `item_${term}`;
-        } else {
-          resultText = `${term} (裝備)`;
-        }
-      } else {
-        const prompt = direction === 'chiToEng'
-          ? `Translate this Chinese rescue equipment word into a simple English word or short phrase for ESL class: "${text}". Output only the English translation in lowercase.`
-          : `Translate this English rescue equipment word into a concise Traditional Chinese word: "${text}". Output only the Chinese translation.`;
-        
-        const textUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
-        const textPayload = {
-          contents: [{ parts: [{ text: prompt }] }],
-          systemInstruction: { parts: [{ text: "You are a bi-directional English-Chinese translator for kids rescue equipment." }] }
-        };
-
-        const res = await fetch(textUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(textPayload)
-        });
-        const data = await res.json();
-        resultText = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim()?.toLowerCase() || '';
+      if (dict[term]) {
+        return dict[term];
       }
 
-      return resultText;
+      // 使用免費且免 key 的在線翻譯服務
+      const langpair = direction === 'chiToEng' ? 'zh-TW|en' : 'en|zh-TW';
+      const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${langpair}`);
+      const data = await res.json();
+      let translated = data?.responseData?.translatedText?.trim() || '';
+      
+      if (translated) {
+        if (direction === 'chiToEng') translated = translated.toLowerCase();
+        return translated;
+      }
+      return text;
     } catch (err) {
       console.error("Auto translation error:", err);
-      return '';
+      return text;
     } finally {
       setIsTranslatingItem(false);
     }
   };
 
-  const handleChiItemChange = async (val) => {
+  const handleChiItemChange = (val) => {
     setCustomItemChi(val);
-    if (val.trim()) {
+    if (translationTimeoutRef.current) clearTimeout(translationTimeoutRef.current);
+    if (!val.trim()) {
+      setCustomItemEng('');
+      return;
+    }
+    translationTimeoutRef.current = setTimeout(async () => {
       const translatedEng = await translateBiDirectional(val, 'chiToEng');
       if (translatedEng) setCustomItemEng(translatedEng);
-    }
+    }, 350);
   };
 
-  const handleEngItemChange = async (val) => {
+  const handleEngItemChange = (val) => {
     setCustomItemEng(val);
-    if (val.trim()) {
+    if (translationTimeoutRef.current) clearTimeout(translationTimeoutRef.current);
+    if (!val.trim()) {
+      setCustomItemChi('');
+      return;
+    }
+    translationTimeoutRef.current = setTimeout(async () => {
       const translatedChi = await translateBiDirectional(val, 'engToChi');
       if (translatedChi) setCustomItemChi(translatedChi);
-    }
+    }, 350);
   };
 
-  const handleAddCustomRescueItem = (e) => {
+  const handleAddCustomRescueItem = async (e) => {
     if (e && e.key !== 'Enter' && e.type !== 'click') return;
     if (!customItemEng.trim() && !customItemChi.trim()) return;
 
-    const engVal = customItemEng.trim() || customItemChi.trim();
-    const chiVal = customItemChi.trim() || customItemEng.trim();
+    let engVal = customItemEng.trim();
+    let chiVal = customItemChi.trim();
+
+    if (!engVal && chiVal) {
+      engVal = await translateBiDirectional(chiVal, 'chiToEng');
+    } else if (!chiVal && engVal) {
+      chiVal = await translateBiDirectional(engVal, 'engToChi');
+    }
 
     const newItem = {
       id: `custom_${Date.now()}`,
-      eng: engVal.toLowerCase(),
-      chi: chiVal,
+      eng: (engVal || chiVal).toLowerCase(),
+      chi: chiVal || engVal,
       icon: '🎒'
     };
 
@@ -335,24 +343,30 @@ export default function CatRescueLesson() {
     
     setIsGenerating(true);
     setApiError('');
-    const termToTranslate = chineseInput;
+    const termToTranslate = chineseInput.trim();
     const targetCat = selectedCat;
     
     try {
-      let engWord = 'magic';
-      await new Promise(res => setTimeout(res, 400));
-      if (termToTranslate.includes('貓')) engWord = 'cat';
-      else if (termToTranslate.includes('狗')) engWord = 'dog';
-      else if (termToTranslate.includes('黑')) engWord = 'black';
-      else if (termToTranslate.includes('白')) engWord = 'white';
-      else if (termToTranslate.includes('橘')) engWord = 'orange';
-      else if (termToTranslate.includes('大')) engWord = 'big';
-      else if (termToTranslate.includes('小')) engWord = 'small';
-      else if (termToTranslate.includes('怕') || termToTranslate.includes('恐')) engWord = 'scared';
-      else if (termToTranslate.includes('餓')) engWord = 'hungry';
-      else if (termToTranslate.includes('氣')) engWord = 'angry';
-      else if (termToTranslate.includes('可愛')) engWord = 'cute';
-      else engWord = termToTranslate.toLowerCase();
+      let engWord = '';
+      
+      const commonDict = {
+        '貓': 'cat', '小貓': 'kitten', '狗': 'dog', '小狗': 'puppy',
+        '黑': 'black', '白': 'white', '橘': 'orange', '黃': 'yellow', '三花': 'calico', '玳瑁': 'tortoiseshell',
+        '虎斑': 'tabby', '灰': 'gray', '黑白': 'black and white', '黑白相間': 'black and white',
+        '大': 'big', '小': 'small', '微小': 'tiny', '巨大': 'huge',
+        '幼年': 'young', '嬰兒': 'baby', '老': 'old', '年幼': 'young',
+        '害怕': 'scared', '恐懼': 'scared', '緊張': 'nervous', '飢餓': 'hungry', '生氣': 'angry', '難過': 'sad', '可愛': 'cute',
+        '雨中': 'in the rain', '車底': 'under the car', '引擎蓋': 'in the car engine', '巷弄': 'in the alley', '屋頂': 'on the roof', '樹上': 'in the tree',
+        '親人': 'friendly', '受傷': 'injured', '虛弱': 'weak', '吵鬧': 'noisy', '快速': 'fast'
+      };
+
+      if (commonDict[termToTranslate]) {
+        engWord = commonDict[termToTranslate];
+      } else {
+        const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(termToTranslate)}&langpair=zh-TW|en`);
+        const data = await res.json();
+        engWord = data?.responseData?.translatedText?.trim()?.toLowerCase() || termToTranslate;
+      }
 
       if (engWord && !vocabulary[targetCat].includes(engWord)) {
         setVocabulary(prev => ({
