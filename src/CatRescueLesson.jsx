@@ -939,7 +939,6 @@ export default function CatRescueLesson() {
                     />
                   </label>
                 </div>
-                <p className="text-gray-500 mb-4 w-full text-left">Look at the picture. What do you see?<br/>(看看這張照片，你看到了什麼？)</p>
                 
                 {imageUploadError && (
                   <div className="mb-4 w-full bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded-xl text-xs flex items-center gap-2">
