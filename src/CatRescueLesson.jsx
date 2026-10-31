@@ -657,7 +657,7 @@ export default function CatRescueLesson() {
               }`}
             >
               <Cat size={18} />
-              <span>Task 1: Observe</span>
+              <span>Task 1: 觀察與描述 (Observe)</span>
             </button>
             <button
               onClick={() => setActiveTab('task2')}
@@ -668,7 +668,7 @@ export default function CatRescueLesson() {
               }`}
             >
               <ShieldCheck size={18} className="text-emerald-600" />
-              <span>Task 2: Rescue</span>
+              <span>Task 2: 展開救援 & 健檢 (Rescue)</span>
             </button>
             <button
               onClick={() => setActiveTab('task3')}
@@ -679,7 +679,7 @@ export default function CatRescueLesson() {
               }`}
             >
               <HeartHandshake size={18} className="text-purple-600" />
-              <span>Task 3: Adoption Flyer</span>
+              <span>Task 3: 領養宣傳單 (Adoption Flyer)</span>
             </button>
             <button
               onClick={() => setActiveTab('game')}
@@ -690,7 +690,7 @@ export default function CatRescueLesson() {
               }`}
             >
               <Gamepad2 size={18} className="text-yellow-300" />
-              <span>2D RPG Game (Paws & Play)</span>
+              <span>2D RPG 遊戲 (Paws & Play)</span>
             </button>
           </div>
         </div>
@@ -707,6 +707,7 @@ export default function CatRescueLesson() {
               actionChoice2={actionChoice}
               selectedTool={selectedTool}
               vetCheck={vetCheck}
+              setVetCheck={setVetCheck}
               catImage={catImage}
               adoptionPetName={adoptionPetName}
               setAdoptionPetName={setAdoptionPetName}
@@ -1507,420 +1508,32 @@ export default function CatRescueLesson() {
                     </div>
                   </section>
 
-                  {/* Step 2B: Choose Your Action */}
-                  <section className="bg-white p-6 rounded-3xl shadow-lg border-2 border-emerald-100 space-y-6">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  {/* Direct Transition to 2D RPG Game Banner */}
+                  <section className="bg-gradient-to-r from-indigo-900 via-purple-900 to-slate-900 text-white p-6 md:p-8 rounded-3xl shadow-2xl border-4 border-yellow-400 space-y-4">
+                    <div className="flex items-center gap-3">
+                      <span className="text-4xl animate-bounce">🎒</span>
                       <div>
-                        <h2 className="text-2xl font-bold text-emerald-900 flex items-center">
-                          <span className="bg-emerald-600 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-lg">2B</span>
-                          Choose Your Action (智慧多階救援分歧劇情)
+                        <h2 className="text-2xl font-black text-yellow-300">
+                          裝備準備完畢！直接進入 2D RPG 核心關卡
                         </h2>
-                        <p className="text-gray-500 text-sm mt-1">
-                          結合 Task 1 的動物：<span className="font-bold text-emerald-700">{currentAnimalName}</span>、地點：<span className="font-bold text-emerald-700">{currentEnvName}</span>，展開互動式 RPG 救援！
+                        <p className="text-xs md:text-sm text-purple-200 mt-1 leading-relaxed">
+                          Task 1 (觀察描述) 與 Task 2 (裝備選取) 是遊戲前的素材累積與英文練習。點擊下方按鈕直接進入 2D RPG Game 展開現場救援抉擇、多重裝備使用、獸醫健檢與生成英文報告！
                         </p>
                       </div>
-                      
-                      <button
-                        onClick={() => {
-                          setDecisionStep(1);
-                          setTrustMeter(50);
-                          setApproachChoice(null);
-                          setActionChoice(null);
-                          setSelectedTool(null);
-                          setFeedbackMessage('');
-                        }}
-                        className="bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-bold px-3.5 py-2 rounded-xl border border-emerald-300 transition shadow-sm flex items-center gap-1.5"
-                      >
-                        <RotateCcw size={14} />
-                        <span>重新開始分歧劇情 (Reset)</span>
-                      </button>
                     </div>
 
-                    {/* Task 1 Dynamic Context Card */}
-                    <div className="bg-gradient-to-r from-emerald-900 to-teal-900 text-white p-4 rounded-2xl shadow-md border border-emerald-700">
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-xs font-bold bg-amber-400 text-slate-950 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                          <Sparkles size={12} /> Task 1 即時動態聯動情境
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-emerald-200">信任度 (Trust Meter):</span>
-                          <span className={`text-sm font-black font-mono px-2 py-0.5 rounded ${trustMeter >= 70 ? 'bg-emerald-500 text-white' : trustMeter <= 30 ? 'bg-red-500 text-white' : 'bg-yellow-500 text-slate-950'}`}>
-                            {trustMeter}%
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <p className="text-sm md:text-base font-bold text-emerald-100 mt-2">
-                        🚨 現場緊急狀況：一隻在「{currentEnvName}」的 {currentAnimalName}，看起來非常「{currentEmotionName}」！
-                      </p>
-                      
-                      {/* Trust Meter Progress Bar */}
-                      <div className="w-full bg-slate-950/60 h-2.5 rounded-full overflow-hidden mt-3 border border-emerald-600/50">
-                        <div 
-                          className={`h-full transition-all duration-500 ${trustMeter >= 70 ? 'bg-emerald-400' : trustMeter <= 30 ? 'bg-red-400' : 'bg-yellow-400'}`}
-                          style={{ width: `${trustMeter}%` }}
-                        ></div>
-                      </div>
+                    <div className="bg-slate-950/70 p-4 rounded-2xl border border-indigo-700/80 text-xs text-indigo-200 flex flex-wrap justify-between items-center gap-2">
+                      <span>已選擇攜帶裝備：<strong className="text-yellow-300">{backpack.length ? backpack.map(i => i.eng).join(', ') : '基本裝備'}</strong></span>
+                      <span className="bg-indigo-800 text-yellow-300 px-3 py-1 rounded-full font-mono font-bold">{backpack.length} Items Ready</span>
                     </div>
 
-                    {/* Multi-Step Decision Steps */}
-                    <div className="space-y-6">
-                      
-                      {/* STEP 1: Approach Selection */}
-                      <div className={`p-5 rounded-2xl border-2 transition-all ${decisionStep === 1 ? 'bg-emerald-50/80 border-emerald-400 shadow-sm' : decisionStep > 1 ? 'bg-slate-50 border-slate-200 opacity-90' : 'bg-slate-50 border-slate-200'}`}>
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-bold text-emerald-950 text-base flex items-center gap-2">
-                            <span className="w-6 h-6 rounded-full bg-emerald-600 text-white text-xs flex items-center justify-center font-bold">1</span>
-                            Step 1: 選擇靠近方式 (Approaching)
-                          </h3>
-                          {decisionStep > 1 && <span className="text-xs font-bold text-emerald-600 flex items-center gap-1"><CheckCircle2 size={14}/> 已完成</span>}
-                        </div>
-                        <p className="text-xs text-gray-600 mb-3">請選擇小朋友該如何接近緊張的動物？</p>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <button
-                            onClick={() => {
-                              setApproachChoice('slow');
-                              setTrustMeter(75);
-                              setDecisionStep(2);
-                              setFeedbackMessage('❤️ 太棒了！輕聲慢步靠近讓動物放下警戒，信任度上升！');
-                            }}
-                            disabled={decisionStep !== 1}
-                            className={`p-3.5 rounded-xl font-bold border-2 text-left transition-all ${
-                              approachChoice === 'slow' 
-                                ? 'bg-emerald-600 text-white border-emerald-700 shadow' 
-                                : decisionStep === 1 
-                                ? 'bg-white text-gray-700 border-gray-200 hover:border-emerald-400' 
-                                : 'bg-gray-100 text-gray-500 border-gray-200'
-                            }`}
-                          >
-                            <p className="text-sm">🚶‍♂️ Walk slowly & softly (輕聲慢步靠近)</p>
-                            <p className="text-[11px] opacity-80 mt-1 font-normal">適合緊張的動物，提升信任度 ❤️</p>
-                          </button>
-
-                          <button
-                            onClick={() => {
-                              setApproachChoice('fast');
-                              setTrustMeter(25);
-                              setFeedbackMessage('⚠️ 快速衝過去嚇到了小動物！動物警戒度大幅提升，請試著改用柔和方式！');
-                            }}
-                            disabled={decisionStep !== 1}
-                            className={`p-3.5 rounded-xl font-bold border-2 text-left transition-all ${
-                              approachChoice === 'fast' 
-                                ? 'bg-red-500 text-white border-red-600 shadow' 
-                                : decisionStep === 1 
-                                ? 'bg-white text-gray-700 border-gray-200 hover:border-red-300' 
-                                : 'bg-gray-100 text-gray-500 border-gray-200'
-                            }`}
-                          >
-                            <p className="text-sm">🏃‍♂️ Run fast & shout (快速衝過去並大叫)</p>
-                            <p className="text-[11px] opacity-80 mt-1 font-normal">動作太大會嚇跑動物 💨</p>
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* STEP 2: Action & Backpack Item Selection */}
-                      {decisionStep >= 2 && (
-                        <div className={`p-5 rounded-2xl border-2 transition-all ${decisionStep === 2 ? 'bg-emerald-50/80 border-emerald-400 shadow-sm' : 'bg-slate-50 border-slate-200'}`}>
-                          <div className="flex items-center justify-between mb-2">
-                            <h3 className="font-bold text-emerald-950 text-base flex items-center gap-2">
-                              <span className="w-6 h-6 rounded-full bg-emerald-600 text-white text-xs flex items-center justify-center font-bold">2</span>
-                              Step 2: 選擇救援動作與背包道具 (Action & Backpack Tools)
-                            </h3>
-                            {decisionStep > 2 && <span className="text-xs font-bold text-emerald-600 flex items-center gap-1"><CheckCircle2 size={14}/> 已完成</span>}
-                          </div>
-                          <p className="text-xs text-gray-600 mb-3">選用背包（Task 2A）裡的道具引誘或協助救援：</p>
-
-                          {backpack.length === 0 ? (
-                            <div className="bg-amber-50 p-3 rounded-xl border border-amber-200 text-xs text-amber-800 flex items-center gap-2 mb-3">
-                              <HelpCircle size={16} className="text-amber-600 shrink-0" />
-                              <span>背包裡目前沒有裝備！您可以先至上方 <b>Step 2A 救援裝備庫</b> 選擇道具，或直接選擇基本動作。</span>
-                            </div>
-                          ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-3">
-                              {backpack.map((item) => (
-                                <button
-                                  key={item.id}
-                                  onClick={() => {
-                                    setActionChoice('backpack_item');
-                                    setSelectedTool(item);
-                                    setTrustMeter(95);
-                                    setDecisionStep(3);
-                                    setFeedbackMessage(`🎉 太讚了！使用背包裡的【${item.eng} (${item.chi})】順利安撫小動物，完成救援！`);
-                                  }}
-                                  disabled={decisionStep !== 2}
-                                  className={`p-3 rounded-xl border-2 text-left flex items-center gap-2.5 transition-all ${
-                                    selectedTool?.id === item.id 
-                                      ? 'bg-emerald-600 text-white border-emerald-700 shadow' 
-                                      : 'bg-white text-gray-700 border-gray-200 hover:border-emerald-300'
-                                  }`}
-                                >
-                                  <span className="text-2xl">{item.icon}</span>
-                                  <div>
-                                    <p className="text-xs font-bold capitalize">{item.eng}</p>
-                                    <p className="text-[10px] text-gray-400">{item.chi}</p>
-                                  </div>
-                                </button>
-                              ))}
-                            </div>
-                          )}
-
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                            <button
-                              onClick={() => {
-                                setActionChoice('feed_treat');
-                                setSelectedTool({ eng: 'treats', chi: '點心/罐頭' });
-                                setTrustMeter(90);
-                                setDecisionStep(3);
-                                setFeedbackMessage('🥩 拿食物輕輕餵食！香味誘使動物踏出安全範圍，順利救援成功！');
-                              }}
-                              disabled={decisionStep !== 2}
-                              className="p-3 rounded-xl font-bold border-2 border-gray-200 bg-white hover:border-emerald-300 text-left text-xs"
-                            >
-                              🥩 Offer treats/food (給予罐頭或零食引誘)
-                            </button>
-
-                            <button
-                              onClick={() => {
-                                setActionChoice('shout');
-                                setTrustMeter(15);
-                                setFeedbackMessage('❌ 警報！大聲叫喊反而嚇壞動物，請使用情態助動詞引導孩子：*You should not shout at a scared animal!*');
-                              }}
-                              disabled={decisionStep !== 2}
-                              className="p-3 rounded-xl font-bold border-2 border-gray-200 bg-white hover:border-red-300 text-left text-xs text-red-700"
-                            >
-                              🔊 Shout "Come here!" (大聲尖叫叫牠出來)
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Feedback Banner */}
-                      {feedbackMessage && (
-                        <div className={`p-4 rounded-2xl border flex items-start gap-2.5 text-xs font-bold ${feedbackMessage.includes('⚠️') || feedbackMessage.includes('❌') ? 'bg-red-50 border-red-300 text-red-800' : 'bg-emerald-100 border-emerald-300 text-emerald-950'}`}>
-                          {feedbackMessage.includes('⚠️') || feedbackMessage.includes('❌') ? <AlertTriangle size={18} className="text-red-500 shrink-0 mt-0.5" /> : <Sparkles size={18} className="text-emerald-600 shrink-0 mt-0.5" />}
-                          <div className="space-y-1">
-                            <p className="text-sm">{feedbackMessage}</p>
-                            {(feedbackMessage.includes('⚠️') || feedbackMessage.includes('❌')) && (
-                              <p className="font-mono text-[11px] text-red-600 bg-red-100/80 p-2 rounded-lg mt-1 border border-red-200">
-                                💡 英文句型引導 (Modal Verbs Practice):<br/>
-                                <span className="font-bold">"You should walk slowly."</span> / <span className="font-bold">"You must not shout!"</span>
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* STEP 3: RPG Branching Decision Result & Sentence Synthesis */}
-                      {decisionStep === 3 && (
-                        <div className="bg-gradient-to-br from-emerald-900 to-slate-900 text-white p-5 rounded-2xl border-2 border-emerald-500 space-y-4 shadow-xl">
-                          <div className="flex items-center justify-between border-b border-emerald-700/80 pb-2">
-                            <h3 className="font-bold text-yellow-300 text-base flex items-center gap-2">
-                              <Award size={20} className="text-yellow-400" />
-                              Step 3: 救援成功與英文情態助動詞句型 (Grammar Guidance)
-                            </h3>
-                            <span className="bg-emerald-600 text-white text-xs px-2.5 py-0.5 rounded-full font-bold">RPG Rescue Clear!</span>
-                          </div>
-
-                          <div className="bg-slate-950/70 p-4 rounded-xl border border-emerald-800/80 space-y-2 text-xs md:text-sm font-mono leading-relaxed">
-                            <p className="text-emerald-300 font-bold">📜 救援分歧劇情戰報 (Rescue Branch Log):</p>
-                            <p>1. Target Animal: <span className="text-yellow-300">{currentAnimalName}</span> found in <span className="text-yellow-300">{currentEnvName}</span> ({currentEmotionName}).</p>
-                            <p>2. Approach: <span className="text-emerald-400">Walked slowly and softly</span> (Trust: {trustMeter}%).</p>
-                            <p>3. Rescue Tool: Used <span className="text-emerald-400">{selectedTool?.eng || 'canned food'}</span> from backpack!</p>
-                          </div>
-
-                          <div className="bg-emerald-950/90 p-4 rounded-xl border border-emerald-600 text-xs md:text-sm text-emerald-100 space-y-2">
-                            <p className="font-bold text-yellow-300">💡 課堂生成救援任務句型 (Modal Verbs Practice)：</p>
-                            <div className="bg-emerald-900/80 p-3 rounded-xl border border-yellow-400/40 font-mono text-yellow-200 text-xs md:text-sm space-y-1">
-                              <p>• To save a scared {currentAnimalName}, you <span className="font-bold text-yellow-300 underline">should walk slowly</span>.</p>
-                              <p>• You <span className="font-bold text-yellow-300 underline">can use {selectedTool?.eng || 'canned food'}</span> to lure the animal safely.</p>
-                              <p className="pt-1.5 text-yellow-300 font-bold border-t border-emerald-700/80">
-                                🎯 2D RPG 遊戲任務要求句型：<br/>
-                                <span className="text-white bg-slate-950 px-2.5 py-1.5 rounded-lg inline-block mt-1 border border-yellow-400/50 shadow-inner">
-                                  "You should walk slowly and use {selectedTool?.eng || (backpack[0] ? backpack[0].eng : 'canned food')} to rescue the {currentAnimalName}!"
-                                </span>
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="pt-2 flex flex-col sm:flex-row gap-3 justify-end">
-                            <button
-                              onClick={() => setActiveTab('game')}
-                              className="bg-indigo-600 hover:bg-indigo-500 text-white font-black px-6 py-3 rounded-xl text-xs transition shadow-lg flex items-center justify-center gap-2 border border-indigo-400 scale-105"
-                            >
-                              <Gamepad2 size={18} className="text-yellow-300" />
-                              <span>帶著救援句型任務，直接進入 2D RPG 遊戲 ➔</span>
-                            </button>
-                            <button
-                              onClick={() => {
-                                const el = document.getElementById('step-vet-check');
-                                if (el) el.scrollIntoView({ behavior: 'smooth' });
-                              }}
-                              className="bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-bold px-5 py-2.5 rounded-xl text-xs transition shadow-md flex items-center gap-1.5"
-                            >
-                              <span>前往 Step 2C 獸醫檢查</span>
-                              <ChevronRight size={16} />
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-                    </div>
-                  </section>
-
-                  {/* Step 2C: Vet Check-up (With Infectious Disease Check & Vaccination) */}
-                  <section id="step-vet-check" className="bg-white p-6 rounded-3xl shadow-lg border-2 border-emerald-100 space-y-6">
-                    <div>
-                      <h2 className="text-2xl font-bold text-emerald-900 flex items-center mb-1">
-                        <span className="bg-emerald-600 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-lg">2C</span>
-                        Vet Check-up (獸醫健檢、傳染病篩檢與疫苗注射)
-                      </h2>
-                      <p className="text-gray-500 text-sm">救援成功！帶到診所，進行全套檢查並練習醫療英文：</p>
-                    </div>
-
-                    {/* Standard Body Inspection */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {[
-                        { key: 'ears', label: 'Ears (耳朵)', options: ['dirty', 'clean', 'injured'] },
-                        { key: 'eyes', label: 'Eyes (眼睛)', options: ['clean', 'watery', 'bright'] },
-                        { key: 'paws', label: 'Paws (肉墊/爪)', options: ['cold', 'warm', 'dirty'] },
-                        { key: 'body', label: 'Body (身體)', options: ['healthy', 'thin', 'soft'] },
-                      ].map((part) => (
-                        <div key={part.key} className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                          <p className="font-bold text-slate-700 mb-2 text-xs">{part.label}</p>
-                          <div className="flex gap-2">
-                            {part.options.map((opt) => (
-                              <button
-                                key={opt}
-                                onClick={() => setVetCheck({ ...vetCheck, [part.key]: opt })}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition-all ${
-                                  vetCheck[part.key] === opt 
-                                    ? 'bg-emerald-600 text-white shadow-sm' 
-                                    : 'bg-white text-gray-600 border border-gray-300'
-                                }`}
-                              >
-                                {opt}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Infectious Disease Check & Vaccination Status */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-emerald-100">
-                      
-                      {/* Infectious Disease Check */}
-                      <div className="bg-emerald-50/80 p-4 rounded-2xl border border-emerald-200">
-                        <p className="font-extrabold text-emerald-900 mb-2 text-xs flex items-center gap-1.5">
-                          <Activity size={16} className="text-emerald-600" />
-                          傳染病篩檢 (Infectious Disease Test - FIV/FeLV/FPV):
-                        </p>
-                        <div className="flex flex-col gap-2">
-                          {[
-                            { key: 'negative', label: 'Negative / Healthy (陰性健康)' },
-                            { key: 'positive', label: 'Positive (陽性照護中)' },
-                            { key: 'clear', label: 'Tested Clear (過關無病毒)' }
-                          ].map((item) => (
-                            <button
-                              key={item.key}
-                              onClick={() => setVetCheck({ ...vetCheck, disease: item.key })}
-                              className={`p-2 rounded-xl text-xs font-bold text-left transition-all ${
-                                vetCheck.disease === item.key 
-                                  ? 'bg-emerald-600 text-white shadow' 
-                                  : 'bg-white text-gray-700 border border-gray-200'
-                              }`}
-                            >
-                              {item.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Vaccination Status */}
-                      <div className="bg-emerald-50/80 p-4 rounded-2xl border border-emerald-200">
-                        <p className="font-extrabold text-emerald-900 mb-2 text-xs flex items-center gap-1.5">
-                          <Syringe size={16} className="text-emerald-600" />
-                          疫苗注射狀況 (Vaccination Status):
-                        </p>
-                        <div className="flex flex-col gap-2">
-                          {[
-                            { key: 'vaccinated', label: 'Fully Vaccinated (已施打完成)' },
-                            { key: '1st_dose', label: '1st Dose Completed (完成首劑)' },
-                            { key: 'pending', label: 'Pending Schedule (安排中)' }
-                          ].map((item) => (
-                            <button
-                              key={item.key}
-                              onClick={() => setVetCheck({ ...vetCheck, vaccine: item.key })}
-                              className={`p-2 rounded-xl text-xs font-bold text-left transition-all ${
-                                vetCheck.vaccine === item.key 
-                                  ? 'bg-emerald-600 text-white shadow' 
-                                  : 'bg-white text-gray-700 border border-gray-200'
-                              }`}
-                            >
-                              {item.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                    </div>
-                  </section>
-
-                  {/* Step 2D: Rescue Report */}
-                  <section className="bg-white p-6 rounded-3xl shadow-lg border-2 border-emerald-100">
-                    <h2 className="text-2xl font-bold text-emerald-900 flex items-center mb-4">
-                      <span className="bg-emerald-600 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-lg">2D</span>
-                      Rescue Report (救援英文報告)
-                    </h2>
-                    <div className="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-200 space-y-3 text-base md:text-lg text-emerald-950 font-medium">
-                      <p>We brought <span className="font-bold text-emerald-700 underline">{backpack.length ? backpack.map(i => i.eng).join(', ') : 'carrier and blanket'}</span> to rescue the {currentAnimalName}.</p>
-                      <p>We <span className="font-bold text-emerald-700 underline">{approachChoice === 'slow' ? 'walked slowly' : 'approached carefully'}</span> and gave it <span className="font-bold text-emerald-700 underline">{selectedTool?.eng || 'delicious food'}</span>.</p>
-                      <p>At the vet: Disease Test is <span className="font-bold text-emerald-700 underline">{diseaseLabelMap[vetCheck.disease]}</span>, Vaccine status: <span className="font-bold text-emerald-700 underline">{vaccineLabelMap[vetCheck.vaccine]}</span>.</p>
-                      <p>Its ears are <span className="font-bold text-emerald-700 underline">{vetCheck.ears}</span>, but its body is <span className="font-bold text-emerald-700 underline">{vetCheck.body}</span> now!</p>
-                    </div>
-                  </section>
-
-                  {/* Task 2 Complete Prompt */}
-                  <section className="bg-slate-900 p-6 md:p-8 rounded-3xl shadow-2xl text-white border-4 border-emerald-700 relative">
-                    <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-2xl font-bold flex items-center text-emerald-400">
-                        <Award size={28} className="mr-2 text-emerald-400" />
-                        Task 2 Complete: Happy Ending Unlocked!
-                      </h2>
-                    </div>
-
-                    <div className="space-y-4 font-mono">
-                      <div className="border-b border-slate-700 pb-2">
-                        <h3 className="text-lg font-bold text-white">救援成功！溫馨未來 (Happy Rescue Image Prompt)</h3>
-                        <p className="text-xs text-emerald-400">將這段咒語貼給 Gemini，產出小動物被拯救後幸福溫馨的繪本畫面！</p>
-                      </div>
-
-                      <div className="bg-slate-950 p-4 rounded-xl border border-slate-700 text-slate-300 text-sm leading-relaxed">
-                        {task2Prompt}
-                      </div>
-
-                      <div className="pt-2 flex flex-col sm:flex-row gap-4 items-center">
-                        <button 
-                          onClick={() => {
-                            navigator.clipboard.writeText(task2Prompt);
-                            setIsCopiedTask2(true);
-                            setTimeout(() => setIsCopiedTask2(false), 2000);
-                          }}
-                          className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 px-6 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 w-full sm:w-auto"
-                        >
-                          {isCopiedTask2 ? <Check size={20} /> : <Copy size={20} />}
-                          {isCopiedTask2 ? '已複製！(Copied)' : '複製 Task 2 救援成功 Prompt'}
-                        </button>
-
-                        <button
-                          onClick={() => setActiveTab('task3')}
-                          className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 px-6 rounded-xl shadow-md transition flex items-center justify-center gap-2 w-full sm:w-auto"
-                        >
-                          <HeartHandshake size={20} /> 前往 Task 3 製作領養宣傳單 ➔
-                        </button>
-                      </div>
-                    </div>
+                    <button
+                      onClick={() => setActiveTab('game')}
+                      className="w-full bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-black py-4 rounded-2xl shadow-xl hover:shadow-yellow-400/50 transition-all text-base flex items-center justify-center gap-3 active:scale-98"
+                    >
+                      <Gamepad2 size={24} className="text-indigo-950" />
+                      <span>帶著裝備，直接進入 2D RPG Game 展開救援 ➔</span>
+                    </button>
                   </section>
                 </>
               )}
@@ -1947,6 +1560,7 @@ function PawsAndPlay({
   actionChoice2 = null,
   selectedTool = null,
   vetCheck = { ears: 'clean', eyes: 'clean', paws: 'warm', body: 'healthy', disease: 'negative', vaccine: 'vaccinated' },
+  setVetCheck = () => {},
   catImage = null,
   adoptionPetName = 'Lucky',
   setAdoptionPetName = () => {},
@@ -1955,6 +1569,25 @@ function PawsAndPlay({
   const [gameState, setGameState] = useState('START'); // START, MAP, MINIGAME, PROFILE
   const [activeCat, setActiveCat] = useState(null);
   
+  // Game stages inside active cat rescue
+  const [gameStage, setGameStage] = useState('APPROACH_TOOLS'); // 'APPROACH_TOOLS' | 'MINIGAME_ACTION' | 'VET_CHECK' | 'RESCUE_REPORT'
+  
+  // Multi-select tools for active rescue
+  const [selectedTools, setSelectedTools] = useState([]);
+  const [approachChoice, setApproachChoice] = useState('slow');
+  const [trustMeter, setTrustMeter] = useState(50);
+  const [feedbackMsg, setFeedbackMsg] = useState('');
+  
+  // Local vet check state for current rescued cat
+  const [localVetCheck, setLocalVetCheck] = useState({
+    ears: 'dirty',
+    eyes: 'clean',
+    paws: 'cold',
+    body: 'healthy',
+    disease: 'negative',
+    vaccine: 'vaccinated'
+  });
+
   // Feeding Mini-game state
   const [feedStep, setFeedStep] = useState(1);
   const [temperature, setTemperature] = useState(0);
@@ -1962,6 +1595,7 @@ function PawsAndPlay({
   const [tempMsg, setTempMsg] = useState('');
   const [usedItemMsg, setUsedItemMsg] = useState('');
   const [isCopiedMergedPrompt, setIsCopiedMergedPrompt] = useState(false);
+  const [isCopiedReportPrompt, setIsCopiedReportPrompt] = useState(false);
   
   // Car Engine Mini-game state
   const [carStep, setCarStep] = useState(1);
@@ -1974,8 +1608,14 @@ function PawsAndPlay({
   const gameDataRef = useRef({ cats: [...gameCats], map: JSON.parse(JSON.stringify(INITIAL_MAP_DATA)) });
 
   const currentAnimal = vocabulary.animal[0] || 'cat';
-  const currentToolName = selectedTool?.eng || (backpack[0] ? backpack[0].eng : 'canned food');
-  const missionSentence = `You should walk slowly and use ${currentToolName} to rescue the ${currentAnimal}!`;
+  
+  // Dynamic rescue sentence with selected MULTIPLE tools
+  const selectedToolObjs = backpack.filter(i => selectedTools.includes(i.id));
+  const selectedToolNames = selectedToolObjs.length 
+    ? selectedToolObjs.map(i => i.eng).join(', ') 
+    : 'canned food';
+
+  const missionSentence = `You should ${approachChoice === 'slow' ? 'walk slowly' : 'approach carefully'} and use ${selectedToolNames} to rescue the ${currentAnimal}!`;
 
   useEffect(() => {
     gameDataRef.current.cats = [...gameCats];
@@ -2010,7 +1650,7 @@ function PawsAndPlay({
       situation = "waiting to be rescued on the street";
     }
 
-    const itemsStr = backpack.map(i => i.eng).join(', ') || 'canned food and blanket';
+    const itemsStr = selectedToolNames || 'canned food and blanket';
     return `Create a heartwarming children's storybook illustration of a small rescued ${vocabulary.animal[0] || 'cat'} named ${adoptionPetName || cat.profile.name}. The cat is ${situation}. Rescued using ${itemsStr}. The style should be emotional but hopeful, with soft lighting and cute details. (Story: ${cat.profile.story})`;
   };
 
@@ -2018,12 +1658,39 @@ function PawsAndPlay({
     for (let k in keysRef.current) keysRef.current[k] = false;
     setActiveCat(cat);
     setGameState('MINIGAME');
+    setGameStage('APPROACH_TOOLS');
+    
+    // Default select all tools in backpack
+    if (backpack.length > 0) {
+      setSelectedTools(backpack.map(b => b.id));
+    } else {
+      setSelectedTools([]);
+    }
+    setApproachChoice('slow');
+    setTrustMeter(75);
+    setFeedbackMsg('');
     setUsedItemMsg('');
+    setLocalVetCheck({
+      ears: 'dirty',
+      eyes: 'clean',
+      paws: 'cold',
+      body: 'healthy',
+      disease: 'negative',
+      vaccine: 'vaccinated'
+    });
     
     if (cat.rescueType === 'feed') {
       setFeedStep(1); setTemperature(0); setTempMsg('');
     } else if (cat.rescueType === 'car_engine') {
       setCarStep(1);
+    }
+  };
+
+  const toggleToolSelection = (toolId) => {
+    if (selectedTools.includes(toolId)) {
+      setSelectedTools(selectedTools.filter(id => id !== toolId));
+    } else {
+      setSelectedTools([...selectedTools, toolId]);
     }
   };
 
@@ -2101,10 +1768,8 @@ function PawsAndPlay({
 
       const customImg = avatarCacheRef.current[cat.id];
       if (customImg && customImg.complete) {
-        // Draw custom transparent headshot avatar directly onto the 2D game grid canvas!
         ctx.drawImage(customImg, cx + 2, cy + 2 + bounce, 28, 28);
       } else if (cat.avatarUrl) {
-        // Fallback for image preloading
         const img = new Image();
         img.src = cat.avatarUrl;
         avatarCacheRef.current[cat.id] = img;
@@ -2337,7 +2002,7 @@ function PawsAndPlay({
         </div>
       )}
 
-      {/* OVERLAYS: Start, Mini-game, Profile modals */}
+      {/* OVERLAYS: Start, Multi-Stage Mini-game, Profile modals */}
       {gameState !== 'MAP' && (
         <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-20 overflow-y-auto p-4">
           
@@ -2357,158 +2022,355 @@ function PawsAndPlay({
                 <p>🎮 <b>How to play:</b></p>
                 <p>1. Use Keyboard (WASD / Arrow Keys) or Touch D-Pad.</p>
                 <p>2. Walk up to stray cats (🐈) on the map.</p>
-                <p>3. Use your Task 2 Backpack items during rescue mini-games!</p>
+                <p>3. Select action strategies, multiple backpack tools, perform vet checks, and generate rescue reports!</p>
               </div>
               <button onClick={() => setGameState('MAP')} className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition">Start Game 🚀</button>
             </div>
           )}
 
-          {/* Mini-Game: Feeding */}
-          {gameState === 'MINIGAME' && activeCat?.rescueType === 'feed' && (
-            <div className="bg-white p-6 rounded-2xl w-full max-w-sm text-center shadow-2xl border-4 border-blue-400 relative">
-              <div className="absolute top-3 right-4 text-xs font-bold text-gray-700 tracking-widest">🐟 ({feedStep}/4)</div>
-              <h2 className="text-2xl font-black text-blue-800 mb-1 mt-2">Feeding & Rescue</h2>
+          {/* Mini-Game Overlays (Multi-Stage RPG Rescue Flow) */}
+          {gameState === 'MINIGAME' && activeCat && (
+            <div className="bg-white p-6 rounded-3xl w-full max-w-lg text-center shadow-2xl border-4 border-indigo-500 relative max-h-[90vh] overflow-y-auto">
               
-              {/* Mission Sentence Banner */}
-              <div className="mb-3 bg-indigo-950 text-indigo-100 p-2.5 rounded-2xl border-2 border-yellow-400 text-left shadow-lg">
-                <p className="text-[10px] font-bold text-yellow-300 mb-0.5 flex items-center gap-1">
-                  🎯 觸發救援任務句型 (Triggered Mission):
-                </p>
-                <p className="text-[11px] font-mono font-bold text-white leading-tight">
-                  "{missionSentence}"
-                </p>
-              </div>
-
-              <p className="text-xs text-blue-600 mb-3 font-medium">Target: {vocabulary.color.join(' ') || 'stray'} {vocabulary.animal[0] || 'cat'} in {vocabulary.environment[0] || 'rain'}</p>
-              
-              <div className={`text-6xl mb-3 flex justify-center transition-transform ${feedStep <= 2 ? 'shaking' : ''}`}>{feedStep <= 2 ? '🐱📦' : feedStep === 3 ? '🐱🍼' : '🩺🐱'}</div>
-
-              {backpack.length > 0 && (
-                <div className="mb-4 bg-amber-900 text-amber-100 p-2.5 rounded-2xl border-2 border-amber-700 text-left shadow-lg">
-                  <p className="text-[11px] font-bold text-yellow-300 mb-1 flex items-center gap-1">
-                    <Briefcase size={12} /> Use Task 2 Backpack Item:
-                  </p>
-                  <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
-                    {backpack.map((item, idx) => (
-                      <button
-                        key={`${item.id}_${idx}`}
-                        onClick={() => setUsedItemMsg(`✨ Used ${item.eng} (${item.chi})! Rescue bonus +1`)}
-                        className="bg-amber-800 hover:bg-amber-700 text-amber-100 font-bold text-[10px] px-2 py-1 rounded-lg border border-amber-600 shadow transition flex items-center gap-1"
-                      >
-                        <span>{item.icon}</span> <span>{item.eng}</span>
-                      </button>
-                    ))}
+              {/* STAGE 1: Choose Your Action & Multiple Backpack Tools */}
+              {gameStage === 'APPROACH_TOOLS' && (
+                <div className="space-y-4 text-left">
+                  <div className="text-center">
+                    <span className="bg-indigo-100 text-indigo-800 text-xs font-black px-3 py-1 rounded-full uppercase">
+                      Stage 1: Choose Your Action & Tools
+                    </span>
+                    <h2 className="text-2xl font-black text-indigo-900 mt-2">
+                      🚨 Rescue Challenge: {activeCat.profile.name}
+                    </h2>
+                    <p className="text-xs text-gray-500 font-medium mt-1">
+                      Target: {vocabulary.color.join(' ') || 'stray'} {currentAnimal} in {vocabulary.environment[0] || 'street'}
+                    </p>
                   </div>
-                  {usedItemMsg && <p className="text-[10px] text-yellow-300 font-bold mt-1 animate-pulse">{usedItemMsg}</p>}
+
+                  {/* Approach Choice */}
+                  <div className="bg-amber-50/80 p-3.5 rounded-2xl border border-amber-200 space-y-2">
+                    <p className="font-bold text-amber-900 text-xs flex items-center gap-1.5">
+                      <span>🚶‍♂️</span> 1. 選擇靠近方式 (Approach Strategy):
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => {
+                          setApproachChoice('slow');
+                          setTrustMeter(80);
+                          setFeedbackMsg('❤️ 輕聲慢步靠近讓動物放下警戒 (Trust Meter ⬆️)');
+                        }}
+                        className={`p-2.5 rounded-xl font-bold text-xs text-left transition ${approachChoice === 'slow' ? 'bg-emerald-600 text-white shadow' : 'bg-white text-gray-700 border border-gray-200'}`}
+                      >
+                        🚶‍♂️ Walk slowly & softly
+                      </button>
+                      <button
+                        onClick={() => {
+                          setApproachChoice('fast');
+                          setTrustMeter(30);
+                          setFeedbackMsg('⚠️ 快速衝過去嚇到了小動物！(Trust Meter ⬇️)');
+                        }}
+                        className={`p-2.5 rounded-xl font-bold text-xs text-left transition ${approachChoice === 'fast' ? 'bg-red-500 text-white shadow' : 'bg-white text-gray-700 border border-gray-200'}`}
+                      >
+                        🏃‍♂️ Run fast & shout
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Multiple Backpack Tools Selection */}
+                  <div className="bg-purple-50/80 p-3.5 rounded-2xl border border-purple-200 space-y-2">
+                    <div className="flex justify-between items-center">
+                      <p className="font-bold text-purple-900 text-xs flex items-center gap-1.5">
+                        <Briefcase size={14} className="text-purple-600" /> 2. 選擇使用的救援裝備 (可多選 Select Tools):
+                      </p>
+                      <span className="text-[10px] font-mono bg-purple-200 text-purple-900 px-2 py-0.5 rounded-full font-bold">
+                        {selectedTools.length} selected
+                      </span>
+                    </div>
+
+                    {backpack.length === 0 ? (
+                      <p className="text-xs text-purple-700 italic bg-white p-2.5 rounded-xl border border-purple-100">
+                        目前背包無裝備，將使用基本救助物資。
+                      </p>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto pr-1">
+                        {backpack.map((item) => {
+                          const isChecked = selectedTools.includes(item.id);
+                          return (
+                            <button
+                              key={item.id}
+                              onClick={() => toggleToolSelection(item.id)}
+                              className={`p-2 rounded-xl text-left font-bold text-xs border transition flex items-center justify-between ${isChecked ? 'bg-purple-600 text-white border-purple-700 shadow' : 'bg-white text-gray-700 border-gray-200'}`}
+                            >
+                              <span className="truncate">{item.icon} {item.eng}</span>
+                              {isChecked && <CheckCircle2 size={14} className="shrink-0" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Feedback & Mission Sentence Preview */}
+                  {feedbackMsg && (
+                    <p className={`text-xs font-bold p-2 rounded-xl border ${feedbackMsg.includes('⚠️') ? 'bg-red-50 border-red-200 text-red-700' : 'bg-emerald-50 border-emerald-200 text-emerald-800'}`}>
+                      {feedbackMsg}
+                    </p>
+                  )}
+
+                  <div className="bg-slate-950 text-yellow-300 p-3 rounded-2xl font-mono text-xs border border-yellow-400/50 space-y-1">
+                    <p className="text-[10px] text-yellow-400 font-bold">🎯 生成救援任務句型 (Sentence Practice):</p>
+                    <p className="text-white text-xs leading-snug font-bold">"{missionSentence}"</p>
+                  </div>
+
+                  <button
+                    onClick={() => setGameStage('MINIGAME_ACTION')}
+                    className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-3 rounded-xl shadow-lg transition text-xs flex items-center justify-center gap-2"
+                  >
+                    <span>🚀 進入現場救援操作 (Proceed to Rescue) ➔</span>
+                  </button>
                 </div>
               )}
 
-              {feedStep === 1 && (
-                <>
-                  <p className="text-gray-600 mb-4 text-xs font-bold">Step 1: Observe! Is the mother cat here?</p>
-                  <div className="flex gap-2">
-                    <button onClick={() => setTempMsg("DON'T TOUCH! The mother cat will abandon the kitten.")} className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-2 rounded-xl text-xs shadow">👀 Yes</button>
-                    <button onClick={() => { setTempMsg("Good! The kitten is alone."); setTimeout(() => setFeedStep(2), 1200); }} className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-2 rounded-xl text-xs shadow">🚫 No</button>
-                  </div>
-                  <p className={`text-xs font-bold mt-2 h-8 ${tempMsg.includes("DON'T") ? 'text-red-600' : 'text-green-600'}`}>{tempMsg}</p>
-                </>
-              )}
-              {feedStep === 2 && (
-                <>
-                  <p className="text-gray-600 mb-4 text-xs font-bold">Step 2: Heat the milk!</p>
-                  <div className="w-full h-5 bg-gray-200 rounded-full mb-4 relative overflow-hidden border border-gray-400">
-                    <div className="absolute left-[40%] w-[20%] h-full bg-green-500/40 border-l border-r border-dashed border-gray-700" />
-                    <div className={`h-full transition-all duration-100 ${temperature < 40 ? 'bg-blue-500' : temperature <= 60 ? 'bg-green-500' : 'bg-red-500'}`} style={{ width: `${temperature}%` }} />
-                  </div>
-                  <button onMouseDown={() => setIsHeating(true)} onMouseUp={() => setIsHeating(false)} onMouseLeave={() => setIsHeating(false)} onTouchStart={() => setIsHeating(true)} onTouchEnd={() => setIsHeating(false)} disabled={tempMsg.includes('Perfect')} className="w-full bg-orange-500 text-white font-bold py-2.5 px-4 rounded-xl shadow text-xs active:scale-95 disabled:opacity-50">🔥 Heat Milk (Hold)</button>
-                  <p className={`text-xs font-bold mt-2 h-5 ${temperature > 60 ? 'text-red-600' : temperature >= 40 ? 'text-green-600' : 'text-blue-600'}`}>{tempMsg}</p>
-                </>
-              )}
-              {feedStep === 3 && (
-                <>
-                  <p className="text-gray-600 mb-4 text-xs font-bold">Step 3: Feed gently and wrap in a warm blanket.</p>
-                  <button onClick={() => setFeedStep(4)} className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2.5 px-4 rounded-xl shadow text-xs active:scale-95">🍼 Feed Milk & Care</button>
-                </>
-              )}
-              {feedStep === 4 && (
-                <>
-                  <p className="text-gray-600 mb-2 text-xs font-bold">Step 4: Vet Check-up (連動 Task 2C 檢測結果)</p>
-                  <div className="bg-slate-100 p-2.5 rounded-xl border border-slate-300 text-xs text-left mb-3 space-y-1">
-                    <p>🧪 Disease Test: <span className="font-bold text-emerald-700">{vetCheck.disease}</span></p>
-                    <p>💉 Vaccine: <span className="font-bold text-emerald-700">{vetCheck.vaccine}</span></p>
-                    <p>耳 Ears: <span className="font-bold text-emerald-700">{vetCheck.ears}</span></p>
-                    <p>眼 Eyes: <span className="font-bold text-emerald-700">{vetCheck.eyes}</span></p>
-                  </div>
-                  <button onClick={finishMiniGame} className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2.5 px-4 rounded-xl shadow text-xs active:scale-95">🏥 Complete Rescue & Vet Check</button>
-                </>
-              )}
-            </div>
-          )}
+              {/* STAGE 2: Mini-game Action (Feeding or Car Engine) */}
+              {gameStage === 'MINIGAME_ACTION' && (
+                <div className="space-y-4">
+                  <span className="bg-blue-100 text-blue-800 text-xs font-black px-3 py-1 rounded-full uppercase">
+                    Stage 2: Rescue Action
+                  </span>
+                  
+                  {activeCat.rescueType === 'feed' ? (
+                    <div className="space-y-3">
+                      <h2 className="text-2xl font-black text-blue-900">Feeding & Care</h2>
+                      <div className={`text-6xl my-3 flex justify-center transition-transform ${feedStep <= 2 ? 'shaking' : ''}`}>
+                        {feedStep <= 2 ? '🐱📦' : feedStep === 3 ? '🐱🍼' : '🩺🐱'}
+                      </div>
 
-          {/* Mini-Game: Car Engine */}
-          {gameState === 'MINIGAME' && activeCat?.rescueType === 'car_engine' && (
-            <div className="bg-white p-6 rounded-2xl w-full max-w-sm text-center shadow-2xl border-4 border-red-400 relative">
-              <h2 className="text-2xl font-black text-red-800 mb-1">Car Engine Rescue!</h2>
-              
-              {/* Mission Sentence Banner */}
-              <div className="mb-3 bg-indigo-950 text-indigo-100 p-2.5 rounded-2xl border-2 border-yellow-400 text-left shadow-lg">
-                <p className="text-[10px] font-bold text-yellow-300 mb-0.5 flex items-center gap-1">
-                  🎯 觸發救援任務句型 (Triggered Mission):
-                </p>
-                <p className="text-[11px] font-mono font-bold text-white leading-tight">
-                  "{missionSentence}"
-                </p>
-              </div>
+                      {feedStep === 1 && (
+                        <>
+                          <p className="text-gray-600 text-xs font-bold">Step 1: Observe! Is the mother cat here?</p>
+                          <div className="flex gap-2">
+                            <button onClick={() => setTempMsg("DON'T TOUCH! Mother cat might be around.")} className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-2 rounded-xl text-xs shadow">👀 Yes</button>
+                            <button onClick={() => { setTempMsg("Good! The kitten is alone."); setTimeout(() => setFeedStep(2), 1000); }} className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-2 rounded-xl text-xs shadow">🚫 No</button>
+                          </div>
+                          <p className={`text-xs font-bold mt-2 h-6 ${tempMsg.includes("DON'T") ? 'text-red-600' : 'text-green-600'}`}>{tempMsg}</p>
+                        </>
+                      )}
+                      {feedStep === 2 && (
+                        <>
+                          <p className="text-gray-600 text-xs font-bold">Step 2: Heat the milk to a safe warm temperature!</p>
+                          <div className="w-full h-5 bg-gray-200 rounded-full my-2 relative overflow-hidden border border-gray-400">
+                            <div className="absolute left-[40%] w-[20%] h-full bg-green-500/40 border-l border-r border-dashed border-gray-700" />
+                            <div className={`h-full transition-all duration-100 ${temperature < 40 ? 'bg-blue-500' : temperature <= 60 ? 'bg-green-500' : 'bg-red-500'}`} style={{ width: `${temperature}%` }} />
+                          </div>
+                          <button onMouseDown={() => setIsHeating(true)} onMouseUp={() => setIsHeating(false)} onMouseLeave={() => setIsHeating(false)} onTouchStart={() => setIsHeating(true)} onTouchEnd={() => setIsHeating(false)} disabled={tempMsg.includes('Perfect')} className="w-full bg-orange-500 text-white font-bold py-2.5 px-4 rounded-xl shadow text-xs active:scale-95 disabled:opacity-50">🔥 Hold to Heat Milk</button>
+                          <p className={`text-xs font-bold mt-2 h-5 ${temperature > 60 ? 'text-red-600' : temperature >= 40 ? 'text-green-600' : 'text-blue-600'}`}>{tempMsg}</p>
+                        </>
+                      )}
+                      {(feedStep === 3 || feedStep === 4) && (
+                        <>
+                          <p className="text-gray-600 text-xs font-bold">Step 3: Feed milk & wrap in warm blanket with selected tools ({selectedToolNames})!</p>
+                          <button onClick={() => setGameStage('VET_CHECK')} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 rounded-xl shadow-lg transition text-xs flex items-center justify-center gap-2">
+                            <span>🩺 前往診所進行 Vet Check-up ➔</span>
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <h2 className="text-2xl font-black text-red-800">Car Engine Rescue</h2>
+                      <div className="text-5xl my-3">{carStep === 1 ? '🚗' : carStep === 2 ? '🐈💕' : '🩺🐱'}</div>
 
-              <p className="text-xs text-red-600 mb-3 font-medium">Action strategy from Task 2: {actionChoice1 === 'slow' ? 'Walk Slowly (🚶‍♂️)' : 'Approach Carefully'}</p>
-              
-              <div className="text-5xl mb-4 transition-transform" style={{ transform: carStep >= 2 ? 'scale(1.2)' : 'none' }}>{carStep === 1 ? '🚗' : carStep === 2 ? '🐈💕' : '🩺🐱'}</div>
-
-              {backpack.length > 0 && (
-                <div className="mb-3 bg-amber-900 text-amber-100 p-2 rounded-2xl border-2 border-amber-700 text-left shadow-lg">
-                  <p className="text-[10px] font-bold text-yellow-300 mb-1">🎒 Use Backpack Equipment:</p>
-                  <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
-                    {backpack.map((item, idx) => (
-                      <button
-                        key={`${item.id}_${idx}`}
-                        onClick={() => setUsedItemMsg(`✨ Used ${item.eng} to safely rescue!`)}
-                        className="bg-amber-800 hover:bg-amber-700 text-amber-100 font-bold text-[10px] px-2 py-0.5 rounded-lg border border-amber-600 shadow"
-                      >
-                        {item.icon} {item.eng}
-                      </button>
-                    ))}
-                  </div>
-                  {usedItemMsg && <p className="text-[10px] text-yellow-300 font-bold mt-1">{usedItemMsg}</p>}
+                      {carStep === 1 && (
+                        <>
+                          <p className="text-gray-600 text-xs font-bold">The cat is inside the engine! Tap the car hood first to alert her.</p>
+                          <button onClick={() => setCarStep(2)} className="w-full bg-yellow-500 text-white font-bold py-2.5 px-2 rounded-xl text-xs shadow hover:bg-yellow-600">👋 Tap Car Hood</button>
+                        </>
+                      )}
+                      {carStep >= 2 && (
+                        <>
+                          <p className="text-gray-600 text-xs font-bold">She peeked out! Use selected tools ({selectedToolNames}) to lure her safely into carrier.</p>
+                          <button onClick={() => setGameStage('VET_CHECK')} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 rounded-xl shadow-lg transition text-xs flex items-center justify-center gap-2">
+                            <span>🩺 前往診所進行 Vet Check-up ➔</span>
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
-              {carStep === 1 && (
-                <>
-                  <p className="text-gray-600 mb-4 text-xs font-bold">The cat is inside the car engine! First, tap the hood to alert her.</p>
-                  <button onClick={() => setCarStep(2)} className="w-full bg-yellow-500 text-white font-bold py-2.5 px-2 rounded-xl text-xs shadow hover:bg-yellow-600">👋 Tap Car Hood</button>
-                </>
-              )}
-              {carStep === 2 && (
-                <>
-                  <p className="text-gray-600 mb-4 text-xs font-bold">She peeked out! Use wet food or a blanket to lure her into the carrier.</p>
-                  <button onClick={() => setCarStep(3)} className="w-full bg-pink-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow hover:bg-pink-600">🥫 Give Food & Carrier</button>
-                </>
-              )}
-              {carStep === 3 && (
-                <>
-                  <p className="text-gray-600 mb-2 text-xs font-bold">Vet Preliminary Check (Task 2 Results)</p>
-                  <div className="bg-slate-100 p-2 rounded-xl border border-slate-300 text-xs text-left mb-3 space-y-1">
-                    <p>🧪 Disease Test: <span className="font-bold text-emerald-700">{vetCheck.disease}</span></p>
-                    <p>💉 Vaccination: <span className="font-bold text-emerald-700">{vetCheck.vaccine}</span></p>
-                    <p>❤️ Health Status: <span className="font-bold text-emerald-700">{vetCheck.body}</span></p>
+              {/* STAGE 3: Vet Check-up in RPG Game */}
+              {gameStage === 'VET_CHECK' && (
+                <div className="space-y-4 text-left">
+                  <div className="text-center">
+                    <span className="bg-emerald-100 text-emerald-800 text-xs font-black px-3 py-1 rounded-full uppercase">
+                      Stage 3: Vet Check-up Clinic
+                    </span>
+                    <h2 className="text-2xl font-black text-emerald-900 mt-1 flex items-center justify-center gap-2">
+                      <Stethoscope size={24} className="text-emerald-600" />
+                      獸醫健檢與疫苗篩檢
+                    </h2>
+                    <p className="text-xs text-gray-500">進行健康檢查，檢查耳朵、眼睛、傳染病與疫苗狀況：</p>
                   </div>
-                  <button onClick={finishMiniGame} className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2.5 px-4 rounded-xl shadow text-xs active:scale-95">🎉 Complete Rescue Mission!</button>
-                </>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                      <p className="font-bold text-slate-700 mb-1">Ears (耳朵):</p>
+                      <div className="flex gap-1">
+                        {['dirty', 'clean', 'injured'].map(opt => (
+                          <button
+                            key={opt}
+                            onClick={() => setLocalVetCheck({ ...localVetCheck, ears: opt })}
+                            className={`px-2 py-1 rounded-lg font-bold capitalize transition ${localVetCheck.ears === opt ? 'bg-emerald-600 text-white' : 'bg-white text-gray-600 border'}`}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                      <p className="font-bold text-slate-700 mb-1">Body (身體):</p>
+                      <div className="flex gap-1">
+                        {['healthy', 'thin', 'soft'].map(opt => (
+                          <button
+                            key={opt}
+                            onClick={() => setLocalVetCheck({ ...localVetCheck, body: opt })}
+                            className={`px-2 py-1 rounded-lg font-bold capitalize transition ${localVetCheck.body === opt ? 'bg-emerald-600 text-white' : 'bg-white text-gray-600 border'}`}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="bg-emerald-50 p-2.5 rounded-xl border border-emerald-200 col-span-2 space-y-1">
+                      <p className="font-bold text-emerald-900 flex items-center gap-1">
+                        <Activity size={14} /> 傳染病篩檢 (Infectious Disease Test):
+                      </p>
+                      <div className="grid grid-cols-3 gap-1">
+                        {[
+                          { key: 'negative', label: 'Negative (陰性)' },
+                          { key: 'positive', label: 'Positive (陽性)' },
+                          { key: 'clear', label: 'Clear (過關)' }
+                        ].map(item => (
+                          <button
+                            key={item.key}
+                            onClick={() => setLocalVetCheck({ ...localVetCheck, disease: item.key })}
+                            className={`p-1.5 rounded-lg text-[11px] font-bold transition ${localVetCheck.disease === item.key ? 'bg-emerald-600 text-white shadow' : 'bg-white text-gray-700 border'}`}
+                          >
+                            {item.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="bg-emerald-50 p-2.5 rounded-xl border border-emerald-200 col-span-2 space-y-1">
+                      <p className="font-bold text-emerald-900 flex items-center gap-1">
+                        <Syringe size={14} /> 疫苗施打 (Vaccination):
+                      </p>
+                      <div className="grid grid-cols-3 gap-1">
+                        {[
+                          { key: 'vaccinated', label: 'Fully Vaccinated' },
+                          { key: '1st_dose', label: '1st Dose' },
+                          { key: 'pending', label: 'Pending' }
+                        ].map(item => (
+                          <button
+                            key={item.key}
+                            onClick={() => setLocalVetCheck({ ...localVetCheck, vaccine: item.key })}
+                            className={`p-1.5 rounded-lg text-[11px] font-bold transition ${localVetCheck.vaccine === item.key ? 'bg-emerald-600 text-white shadow' : 'bg-white text-gray-700 border'}`}
+                          >
+                            {item.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setVetCheck(localVetCheck);
+                      setGameStage('RESCUE_REPORT');
+                    }}
+                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 rounded-xl shadow-lg transition text-xs flex items-center justify-center gap-2"
+                  >
+                    <FileText size={16} />
+                    <span>生成完整 Rescue Report (Generate Report) ➔</span>
+                  </button>
+                </div>
               )}
+
+              {/* STAGE 4: Generated Rescue Report in RPG Game */}
+              {gameStage === 'RESCUE_REPORT' && (
+                <div className="space-y-4 text-left">
+                  <div className="text-center">
+                    <span className="bg-purple-100 text-purple-800 text-xs font-black px-3 py-1 rounded-full uppercase">
+                      Stage 4: Rescue Report Complete!
+                    </span>
+                    <h2 className="text-2xl font-black text-purple-900 mt-1 flex items-center justify-center gap-2">
+                      <Award size={24} className="text-yellow-500" />
+                      救援與健檢英文報告
+                    </h2>
+                  </div>
+
+                  {/* Comprehensive Rescue Report */}
+                  <div className="bg-slate-900 text-white p-4 rounded-2xl border border-purple-700 text-xs font-mono space-y-2 leading-relaxed">
+                    <p className="text-yellow-300 font-bold border-b border-slate-700 pb-1">
+                      📜 RESCUE REPORT: {activeCat.profile.name}
+                    </p>
+                    <p>• Animal: <span className="text-yellow-200 capitalize">{vocabulary.color.join('/') || 'Rescued'} {currentAnimal}</span></p>
+                    <p>• Strategy: <span className="text-emerald-400">{approachChoice === 'slow' ? 'Walked slowly and softly' : 'Approached carefully'}</span></p>
+                    <p>• Tools Used: <span className="text-yellow-300">{selectedToolNames}</span></p>
+                    <p>• Disease Test: <span className="text-emerald-300">{localVetCheck.disease}</span></p>
+                    <p>• Vaccine: <span className="text-emerald-300">{localVetCheck.vaccine}</span></p>
+                    <p>• Condition: Ears are <span className="text-emerald-300">{localVetCheck.ears}</span>, Body is <span className="text-emerald-300">{localVetCheck.body}</span>!</p>
+                  </div>
+
+                  {/* Gemini Prompt for Happy Rescue Ending */}
+                  <div className="bg-purple-50 p-3 rounded-xl border border-purple-200 text-xs space-y-2">
+                    <p className="font-bold text-purple-900 flex items-center gap-1.5">
+                      <Wand2 size={14} className="text-purple-600" /> Happy Ending Gemini Prompt:
+                    </p>
+                    <p className="text-[11px] text-gray-700 bg-white p-2 rounded border border-purple-100 font-mono italic">
+                      "{generateImagePrompt(activeCat)}"
+                    </p>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(generateImagePrompt(activeCat));
+                        setIsCopiedReportPrompt(true);
+                        setTimeout(() => setIsCopiedReportPrompt(false), 2000);
+                      }}
+                      className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-1.5 px-3 rounded-lg text-xs transition flex justify-center items-center gap-1"
+                    >
+                      {isCopiedReportPrompt ? <Check size={14} /> : <Copy size={14} />}
+                      {isCopiedReportPrompt ? '已複製 Prompt！' : '複製救援成功繪本 Prompt'}
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                    <button
+                      onClick={() => {
+                        finishMiniGame();
+                        setActiveTab('task3');
+                      }}
+                      className="flex-1 bg-purple-600 hover:bg-purple-500 text-white font-bold py-2.5 px-3 rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow"
+                    >
+                      <HeartHandshake size={16} /> 前往 Task 3 製作領養宣傳單 ➔
+                    </button>
+                    <button
+                      onClick={finishMiniGame}
+                      className="flex-1 bg-gray-800 hover:bg-gray-700 text-white font-bold py-2.5 px-3 rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow"
+                    >
+                      🎮 回到 2D 地圖繼續冒險 ➔
+                    </button>
+                  </div>
+                </div>
+              )}
+
             </div>
           )}
 
-          {/* Profile Card & Task 3 Adoption Entry Modal */}
+          {/* Profile Card Modal */}
           {gameState === 'PROFILE' && activeCat && (
             <div className="bg-white p-6 rounded-2xl w-full max-w-sm text-center shadow-2xl border-4 border-indigo-500 relative max-h-[85vh] overflow-y-auto">
               
@@ -2542,8 +2404,8 @@ function PawsAndPlay({
               {/* Task 2 Rescue Report Summary */}
               <div className="text-left bg-emerald-50 p-3 rounded-xl mb-3 text-xs text-emerald-950 leading-relaxed border border-emerald-200">
                 <span className="font-bold text-emerald-800 block mb-1">🎒 Task 2 Rescue & Medical Report:</span>
-                <p>• Equipment: <span className="font-bold">{backpack.map(i => i.eng).join(', ') || 'Standard Kit'}</span></p>
-                <p>• Medical: Disease <span className="font-bold">{vetCheck.disease}</span>, Vaccine <span className="font-bold">{vetCheck.vaccine}</span></p>
+                <p>• Equipment: <span className="font-bold">{selectedToolNames}</span></p>
+                <p>• Medical: Disease <span className="font-bold">{localVetCheck.disease}</span>, Vaccine <span className="font-bold">{localVetCheck.vaccine}</span></p>
               </div>
 
               {/* Task 3 Adoption Flyer Quick Button */}
