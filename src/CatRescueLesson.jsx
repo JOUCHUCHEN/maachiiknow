@@ -1058,7 +1058,6 @@ export default function CatRescueLesson() {
                       <span className="bg-purple-600 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-lg">2</span>
                       AI Magic Dictionary
                     </h2>
-                    <p className="text-purple-700 mb-6">老師輸入小朋友說的中文，系統自動轉為英文單字與專屬圖卡！</p>
 
                     {apiError && (
                       <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl flex items-center gap-2">
@@ -1291,7 +1290,7 @@ export default function CatRescueLesson() {
                   <section className="bg-slate-900 p-6 rounded-3xl border-4 border-indigo-600 text-white shadow-2xl">
                     <h2 className="text-2xl font-bold text-yellow-400 flex items-center gap-2 mb-2">
                       <MapPin size={26} className="text-indigo-400" />
-                      置入貓咪角色於 2D 遊戲地圖 (Deploy Cat to RPG Map)
+                      Deploy Cat to RPG Map
                     </h2>
                     <p className="text-xs text-slate-300 mb-6">小朋友完成描述後，可以在地圖上記錄點位，將自訂小貓放入 2D 遊戲中！</p>
 
