@@ -1018,7 +1018,7 @@ export default function CatRescueLesson() {
                     <div className="flex justify-between items-center mb-3">
                       <h2 className="text-xl font-bold flex items-center gap-2 text-indigo-300">
                         <Sparkles size={22} className="text-yellow-400" />
-                        正面大頭照生成指令 (Front Portrait Avatar Prompt)
+                        Front Portrait Avatar Prompt
                       </h2>
                       <span className="bg-indigo-800 text-indigo-200 text-xs px-2.5 py-1 rounded-full font-mono">Pet Headshot</span>
                     </div>
