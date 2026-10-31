@@ -657,7 +657,7 @@ export default function CatRescueLesson() {
               }`}
             >
               <Cat size={18} />
-              <span>Task 1: 觀察與描述 (Observe)</span>
+              <span>Task 1: Observe</span>
             </button>
             <button
               onClick={() => setActiveTab('task2')}
@@ -668,7 +668,7 @@ export default function CatRescueLesson() {
               }`}
             >
               <ShieldCheck size={18} className="text-emerald-600" />
-              <span>Task 2: 展開救援 & 健檢 (Rescue)</span>
+              <span>Task 2: Rescue</span>
             </button>
             <button
               onClick={() => setActiveTab('task3')}
@@ -679,7 +679,7 @@ export default function CatRescueLesson() {
               }`}
             >
               <HeartHandshake size={18} className="text-purple-600" />
-              <span>Task 3: 領養宣傳單 (Adoption Flyer)</span>
+              <span>Task 3: Adoption Flyer</span>
             </button>
             <button
               onClick={() => setActiveTab('game')}
@@ -690,7 +690,7 @@ export default function CatRescueLesson() {
               }`}
             >
               <Gamepad2 size={18} className="text-yellow-300" />
-              <span>2D RPG 遊戲 (Paws & Play)</span>
+              <span>2D RPG Game (Paws & Play)</span>
             </button>
           </div>
         </div>
@@ -939,6 +939,7 @@ export default function CatRescueLesson() {
                     />
                   </label>
                 </div>
+                <p className="text-gray-500 mb-4 w-full text-left">Look at the picture. What do you see?<br/>(看看這張照片，你看到了什麼？)</p>
                 
                 {imageUploadError && (
                   <div className="mb-4 w-full bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded-xl text-xs flex items-center gap-2">
@@ -1018,7 +1019,7 @@ export default function CatRescueLesson() {
                     <div className="flex justify-between items-center mb-3">
                       <h2 className="text-xl font-bold flex items-center gap-2 text-indigo-300">
                         <Sparkles size={22} className="text-yellow-400" />
-                        Front Portrait Avatar Prompt
+                        正面大頭照生成指令 (Front Portrait Avatar Prompt)
                       </h2>
                       <span className="bg-indigo-800 text-indigo-200 text-xs px-2.5 py-1 rounded-full font-mono">Pet Headshot</span>
                     </div>
@@ -1058,6 +1059,7 @@ export default function CatRescueLesson() {
                       <span className="bg-purple-600 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-lg">2</span>
                       AI Magic Dictionary
                     </h2>
+                    <p className="text-purple-700 mb-6">老師輸入小朋友說的中文，系統自動轉為英文單字與專屬圖卡！</p>
 
                     {apiError && (
                       <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl flex items-center gap-2">
@@ -1216,7 +1218,17 @@ export default function CatRescueLesson() {
                       </div>
                       <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-200 shadow-sm">
                         <p className="mb-2 text-sm font-bold text-blue-400 uppercase tracking-wider">Details</p>
-                        <p>It is a {vocabulary.size.length ? formatList(vocabulary.size.map(s => s.endsWith('-sized') ? s : `${s}-sized`)) : <span className="text-gray-400 border-b-2 border-dashed border-gray-300 px-4">________-sized</span>}, {formatList(vocabulary.age)} {formatList(vocabulary.animal)}.</p>
+                        <p>
+                          {vocabulary.size.includes('small') && vocabulary.age.includes('baby') ? (
+                            <>
+                              It is a <span className="font-bold text-orange-600 border-b-2 border-orange-400 px-1">small baby</span> {formatList(vocabulary.animal)}.
+                            </>
+                          ) : (
+                            <>
+                              It is a {vocabulary.size.length ? formatList(vocabulary.size.map(s => s.endsWith('-sized') ? s : `${s}-sized`)) : <span className="text-gray-400 border-b-2 border-dashed border-gray-300 px-4">________-sized</span>}, {formatList(vocabulary.age)} {formatList(vocabulary.animal)}.
+                            </>
+                          )}
+                        </p>
                       </div>
                       <div className="bg-red-50/50 p-6 rounded-2xl border border-red-200 shadow-sm">
                         <p className="mb-2 text-sm font-bold text-red-400 uppercase tracking-wider">Feelings</p>
@@ -1253,7 +1265,11 @@ export default function CatRescueLesson() {
                           Create a cute, playful, and childlike children's book illustration (NOT realistic) of this rescued {vocabulary.animal.length ? vocabulary.animal.join('/') : '[cat/dog]'} waiting for help.<br/>
                           It has {vocabulary.color.length ? vocabulary.color.join(' and ') : '[Color]'} fur.<br/>
                           It is currently trapped or found in {vocabulary.environment.length ? vocabulary.environment.join(', ') : '[Place]'}.<br/>
-                          The {vocabulary.animal.length ? vocabulary.animal.join('/') : '[cat/dog]'} is {vocabulary.size.length ? vocabulary.size.map(s => s.endsWith('-sized') ? s : `${s}-sized`).join(', ') : '[Size]-sized'} and {vocabulary.age.length ? vocabulary.age.join(', ') : '[Age]'}.<br/>
+                          {vocabulary.size.includes('small') && vocabulary.age.includes('baby') ? (
+                            <>The {vocabulary.animal.length ? vocabulary.animal.join('/') : '[cat/dog]'} is a small baby.<br/></>
+                          ) : (
+                            <>The {vocabulary.animal.length ? vocabulary.animal.join('/') : '[cat/dog]'} is {vocabulary.size.length ? vocabulary.size.map(s => s.endsWith('-sized') ? s : `${s}-sized`).join(', ') : '[Size]-sized'} and {vocabulary.age.length ? vocabulary.age.join(', ') : '[Age]'}.<br/></>
+                          )}
                           The poor {vocabulary.animal.length ? vocabulary.animal.join('/') : '[cat/dog]'} looks {vocabulary.emotion.length ? vocabulary.emotion.join(' and ') : '[Emotion]'}.<br/>
                           Special features: {vocabulary.other.length ? vocabulary.other.join(', ') : '[Other traits]'}.<br/>
                           The atmosphere shows its rescue situation, slightly dramatic but with a warm, comforting light of hope shining on it.
@@ -1262,7 +1278,11 @@ export default function CatRescueLesson() {
                         <div className="pt-4 flex flex-col sm:flex-row gap-4 items-center">
                            <button 
                              onClick={() => {
-                               const promptText = `[IMPORTANT: Please strictly base the animal's appearance, colors, and markings on the uploaded photo!] Create a cute, playful, and childlike children's book illustration (NOT realistic) of this rescued ${vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog'} waiting for help. It has ${vocabulary.color.length ? vocabulary.color.join(' and ') : 'unspecified'} fur. It is currently trapped or found in ${vocabulary.environment.length ? vocabulary.environment.join(', ') : 'an unknown place'}. The ${vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog'} is ${vocabulary.size.length ? vocabulary.size.map(s => s.endsWith('-sized') ? s : `${s}-sized`).join(', ') : 'medium-sized'} and ${vocabulary.age.length ? vocabulary.age.join(', ') : 'unknown age'}. The poor ${vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog'} looks ${vocabulary.emotion.length ? vocabulary.emotion.join(' and ') : 'anxious'}. Special features: ${vocabulary.other.length ? vocabulary.other.join(', ') : 'none'}. The atmosphere shows its rescue situation, slightly dramatic but with a warm, comforting light of hope shining on it.`;
+                               const isSmallBaby = vocabulary.size.includes('small') && vocabulary.age.includes('baby');
+                               const sizeAgeStr = isSmallBaby 
+                                 ? 'a small baby' 
+                                 : `${vocabulary.size.length ? vocabulary.size.map(s => s.endsWith('-sized') ? s : `${s}-sized`).join(', ') : 'medium-sized'} and ${vocabulary.age.length ? vocabulary.age.join(', ') : 'unknown age'}`;
+                               const promptText = `[IMPORTANT: Please strictly base the animal's appearance, colors, and markings on the uploaded photo!] Create a cute, playful, and childlike children's book illustration (NOT realistic) of this rescued ${vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog'} waiting for help. It has ${vocabulary.color.length ? vocabulary.color.join(' and ') : 'unspecified'} fur. It is currently trapped or found in ${vocabulary.environment.length ? vocabulary.environment.join(', ') : 'an unknown place'}. The ${vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog'} is ${sizeAgeStr}. The poor ${vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog'} looks ${vocabulary.emotion.length ? vocabulary.emotion.join(' and ') : 'anxious'}. Special features: ${vocabulary.other.length ? vocabulary.other.join(', ') : 'none'}. The atmosphere shows its rescue situation, slightly dramatic but with a warm, comforting light of hope shining on it.`;
                                navigator.clipboard.writeText(promptText);
                                setIsCopied(true);
                                setTimeout(() => setIsCopied(false), 2000);
@@ -1290,7 +1310,7 @@ export default function CatRescueLesson() {
                   <section className="bg-slate-900 p-6 rounded-3xl border-4 border-indigo-600 text-white shadow-2xl">
                     <h2 className="text-2xl font-bold text-yellow-400 flex items-center gap-2 mb-2">
                       <MapPin size={26} className="text-indigo-400" />
-                      Deploy Cat to RPG Map
+                      置入貓咪角色於 2D 遊戲地圖 (Deploy Cat to RPG Map)
                     </h2>
                     <p className="text-xs text-slate-300 mb-6">小朋友完成描述後，可以在地圖上記錄點位，將自訂小貓放入 2D 遊戲中！</p>
 
