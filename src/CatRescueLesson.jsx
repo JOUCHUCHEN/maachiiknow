@@ -1,11 +1,33 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Camera, Plus, Trash2, ArrowRight, Sparkles, Cat, Heart, ShieldAlert, Loader2, 
+  Camera, Plus, Trash2, ArrowRight, Sparkles, Heart, ShieldAlert, Loader2, 
   Image as ImageIcon, Wand2, Tag, Key, AlertCircle, Copy, Check, Briefcase, 
   Stethoscope, CheckCircle2, ShieldCheck, Award, Gamepad2, MapPin, Play, Grid,
   RotateCcw, AlertTriangle, ChevronRight, HelpCircle, FileText, Printer, Syringe,
   Activity, Share2, HeartHandshake
 } from 'lucide-react';
+
+// Custom Cat Icon component for universal rendering compatibility
+const CatIcon = ({ size = 24, className = "" }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <path d="M12 5c-4 0-7.5 2.5-7.5 7 0 4.5 3.5 7 7.5 7s7.5-2.5 7.5-7c0-4.5-3.5-7-7.5-7z" />
+    <path d="M4.5 9.5L2 4l5 2" />
+    <path d="M19.5 9.5L22 4l-5 2" />
+    <circle cx="9" cy="11" r="1" fill="currentColor" />
+    <circle cx="15" cy="11" r="1" fill="currentColor" />
+    <path d="M11 14a1 1 0 0 0 2 0" />
+  </svg>
+);
 
 const TILE_SIZE = 32;
 
@@ -59,7 +81,7 @@ const INITIAL_MAP_DATA = [
   [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
 ];
 
-// Helper function to remove white / near-white background from avatar image
+// Helper function to remove white background from avatar image
 const removeWhiteBackground = (dataUrl, threshold = 220) => {
   return new Promise((resolve) => {
     const img = new Image();
@@ -88,7 +110,7 @@ const removeWhiteBackground = (dataUrl, threshold = 220) => {
   });
 };
 
-export default function CatRescueLesson() {
+export default function App() {
   const [activeTab, setActiveTab] = useState('task1'); // 'task1' | 'task2' | 'task3' | 'game'
 
   // Task 1 Vocabulary & Inputs
@@ -136,16 +158,15 @@ export default function CatRescueLesson() {
   // Task 2 Backpack States - NO ITEM LIMIT
   const [backpack, setBackpack] = useState([]);
   
-  // Task 2C Vet Check States with Infectious Disease Testing & Vaccination
+  // Task 2C Vet Check States
   const [vetCheck, setVetCheck] = useState({
     ears: 'dirty',
     eyes: 'clean',
     paws: 'cold',
     body: 'healthy',
-    disease: 'negative',   // 'negative' | 'positive' | 'clear'
-    vaccine: 'vaccinated'  // 'vaccinated' | '1st_dose' | 'pending'
+    disease: 'negative',   
+    vaccine: 'vaccinated'  
   });
-  const [isCopiedTask2, setIsCopiedTask2] = useState(false);
 
   // Task 2A Custom Rescue Item Auto-translation States
   const [customRescueItems, setCustomRescueItems] = useState([]);
@@ -158,13 +179,8 @@ export default function CatRescueLesson() {
   const [adoptionSlogan, setAdoptionSlogan] = useState('Looking for a warm & loving home!');
   const [isFlyerPromptCopied, setIsFlyerPromptCopied] = useState(false);
 
-  // Combined Proposal 1 + 2: Branching Decision Tree + Smart Dynamic Generator State
-  const [decisionStep, setDecisionStep] = useState(1);
-  const [trustMeter, setTrustMeter] = useState(50);
+  // Decision States
   const [approachChoice, setApproachChoice] = useState(null);
-  const [actionChoice, setActionChoice] = useState(null);
-  const [selectedTool, setSelectedTool] = useState(null);
-  const [feedbackMessage, setFeedbackMessage] = useState('');
 
   // Game Shared Cats State
   const [gameCats, setGameCats] = useState(INITIAL_CATS_DATA);
@@ -203,7 +219,6 @@ export default function CatRescueLesson() {
         return dict[term];
       }
 
-      // 使用免費且免 key 的在線翻譯服務
       const langpair = direction === 'chiToEng' ? 'zh-TW|en' : 'en|zh-TW';
       const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${langpair}`);
       const data = await res.json();
@@ -269,7 +284,6 @@ export default function CatRescueLesson() {
     };
 
     setCustomRescueItems(prev => [...prev, newItem]);
-    // NO LIMIT: Automatically add to backpack!
     setBackpack(prev => [...prev, newItem]);
 
     setCustomItemEng('');
@@ -435,7 +449,6 @@ export default function CatRescueLesson() {
     if (backpack.some(i => i.id === item.id)) {
       setBackpack(backpack.filter(i => i.id !== item.id));
     } else {
-      // Unlimited backpack selection!
       setBackpack([...backpack, item]);
     }
   };
@@ -495,12 +508,11 @@ export default function CatRescueLesson() {
     );
   };
 
-  // Re-ordered categories to place Danger/Place (危險/環境) / Background right between Appearance (Animal & Color) and Details (Size & Age)
   const categories = [
-    { id: 'animal', label: 'Cat or Dog (貓或狗)', icon: <Cat size={18} className="mr-2 text-indigo-500"/>, placeholder: 'e.g., cat, dog' },
+    { id: 'animal', label: 'Cat or Dog (貓或狗)', icon: <CatIcon size={18} className="mr-2 text-indigo-500"/>, placeholder: 'e.g., cat, dog' },
     { id: 'color', label: 'Color (顏色)', icon: <Sparkles size={18} className="mr-2 text-yellow-500"/>, placeholder: 'e.g., black, white, orange' },
     { id: 'environment', label: 'Danger/Place (危險/環境)', icon: <ShieldAlert size={18} className="mr-2 text-purple-500"/>, placeholder: 'e.g., street, rain, cold' },
-    { id: 'size', label: 'Size (大小)', icon: <Cat size={18} className="mr-2 text-blue-500"/>, placeholder: 'e.g., small, tiny, big' },
+    { id: 'size', label: 'Size (大小)', icon: <CatIcon size={18} className="mr-2 text-blue-500"/>, placeholder: 'e.g., small, tiny, big' },
     { id: 'age', label: 'Age (年紀)', icon: <Heart size={18} className="mr-2 text-pink-500"/>, placeholder: 'e.g., young, baby, old' },
     { id: 'emotion', label: 'Feelings (情緒)', icon: <Heart size={18} className="mr-2 text-red-500"/>, placeholder: 'e.g., scared, sad, hungry' },
     { id: 'other', label: 'Other (其他)', icon: <Tag size={18} className="mr-2 text-teal-500"/>, placeholder: 'e.g., cute, fast, noisy' }
@@ -512,7 +524,7 @@ export default function CatRescueLesson() {
     if (category === 'color') {
       return (
         <div className="w-full h-full flex items-center justify-center bg-slate-100 rounded-xl shadow-inner relative overflow-hidden">
-          <Cat size={100} style={{ color: w, fill: w }} className="drop-shadow-md z-10" />
+          <CatIcon size={80} style={{ color: w, fill: w }} className="drop-shadow-md z-10" />
           <div className="absolute inset-0 opacity-20" style={{ backgroundColor: w }}></div>
         </div>
       );
@@ -541,7 +553,7 @@ export default function CatRescueLesson() {
       if (['big', 'large', 'huge', 'fat', 'giant'].includes(cleanW)) sizeClass = "scale-150";
       return (
         <div className="w-full h-full flex items-center justify-center bg-blue-50 rounded-xl overflow-hidden shadow-inner">
-          <Cat size={60} className={`text-blue-500 transition-transform duration-500 ${sizeClass}`} />
+          <CatIcon size={60} className={`text-blue-500 transition-transform duration-500 ${sizeClass}`} />
         </div>
       );
     }
@@ -575,8 +587,6 @@ export default function CatRescueLesson() {
     '1st_dose': '1st Dose Completed (完成首劑)',
     pending: 'Pending Vet Schedule (安排中)'
   };
-
-  const task2Prompt = `[IMPORTANT: MUST strictly match the animal's exact breed, facial markings, and fur color in the uploaded photo!] Create a heartwarming, joyful, and childlike children's book illustration (NOT realistic) of this rescued ${currentAnimalName} successfully saved and happy! The ${currentAnimalName} is now inside a cozy warm room, happily eating ${backpack.map(i => i.eng).join(', ') || 'canned food'}, wrapped in a warm blanket. Infectious disease check: ${diseaseLabelMap[vetCheck.disease]}, Vaccine: ${vaccineLabelMap[vetCheck.vaccine]}. Its paws and ears are gently checked by a friendly vet. Soft pastel colors, warm lighting of hope.`;
 
   const avatarPrompt = `[IMPORTANT: Strictly focus on and crop the pet's face from the uploaded photo!] Create a clean, clear, front-facing portrait headshot avatar of this ${currentAnimalName}. Head only, no neck, no shoulders, solid clean white background, clear soft lighting, sharp focus on the pet's face, ears, and eyes matching the uploaded image.`;
 
@@ -638,7 +648,7 @@ export default function CatRescueLesson() {
             CLASSROOM ESL x RPG ANIMAL RESCUE PROJECT
           </div>
           <h1 className="text-3xl md:text-5xl font-extrabold text-orange-700 drop-shadow-sm flex items-center justify-center gap-3">
-            <Cat size={42} className="text-orange-500" />
+            <CatIcon size={42} className="text-orange-500" />
             Cat Rescue Quest: 浪浪救助三階段教案
           </h1>
           <p className="text-base md:text-lg text-gray-600 font-medium">從「觀察描述」到「展開救援與健康檢查」，最後完成「領養宣傳單」！</p>
@@ -655,7 +665,7 @@ export default function CatRescueLesson() {
                   : 'text-orange-900 hover:bg-orange-200/60'
               }`}
             >
-              <Cat size={18} />
+              <CatIcon size={18} />
               <span>Task 1: 觀察與描述 (Observe)</span>
             </button>
             <button
@@ -703,8 +713,6 @@ export default function CatRescueLesson() {
               vocabulary={vocabulary}
               backpack={backpack}
               actionChoice1={approachChoice}
-              actionChoice2={actionChoice}
-              selectedTool={selectedTool}
               vetCheck={vetCheck}
               setVetCheck={setVetCheck}
               catImage={catImage}
@@ -841,7 +849,7 @@ export default function CatRescueLesson() {
                     {/* Basic Traits */}
                     <div className="bg-amber-50/80 p-4 rounded-2xl border border-amber-200 space-y-2">
                       <h3 className="font-extrabold text-orange-800 border-b border-amber-200 pb-1 flex items-center gap-2">
-                        <Cat size={18} /> Basic Information (基本資料)
+                        <CatIcon size={18} /> Basic Information (基本資料)
                       </h3>
                       <div className="grid grid-cols-2 gap-2 text-xs font-medium">
                         <p><span className="font-bold text-gray-500">Species:</span> <span className="capitalize font-bold text-gray-800">{currentAnimalName}</span></p>
@@ -851,7 +859,7 @@ export default function CatRescueLesson() {
                       </div>
                     </div>
 
-                    {/* Medical Check Record (Task 2C) */}
+                    {/* Medical Check Record */}
                     <div className="bg-emerald-50/80 p-4 rounded-2xl border border-emerald-200 space-y-2">
                       <h3 className="font-extrabold text-emerald-900 border-b border-emerald-200 pb-1 flex items-center gap-2">
                         <Stethoscope size={18} className="text-emerald-600" /> Medical Record (獸醫健康報告)
@@ -1198,7 +1206,7 @@ export default function CatRescueLesson() {
                     </div>
                   </section>
 
-                  {/* Step 4: Magic Sentences - Placed Danger/Place (Background) right between Appearance and Details */}
+                  {/* Step 4: Magic Sentences */}
                   <section className="bg-white p-6 rounded-3xl shadow-lg border-2 border-orange-100 relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-orange-100 rounded-bl-full -z-10 opacity-50"></div>
                     
@@ -1241,7 +1249,7 @@ export default function CatRescueLesson() {
                     </div>
                   </section>
 
-                  {/* Step 5: RPG Character Unlocked - Prompt adjusted to place Danger/Place (Background) between Appearance and Details */}
+                  {/* Step 5: RPG Character Unlocked */}
                   <section className="bg-slate-800 p-6 md:p-8 rounded-3xl shadow-2xl text-white relative border-4 border-slate-700">
                     <h2 className="text-2xl font-bold flex items-center mb-6 text-yellow-400">
                       <span className="bg-yellow-500 text-slate-900 w-8 h-8 rounded-full flex items-center justify-center mr-3 text-lg font-black">5</span>
@@ -1326,7 +1334,10 @@ export default function CatRescueLesson() {
                         <p className="text-xs font-bold text-indigo-300 mb-2 flex items-center gap-1">
                           <Grid size={14} /> 點擊地圖選擇放置位置 (X: {deployX}, Y: {deployY})
                         </p>
-                        <div className="grid grid-cols-20 gap-0.5 bg-slate-950 p-2 rounded-xl border border-slate-700 aspect-square max-w-[280px] mx-auto md:mx-0">
+                        <div 
+                          className="grid gap-0.5 bg-slate-950 p-2 rounded-xl border border-slate-700 aspect-square max-w-[280px] mx-auto md:mx-0"
+                          style={{ gridTemplateColumns: 'repeat(20, minmax(0, 1fr))' }}
+                        >
                           {INITIAL_MAP_DATA.map((row, y) => 
                             row.map((tile, x) => {
                               const isSelected = deployX === x && deployY === y;
@@ -1462,7 +1473,7 @@ export default function CatRescueLesson() {
                       })}
                     </div>
 
-                    {/* Bi-directional Custom Rescue Item Generator */}
+                    {/* Custom Rescue Item Generator */}
                     <div className="bg-emerald-50/80 p-4 rounded-2xl border border-emerald-200">
                       <p className="font-bold text-emerald-900 text-sm mb-1 flex items-center gap-1.5">
                         <Plus size={16} className="text-emerald-600" />
@@ -1507,7 +1518,7 @@ export default function CatRescueLesson() {
                     </div>
                   </section>
 
-                  {/* Direct Transition to 2D RPG Game Banner */}
+                  {/* Direct Transition Banner */}
                   <section className="bg-gradient-to-r from-indigo-900 via-purple-900 to-slate-900 text-white p-6 md:p-8 rounded-3xl shadow-2xl border-4 border-yellow-400 space-y-4">
                     <div className="flex items-center gap-3">
                       <span className="text-4xl animate-bounce">🎒</span>
@@ -1516,7 +1527,7 @@ export default function CatRescueLesson() {
                           裝備準備完畢！直接進入 2D RPG 核心關卡
                         </h2>
                         <p className="text-xs md:text-sm text-purple-200 mt-1 leading-relaxed">
-                          Task 1 (觀察描述) 與 Task 2 (裝備選取) 是遊戲前的素材累積與英文練習。點擊下方按鈕直接進入 2D RPG Game 展開現場救援抉擇、多重裝備使用、獸醫健檢與生成英文報告！
+                          Task 1 與 Task 2 是素材累積與英文練習。點擊下方按鈕直接進入 2D RPG Game 展開現場救援與健檢報告！
                         </p>
                       </div>
                     </div>
@@ -1555,9 +1566,6 @@ function PawsAndPlay({
   setGameCats,
   vocabulary = { animal: [], color: [], size: [], age: [], emotion: [], environment: [], other: [] },
   backpack = [],
-  actionChoice1 = null,
-  actionChoice2 = null,
-  selectedTool = null,
   vetCheck = { ears: 'clean', eyes: 'clean', paws: 'warm', body: 'healthy', disease: 'negative', vaccine: 'vaccinated' },
   setVetCheck = () => {},
   catImage = null,
@@ -1565,19 +1573,13 @@ function PawsAndPlay({
   setAdoptionPetName = () => {},
   setActiveTab = () => {}
 }) {
-  const [gameState, setGameState] = useState('START'); // START, MAP, MINIGAME, PROFILE
+  const [gameState, setGameState] = useState('START');
   const [activeCat, setActiveCat] = useState(null);
+  const [gameStage, setGameStage] = useState('APPROACH_TOOLS');
   
-  // Game stages inside active cat rescue
-  const [gameStage, setGameStage] = useState('APPROACH_TOOLS'); // 'APPROACH_TOOLS' | 'MINIGAME_ACTION' | 'VET_CHECK' | 'RESCUE_REPORT'
-  
-  // Multi-select tools for active rescue
   const [selectedTools, setSelectedTools] = useState([]);
   const [approachChoice, setApproachChoice] = useState('slow');
-  const [trustMeter, setTrustMeter] = useState(50);
-  const [feedbackMsg, setFeedbackMsg] = useState('');
   
-  // Local vet check state for current rescued cat
   const [localVetCheck, setLocalVetCheck] = useState({
     ears: 'dirty',
     eyes: 'clean',
@@ -1587,19 +1589,8 @@ function PawsAndPlay({
     vaccine: 'vaccinated'
   });
 
-  // Feeding Mini-game state
-  const [feedStep, setFeedStep] = useState(1);
-  const [temperature, setTemperature] = useState(0);
-  const [isHeating, setIsHeating] = useState(false);
-  const [tempMsg, setTempMsg] = useState('');
-  const [usedItemMsg, setUsedItemMsg] = useState('');
   const [isCopiedMergedPrompt, setIsCopiedMergedPrompt] = useState(false);
   const [isCopiedReportPrompt, setIsCopiedReportPrompt] = useState(false);
-  
-  // Car Engine Mini-game state
-  const [carStep, setCarStep] = useState(1);
-
-  // Item-specific rescue tasks state
   const [itemActionProgress, setItemActionProgress] = useState({});
 
   const canvasRef = useRef(null);
@@ -1611,7 +1602,6 @@ function PawsAndPlay({
 
   const currentAnimal = vocabulary.animal[0] || 'cat';
   
-  // Dynamic rescue sentence with selected MULTIPLE tools
   const selectedToolObjs = backpack.filter(i => selectedTools.includes(i.id));
   const selectedToolNames = selectedToolObjs.length 
     ? selectedToolObjs.map(i => i.eng).join(', ') 
@@ -1622,7 +1612,6 @@ function PawsAndPlay({
   useEffect(() => {
     gameDataRef.current.cats = [...gameCats];
     
-    // Preload custom transparent avatar images for canvas rendering
     gameCats.forEach(cat => {
       if (cat.avatarUrl && !avatarCacheRef.current[cat.id]) {
         const img = new Image();
@@ -1662,16 +1651,12 @@ function PawsAndPlay({
     setGameState('MINIGAME');
     setGameStage('APPROACH_TOOLS');
     
-    // Default select all tools in backpack
     if (backpack.length > 0) {
       setSelectedTools(backpack.map(b => b.id));
     } else {
       setSelectedTools([]);
     }
     setApproachChoice('slow');
-    setTrustMeter(75);
-    setFeedbackMsg('');
-    setUsedItemMsg('');
     setItemActionProgress({});
     setLocalVetCheck({
       ears: 'dirty',
@@ -1681,20 +1666,6 @@ function PawsAndPlay({
       disease: 'negative',
       vaccine: 'vaccinated'
     });
-    
-    if (cat.rescueType === 'feed') {
-      setFeedStep(1); setTemperature(0); setTempMsg('');
-    } else if (cat.rescueType === 'car_engine') {
-      setCarStep(1);
-    }
-  };
-
-  const toggleToolSelection = (toolId) => {
-    if (selectedTools.includes(toolId)) {
-      setSelectedTools(selectedTools.filter(id => id !== toolId));
-    } else {
-      setSelectedTools([...selectedTools, toolId]);
-    }
   };
 
   const finishMiniGame = () => {
@@ -1703,27 +1674,6 @@ function PawsAndPlay({
     gameDataRef.current.cats = remainingCats;
     setGameCats(remainingCats);
   };
-
-  useEffect(() => {
-    let interval;
-    if (isHeating && feedStep === 2) {
-      interval = setInterval(() => {
-        setTemperature(prev => (prev >= 100 ? 100 : prev + 2));
-      }, 50);
-    } else if (!isHeating && feedStep === 2 && temperature > 0) {
-      if (temperature >= 40 && temperature <= 60) {
-        setTempMsg('Perfect! The milk is WARM.');
-        setTimeout(() => setFeedStep(3), 1500);
-      } else if (temperature > 60) {
-        setTempMsg('Too HOT! Let it cool down.');
-        setTimeout(() => { setTemperature(0); setTempMsg(''); }, 1000);
-      } else {
-        setTempMsg('Too COLD! Keep heating.');
-        setTimeout(() => { setTemperature(0); setTempMsg(''); }, 1000);
-      }
-    }
-    return () => clearInterval(interval);
-  }, [isHeating, temperature, feedStep]);
 
   const drawMap = (ctx) => {
     const data = gameDataRef.current;
@@ -1772,11 +1722,6 @@ function PawsAndPlay({
       const customImg = avatarCacheRef.current[cat.id];
       if (customImg && customImg.complete) {
         ctx.drawImage(customImg, cx + 2, cy + 2 + bounce, 28, 28);
-      } else if (cat.avatarUrl) {
-        const img = new Image();
-        img.src = cat.avatarUrl;
-        avatarCacheRef.current[cat.id] = img;
-        ctx.fillText(cat.emoji || "🐈", cx + 16, cy + 16 + bounce);
       } else {
         ctx.fillText(cat.emoji || "🐈", cx + 16, cy + 16 + bounce);
       }
@@ -1878,12 +1823,7 @@ function PawsAndPlay({
 
   return (
     <div className="relative w-full max-w-5xl aspect-[16/9] flex bg-gray-950 rounded-3xl overflow-hidden select-none font-sans border-4 border-indigo-800 shadow-2xl">
-      <style>{`
-        @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 25% { transform: translate(-1px, -2px) rotate(-5deg); } 50% { transform: translate(-3px, 0px) rotate(5deg); } 75% { transform: translate(3px, 2px) rotate(0deg); } 100% { transform: translate(1px, -1px) rotate(0deg); } }
-        .shaking { animation: shake 0.5s infinite; }
-      `}</style>
-
-      {/* LEFT: Game Canvas Area */}
+      {/* LEFT: Canvas */}
       <div className="relative flex-1 h-full bg-gray-900 flex items-center justify-center p-2 overflow-hidden">
         <canvas 
           ref={canvasRef} 
@@ -1893,7 +1833,6 @@ function PawsAndPlay({
           style={{ imageRendering: 'pixelated' }} 
         />
 
-        {/* Touch D-Pad placed over canvas area on mobile */}
         {gameState === 'MAP' && (
           <div className="absolute bottom-3 right-3 grid grid-cols-3 grid-rows-3 gap-1 md:hidden z-10 opacity-80">
             <div className="col-start-2 flex justify-center items-center bg-white/30 border-2 border-white/60 text-white rounded-full w-9 h-9 text-lg active:bg-white/60 cursor-pointer backdrop-blur-sm" {...dpadProps('ArrowUp')}>▲</div>
@@ -1904,11 +1843,9 @@ function PawsAndPlay({
         )}
       </div>
 
-      {/* RIGHT: Dynamic Rescue Bag Sidebar Panel */}
+      {/* RIGHT: Dynamic Sidebar */}
       <div className="w-60 sm:w-72 md:w-80 h-full bg-gradient-to-b from-amber-900 via-amber-950 to-slate-950 border-l-4 border-amber-700/80 p-3.5 sm:p-4 flex flex-col justify-between overflow-y-auto z-10 shadow-2xl shrink-0">
-        
         <div className="space-y-3">
-          {/* Rescue Bag Header */}
           <div className="flex items-center justify-between border-b-2 border-amber-700/60 pb-2">
             <div className="flex items-center gap-2">
               <span className="text-2xl drop-shadow">🎒</span>
@@ -1922,7 +1859,6 @@ function PawsAndPlay({
             </span>
           </div>
 
-          {/* Rescue Backpack Equipment Slots - Dynamic List */}
           <div className="space-y-2">
             <p className="text-xs font-bold text-amber-300 flex items-center gap-1">
               <span>📦</span> 已裝備道具 (Equipment)
@@ -1951,7 +1887,6 @@ function PawsAndPlay({
             )}
           </div>
 
-          {/* Task 2 Active Sentence Mission Badge */}
           <div className="bg-indigo-950/90 border-2 border-yellow-400/80 rounded-2xl p-2.5 text-xs text-yellow-200 space-y-1 shadow-lg">
             <p className="font-bold text-yellow-300 text-[11px] flex items-center gap-1">
               <Gamepad2 size={14} className="text-yellow-400" /> Task 2 救援句型任務
@@ -1960,28 +1895,15 @@ function PawsAndPlay({
               "{missionSentence}"
             </p>
           </div>
-
-          {/* Task 1 Target Animal Traits Tag */}
-          {vocabulary.color.length > 0 && (
-            <div className="bg-yellow-950/80 border border-yellow-600/60 rounded-xl p-2.5 text-xs text-yellow-200 space-y-1 shadow">
-              <p className="font-bold text-yellow-400 text-[11px] flex items-center gap-1">
-                <Tag size={12} /> Task 1 目標救援特徵
-              </p>
-              <p className="text-[11px] text-amber-200 leading-tight">
-                Target: <span className="font-bold text-white capitalize">{vocabulary.color.join('/') || 'Rescued'} {vocabulary.animal[0] || 'Cat'}</span>
-              </p>
-            </div>
-          )}
         </div>
 
-        {/* Footer Hint */}
         <div className="pt-2 border-t border-amber-800/60 text-[10px] text-amber-400 space-y-0.5">
           <p className="font-bold text-amber-300">💡 操作提示：</p>
           <p className="leading-tight">地圖移動尋找 🐈，遭遇小貓即可使用此後背包內的道具展開救援！</p>
         </div>
       </div>
 
-      {/* Victory Celebration when Game is Completed */}
+      {/* Victory Banner */}
       {gameState === 'MAP' && gameCats.length === 0 && (
         <div className="absolute inset-0 bg-black/80 backdrop-blur-md flex justify-center items-center z-30 p-4 text-center">
           <div className="bg-gradient-to-b from-purple-900 to-indigo-950 border-4 border-yellow-400 p-6 md:p-8 rounded-3xl max-w-md text-white shadow-2xl space-y-4">
@@ -2005,11 +1927,10 @@ function PawsAndPlay({
         </div>
       )}
 
-      {/* OVERLAYS: Start, Multi-Stage Mini-game, Profile modals */}
+      {/* MODALS */}
       {gameState !== 'MAP' && (
         <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-20 overflow-y-auto p-4">
           
-          {/* Start Screen */}
           {gameState === 'START' && (
             <div className="bg-white p-6 rounded-2xl w-full max-w-sm text-center shadow-2xl border-4 border-indigo-500">
               <h1 className="text-3xl font-black text-indigo-600 mb-1">Paws & Play</h1>
@@ -2017,60 +1938,67 @@ function PawsAndPlay({
               
               <div className="mb-4 bg-indigo-50 p-3 rounded-xl border border-indigo-200 text-left text-xs space-y-1">
                 <p className="font-bold text-indigo-900">🔗 Task Integration Active:</p>
-                <p className="text-indigo-700">• Task 1 Target: <span className="font-bold">{vocabulary.color.join(' ') || 'Rescued'} {vocabulary.animal[0] || 'cat'}</span></p>
-                <p className="text-indigo-700">• Task 2 Items: <span className="font-bold">{backpack.map(i => i.eng).join(', ') || 'Standard Kit'}</span></p>
+                <p className="text-indigo-700">• Target: <span className="font-bold">{vocabulary.color.join(' ') || 'Rescued'} {vocabulary.animal[0] || 'cat'}</span></p>
+                <p className="text-indigo-700">• Items: <span className="font-bold">{backpack.map(i => i.eng).join(', ') || 'Standard Kit'}</span></p>
               </div>
 
-              <div className="text-left text-xs text-gray-600 mb-6 space-y-1.5 bg-slate-50 p-3 rounded-xl border border-slate-200">
-                <p>🎮 <b>How to play:</b></p>
-                <p>1. Use Keyboard (WASD / Arrow Keys) or Touch D-Pad.</p>
-                <p>2. Walk up to stray cats (🐈) on the map.</p>
-                <p>3. Select action strategies, multiple backpack tools, perform vet checks, and generate rescue reports!</p>
-              </div>
               <button onClick={() => setGameState('MAP')} className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition">Start Game 🚀</button>
             </div>
           )}
 
-          {/* Mini-Game Overlays (Multi-Stage RPG Rescue Flow) */}
           {gameState === 'MINIGAME' && activeCat && (
             <div className="bg-white p-6 rounded-3xl w-full max-w-lg text-center shadow-2xl border-4 border-indigo-500 relative max-h-[90vh] overflow-y-auto">
               
-              {/* STAGE 2: Mini-game Action (Item-Based Tasks) */}
+              {gameStage === 'APPROACH_TOOLS' && (
+                <div className="space-y-4 text-left">
+                  <div className="text-center">
+                    <span className="bg-indigo-100 text-indigo-800 text-xs font-black px-3 py-1 rounded-full uppercase">Stage 1: Approach & Tools</span>
+                    <h2 className="text-2xl font-black text-indigo-900 mt-1">救援方式與裝備準備</h2>
+                  </div>
+
+                  <div className="bg-amber-50 p-3.5 rounded-xl border border-amber-200 text-xs space-y-1">
+                    <p className="font-bold text-amber-900">🐱 動物處境與情境：</p>
+                    <p className="text-amber-800">{activeCat.profile.englishDesc}</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold text-gray-700">選擇接近方式 (Approach strategy):</label>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <button
+                        onClick={() => setApproachChoice('slow')}
+                        className={`p-3 rounded-xl font-bold border-2 transition ${approachChoice === 'slow' ? 'border-indigo-600 bg-indigo-50 text-indigo-900' : 'border-gray-200'}`}
+                      >
+                        🚶‍♂️ 輕聲緩慢靠近 (Walk slowly)
+                      </button>
+                      <button
+                        onClick={() => setApproachChoice('fast')}
+                        className={`p-3 rounded-xl font-bold border-2 transition ${approachChoice === 'fast' ? 'border-indigo-600 bg-indigo-50 text-indigo-900' : 'border-gray-200'}`}
+                      >
+                        🏃‍♂️ 迅速衝上前 (Approach carefully)
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setGameStage('MINIGAME_ACTION')}
+                    className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-3 rounded-xl shadow transition text-xs"
+                  >
+                    下一步：執行救援任務 ➔
+                  </button>
+                </div>
+              )}
+
               {gameStage === 'MINIGAME_ACTION' && (
                 <div className="space-y-4">
                   <div className="text-center">
                     <span className="bg-blue-100 text-blue-800 text-xs font-black px-3 py-1 rounded-full uppercase">
-                      Stage 2: Item-Based Rescue Action Tasks
+                      Stage 2: Item Tasks
                     </span>
-                    <h2 className="text-2xl font-black text-blue-900 mt-2">
-                      🛠️ 根據裝備執行的救援任務 ({selectedToolObjs.length} 個裝備任務)
+                    <h2 className="text-2xl font-black text-blue-900 mt-1">
+                      🛠️ 裝備救援任務
                     </h2>
-                    <p className="text-xs text-gray-500 font-medium mt-1">
-                      使用你帶來的救援道具，逐一完成小動物拯救步驟！
-                    </p>
                   </div>
 
-                  {/* Scenario Hint: Car engine tap hood */}
-                  {activeCat.rescueType === 'car_engine' && (
-                    <div className="bg-amber-50 p-3 rounded-xl border border-amber-200 text-xs text-amber-900 flex items-center justify-between">
-                      <span className="font-bold">🚗 車底救援特別提示: 靠近車底前先輕敲引擎蓋！</span>
-                      <button
-                        onClick={() => {
-                          setItemActionProgress(prev => ({ ...prev, car_tapped: true }));
-                        }}
-                        disabled={itemActionProgress.car_tapped}
-                        className={`px-3 py-1 rounded-lg font-bold text-xs shadow transition ${
-                          itemActionProgress.car_tapped 
-                            ? 'bg-emerald-600 text-white' 
-                            : 'bg-yellow-500 hover:bg-yellow-600 text-slate-900'
-                        }`}
-                      >
-                        {itemActionProgress.car_tapped ? '✓ 已輕敲引擎蓋 (Tapped)' : '👋 輕敲引擎蓋 (Tap Hood)'}
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Dynamic Item Tasks List */}
                   <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
                     {selectedToolObjs.length === 0 ? (
                       <div className="bg-slate-50 p-4 rounded-2xl border border-dashed border-gray-300 text-center text-xs text-gray-500">
@@ -2085,91 +2013,29 @@ function PawsAndPlay({
                     ) : (
                       selectedToolObjs.map((item, idx) => {
                         const isDone = itemActionProgress[item.id];
-                        const itemKey = item.eng.toLowerCase();
-
-                        let taskTitle = `Use ${item.eng} (${item.chi})`;
-                        let taskDesc = `操作 ${item.chi} 來協助拯救小動物`;
-                        let actionBtnLabel = `實施 ${item.chi} 任務 (Use ${item.eng})`;
-                        let taskEmoji = item.icon || '🎒';
-
-                        if (itemKey.includes('glove')) {
-                          taskTitle = `🧤 戴上防咬手套 (Wear ${item.eng})`;
-                          taskDesc = 'Put on safety gloves to protect your hands from bites/scratches.';
-                          actionBtnLabel = '🧤 戴上防咬手套 (Put On Gloves)';
-                        } else if (itemKey.includes('food') || itemKey.includes('treat') || itemKey.includes('canned')) {
-                          taskTitle = `🥫 準備與放置美食 (Serve ${item.eng})`;
-                          taskDesc = 'Open delicious canned food or treats to lure the hungry pet out safely.';
-                          actionBtnLabel = '🥫 開罐頭/放零食引誘 (Place Food)';
-                        } else if (itemKey.includes('blanket') || itemKey.includes('towel')) {
-                          taskTitle = `🛋️ 輕包裹保暖 (Wrap in ${item.eng})`;
-                          taskDesc = 'Gently wrap the shivering or scared animal to provide warmth and comfort.';
-                          actionBtnLabel = '🛋️ 用保暖毯包裹 (Wrap Pet)';
-                        } else if (itemKey.includes('carrier') || itemKey.includes('cage')) {
-                          taskTitle = `🏠 打開外出籠並引導進入 (Secure in ${item.eng})`;
-                          taskDesc = 'Open carrier door softly, guide the pet inside, and lock the safety latch.';
-                          actionBtnLabel = '🏠 開籠並引導進入 (Guide into Carrier)';
-                        } else if (itemKey.includes('trap')) {
-                          taskTitle = `🪤 架設誘捕裝置 (Set Up ${item.eng})`;
-                          taskDesc = 'Set up trap cage safely with food inside and check mechanism.';
-                          actionBtnLabel = '🪤 架設誘捕籠 (Set Trap Cage)';
-                        } else if (itemKey.includes('flashlight')) {
-                          taskTitle = `🔦 開啟手電筒照亮角落 (Use Flashlight)`;
-                          taskDesc = 'Shine gentle light into dark alley or car engine to spot the pet.';
-                          actionBtnLabel = '🔦 開啟手電筒搜尋 (Shine Light)';
-                        } else if (itemKey.includes('water')) {
-                          taskTitle = `💧 提供乾淨溫水 (Offer Clean Water)`;
-                          taskDesc = 'Pour fresh warm water into a small bowl for the thirsty pet.';
-                          actionBtnLabel = '💧 遞上乾淨溫水 (Give Water)';
-                        } else if (itemKey.includes('toy')) {
-                          taskTitle = `🧸 使用玩具安撫情緒 (Play with Toy)`;
-                          taskDesc = 'Wave a toy gently to soothe anxiety and gain trust.';
-                          actionBtnLabel = '🧸 輕晃玩具安撫 (Play Toy)';
-                        } else if (itemKey.includes('bandage') || itemKey.includes('medicine')) {
-                          taskTitle = `🩹 進行急救包紮 (Apply First Aid)`;
-                          taskDesc = 'Gently inspect and apply bandage/medicine to minor scratches.';
-                          actionBtnLabel = '🩹 包紮微小傷口 (Apply Bandage)';
-                        }
-
                         return (
                           <div
                             key={item.id}
-                            className={`p-3.5 rounded-2xl border-2 transition-all text-left flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 ${
-                              isDone 
-                                ? 'bg-emerald-50/90 border-emerald-400 shadow-sm' 
-                                : 'bg-white border-blue-200 hover:border-blue-300 shadow'
+                            className={`p-3.5 rounded-2xl border-2 transition-all text-left flex justify-between items-center gap-3 ${
+                              isDone ? 'bg-emerald-50 border-emerald-400' : 'bg-white border-blue-200'
                             }`}
                           >
-                            <div className="flex items-start gap-3 flex-1">
-                              <span className="text-3xl shrink-0 p-1 bg-slate-100 rounded-xl">{taskEmoji}</span>
+                            <div className="flex items-center gap-3">
+                              <span className="text-2xl">{item.icon}</span>
                               <div>
-                                <div className="flex items-center gap-2">
-                                  <span className="font-mono text-[10px] font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
-                                    Task {idx + 1}
-                                  </span>
-                                  <h3 className="font-extrabold text-gray-800 text-xs sm:text-sm">{taskTitle}</h3>
-                                </div>
-                                <p className="text-[11px] text-gray-500 mt-1 leading-snug">{taskDesc}</p>
+                                <h3 className="font-extrabold text-xs sm:text-sm">Use {item.eng} ({item.chi})</h3>
+                                <p className="text-[10px] text-gray-500">使用 {item.chi} 來協助救援</p>
                               </div>
                             </div>
 
                             <button
-                              onClick={() => {
-                                setItemActionProgress(prev => ({ ...prev, [item.id]: true }));
-                              }}
+                              onClick={() => setItemActionProgress(prev => ({ ...prev, [item.id]: true }))}
                               disabled={isDone}
-                              className={`w-full sm:w-auto px-4 py-2.5 rounded-xl font-bold text-xs transition whitespace-nowrap shadow flex items-center justify-center gap-1.5 ${
-                                isDone 
-                                  ? 'bg-emerald-600 text-white cursor-default' 
-                                  : 'bg-blue-600 hover:bg-blue-500 text-white active:scale-95'
+                              className={`px-3 py-2 rounded-xl font-bold text-xs ${
+                                isDone ? 'bg-emerald-600 text-white' : 'bg-blue-600 text-white'
                               }`}
                             >
-                              {isDone ? (
-                                <>
-                                  <CheckCircle2 size={16} /> Task Completed!
-                                </>
-                              ) : (
-                                actionBtnLabel
-                              )}
+                              {isDone ? '✓ Completed' : 'Action'}
                             </button>
                           </div>
                         );
@@ -2177,32 +2043,26 @@ function PawsAndPlay({
                     )}
                   </div>
 
-                  {/* Completion check & proceed button */}
                   {(() => {
                     const allDone = selectedToolObjs.length === 0 
                       ? itemActionProgress.bare_hands 
                       : selectedToolObjs.every(i => itemActionProgress[i.id]);
 
                     return (
-                      <div className="pt-2 border-t border-gray-200">
-                        <button
-                          onClick={() => setGameStage('VET_CHECK')}
-                          disabled={!allDone}
-                          className={`w-full font-black py-3.5 rounded-2xl shadow-lg transition text-xs flex items-center justify-center gap-2 ${
-                            allDone 
-                              ? 'bg-emerald-600 hover:bg-emerald-500 text-white animate-pulse' 
-                              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                          }`}
-                        >
-                          <span>🩺 {allDone ? '所有裝備任務完成！前往診所進行 Vet Check-up ➔' : '請完成上方裝備任務後繼續 ➔'}</span>
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => setGameStage('VET_CHECK')}
+                        disabled={!allDone}
+                        className={`w-full font-black py-3 rounded-2xl shadow transition text-xs ${
+                          allDone ? 'bg-emerald-600 text-white' : 'bg-gray-300 text-gray-500'
+                        }`}
+                      >
+                        🩺 {allDone ? '前往診所進行 Vet Check-up ➔' : '請完成上方任務 ➔'}
+                      </button>
                     );
                   })()}
                 </div>
               )}
 
-              {/* STAGE 3: Vet Check-up in RPG Game */}
               {gameStage === 'VET_CHECK' && (
                 <div className="space-y-4 text-left">
                   <div className="text-center">
@@ -2210,10 +2070,8 @@ function PawsAndPlay({
                       Stage 3: Vet Check-up Clinic
                     </span>
                     <h2 className="text-2xl font-black text-emerald-900 mt-1 flex items-center justify-center gap-2">
-                      <Stethoscope size={24} className="text-emerald-600" />
-                      獸醫健檢與疫苗篩檢
+                      <Stethoscope size={24} className="text-emerald-600" /> 獸醫健檢報告
                     </h2>
-                    <p className="text-xs text-gray-500">進行健康檢查，檢查耳朵、眼睛、傳染病與疫苗狀況：</p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 text-xs">
@@ -2224,7 +2082,7 @@ function PawsAndPlay({
                           <button
                             key={opt}
                             onClick={() => setLocalVetCheck({ ...localVetCheck, ears: opt })}
-                            className={`px-2 py-1 rounded-lg font-bold capitalize transition ${localVetCheck.ears === opt ? 'bg-emerald-600 text-white' : 'bg-white text-gray-600 border'}`}
+                            className={`px-2 py-1 rounded-lg font-bold capitalize ${localVetCheck.ears === opt ? 'bg-emerald-600 text-white' : 'bg-white border'}`}
                           >
                             {opt}
                           </button>
@@ -2239,51 +2097,9 @@ function PawsAndPlay({
                           <button
                             key={opt}
                             onClick={() => setLocalVetCheck({ ...localVetCheck, body: opt })}
-                            className={`px-2 py-1 rounded-lg font-bold capitalize transition ${localVetCheck.body === opt ? 'bg-emerald-600 text-white' : 'bg-white text-gray-600 border'}`}
+                            className={`px-2 py-1 rounded-lg font-bold capitalize ${localVetCheck.body === opt ? 'bg-emerald-600 text-white' : 'bg-white border'}`}
                           >
                             {opt}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="bg-emerald-50 p-2.5 rounded-xl border border-emerald-200 col-span-2 space-y-1">
-                      <p className="font-bold text-emerald-900 flex items-center gap-1">
-                        <Activity size={14} /> 傳染病篩檢 (Infectious Disease Test):
-                      </p>
-                      <div className="grid grid-cols-3 gap-1">
-                        {[
-                          { key: 'negative', label: 'Negative (陰性)' },
-                          { key: 'positive', label: 'Positive (陽性)' },
-                          { key: 'clear', label: 'Clear (過關)' }
-                        ].map(item => (
-                          <button
-                            key={item.key}
-                            onClick={() => setLocalVetCheck({ ...localVetCheck, disease: item.key })}
-                            className={`p-1.5 rounded-lg text-[11px] font-bold transition ${localVetCheck.disease === item.key ? 'bg-emerald-600 text-white shadow' : 'bg-white text-gray-700 border'}`}
-                          >
-                            {item.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="bg-emerald-50 p-2.5 rounded-xl border border-emerald-200 col-span-2 space-y-1">
-                      <p className="font-bold text-emerald-900 flex items-center gap-1">
-                        <Syringe size={14} /> 疫苗施打 (Vaccination):
-                      </p>
-                      <div className="grid grid-cols-3 gap-1">
-                        {[
-                          { key: 'vaccinated', label: 'Fully Vaccinated' },
-                          { key: '1st_dose', label: '1st Dose' },
-                          { key: 'pending', label: 'Pending' }
-                        ].map(item => (
-                          <button
-                            key={item.key}
-                            onClick={() => setLocalVetCheck({ ...localVetCheck, vaccine: item.key })}
-                            className={`p-1.5 rounded-lg text-[11px] font-bold transition ${localVetCheck.vaccine === item.key ? 'bg-emerald-600 text-white shadow' : 'bg-white text-gray-700 border'}`}
-                          >
-                            {item.label}
                           </button>
                         ))}
                       </div>
@@ -2295,15 +2111,13 @@ function PawsAndPlay({
                       setVetCheck(localVetCheck);
                       setGameStage('RESCUE_REPORT');
                     }}
-                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 rounded-xl shadow-lg transition text-xs flex items-center justify-center gap-2"
+                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 rounded-xl shadow transition text-xs flex items-center justify-center gap-2"
                   >
-                    <FileText size={16} />
-                    <span>生成完整 Rescue Report (Generate Report) ➔</span>
+                    <FileText size={16} /> 生成完整 Rescue Report ➔
                   </button>
                 </div>
               )}
 
-              {/* STAGE 4: Generated Rescue Report in RPG Game */}
               {gameStage === 'RESCUE_REPORT' && (
                 <div className="space-y-4 text-left">
                   <div className="text-center">
@@ -2311,43 +2125,17 @@ function PawsAndPlay({
                       Stage 4: Rescue Report Complete!
                     </span>
                     <h2 className="text-2xl font-black text-purple-900 mt-1 flex items-center justify-center gap-2">
-                      <Award size={24} className="text-yellow-500" />
-                      救援與健檢英文報告
+                      <Award size={24} className="text-yellow-500" /> 救援與健檢英文報告
                     </h2>
                   </div>
 
-                  {/* Comprehensive Rescue Report */}
-                  <div className="bg-slate-900 text-white p-4 rounded-2xl border border-purple-700 text-xs font-mono space-y-2 leading-relaxed">
+                  <div className="bg-slate-900 text-white p-4 rounded-2xl border border-purple-700 text-xs font-mono space-y-2">
                     <p className="text-yellow-300 font-bold border-b border-slate-700 pb-1">
                       📜 RESCUE REPORT: {activeCat.profile.name}
                     </p>
                     <p>• Animal: <span className="text-yellow-200 capitalize">{vocabulary.color.join('/') || 'Rescued'} {currentAnimal}</span></p>
-                    <p>• Strategy: <span className="text-emerald-400">{approachChoice === 'slow' ? 'Walked slowly and softly' : 'Approached carefully'}</span></p>
                     <p>• Tools Used: <span className="text-yellow-300">{selectedToolNames}</span></p>
-                    <p>• Disease Test: <span className="text-emerald-300">{localVetCheck.disease}</span></p>
-                    <p>• Vaccine: <span className="text-emerald-300">{localVetCheck.vaccine}</span></p>
                     <p>• Condition: Ears are <span className="text-emerald-300">{localVetCheck.ears}</span>, Body is <span className="text-emerald-300">{localVetCheck.body}</span>!</p>
-                  </div>
-
-                  {/* Gemini Prompt for Happy Rescue Ending */}
-                  <div className="bg-purple-50 p-3 rounded-xl border border-purple-200 text-xs space-y-2">
-                    <p className="font-bold text-purple-900 flex items-center gap-1.5">
-                      <Wand2 size={14} className="text-purple-600" /> Happy Ending Gemini Prompt:
-                    </p>
-                    <p className="text-[11px] text-gray-700 bg-white p-2 rounded border border-purple-100 font-mono italic">
-                      "{generateImagePrompt(activeCat)}"
-                    </p>
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(generateImagePrompt(activeCat));
-                        setIsCopiedReportPrompt(true);
-                        setTimeout(() => setIsCopiedReportPrompt(false), 2000);
-                      }}
-                      className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-1.5 px-3 rounded-lg text-xs transition flex justify-center items-center gap-1"
-                    >
-                      {isCopiedReportPrompt ? <Check size={14} /> : <Copy size={14} />}
-                      {isCopiedReportPrompt ? '已複製 Prompt！' : '複製救援成功繪本 Prompt'}
-                    </button>
                   </div>
 
                   <div className="flex flex-col sm:flex-row gap-2 pt-1">
@@ -2373,10 +2161,8 @@ function PawsAndPlay({
             </div>
           )}
 
-          {/* Profile Card Modal */}
           {gameState === 'PROFILE' && activeCat && (
             <div className="bg-white p-6 rounded-2xl w-full max-w-sm text-center shadow-2xl border-4 border-indigo-500 relative max-h-[85vh] overflow-y-auto">
-              
               <div className="bg-indigo-100 text-indigo-800 text-xs font-black px-3 py-1 rounded-full inline-block mb-2">
                 🎉 RPG Character Rescued!
               </div>
@@ -2387,7 +2173,6 @@ function PawsAndPlay({
                 </div>
               )}
 
-              {/* Editable Name Field for Adoption Flyer */}
               <div className="mb-3">
                 <label className="block text-[11px] font-bold text-gray-500 mb-1">取一個領養英文名字 (Adoption Pet Name):</label>
                 <input
@@ -2398,59 +2183,6 @@ function PawsAndPlay({
                 />
               </div>
 
-              {/* Task 1 Sentence Summary */}
-              <div className="text-left bg-orange-50 p-3 rounded-xl mb-3 text-xs text-gray-700 leading-relaxed border border-orange-200">
-                <span className="font-bold text-orange-600 block mb-1">✨ Task 1 Observation Story:</span>
-                {activeCat.profile.story}
-              </div>
-
-              {/* Task 2 Rescue Report Summary */}
-              <div className="text-left bg-emerald-50 p-3 rounded-xl mb-3 text-xs text-emerald-950 leading-relaxed border border-emerald-200">
-                <span className="font-bold text-emerald-800 block mb-1">🎒 Task 2 Rescue & Medical Report:</span>
-                <p>• Equipment: <span className="font-bold">{selectedToolNames}</span></p>
-                <p>• Medical: Disease <span className="font-bold">{localVetCheck.disease}</span>, Vaccine <span className="font-bold">{localVetCheck.vaccine}</span></p>
-              </div>
-
-              {/* Task 3 Adoption Flyer Quick Button */}
-              <div className="bg-purple-50 p-3 rounded-xl mb-4 text-xs border border-purple-200 space-y-2">
-                <p className="font-bold text-purple-900">✨ 製作這隻小貓的【Task 3 愛心領養宣傳單】</p>
-                <button
-                  onClick={() => {
-                    setActiveCat(null);
-                    setGameState('MAP');
-                    setActiveTab('task3');
-                  }}
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-xl shadow transition flex items-center justify-center gap-1.5"
-                >
-                  <HeartHandshake size={16} /> 自動生成 Task 3 領養海報 ➔
-                </button>
-              </div>
-
-              {/* Gemini Image Prompt Generator */}
-              <div className="text-left bg-indigo-50 p-3 rounded-xl mb-4 text-xs border-2 border-indigo-200">
-                <span className="font-bold text-indigo-800 block mb-1.5">🖼️ 雙任務合成 Gemini 繪本 Prompt:</span>
-                <p className="text-gray-600 italic mb-2.5 bg-white p-2 rounded border border-indigo-100 text-[11px] select-all">
-                  "{generateImagePrompt(activeCat)}"
-                </p>
-                
-                {isCopiedMergedPrompt && (
-                  <p className="text-[11px] text-emerald-600 font-bold text-center mb-1 animate-pulse">
-                    ✓ 已複製雙任務整合 Prompt！
-                  </p>
-                )}
-
-                <button 
-                  onClick={() => {
-                    navigator.clipboard.writeText(generateImagePrompt(activeCat));
-                    setIsCopiedMergedPrompt(true);
-                    setTimeout(() => setIsCopiedMergedPrompt(false), 2000);
-                  }}
-                  className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-3 rounded-xl text-xs shadow transition mb-1.5 flex justify-center items-center gap-2"
-                >
-                  📋 複製整合 Prompt 給 Gemini
-                </button>
-              </div>
-              
               <button 
                 onClick={() => { setActiveCat(null); setGameState('MAP'); }} 
                 className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2.5 px-4 rounded-xl text-xs transition"
