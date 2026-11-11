@@ -428,8 +428,7 @@ export default function CatRescueLesson() {
     { id: 'food', eng: 'canned food', chi: '罐頭', icon: '🥫' },
     { id: 'blanket', eng: 'warm blanket', chi: '保暖毯', icon: '🛋️' },
     { id: 'gloves', eng: 'safety gloves', chi: '防咬手套', icon: '🧤' },
-    { id: 'toy', eng: 'cat toy', chi: '逗貓棒/玩具', icon: '🧸' },
-    { id: 'water', eng: 'fresh water', chi: '乾淨水', icon: '💧' },
+    { id: 'trap_cage', eng: 'trap cage', chi: '誘捕籠', icon: '🪤' },
   ];
 
   const toggleBackpackItem = (item) => {
