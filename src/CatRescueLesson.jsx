@@ -2001,42 +2001,85 @@ function PawsAndPlay({
 
                   <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
                     {selectedToolObjs.length === 0 ? (
-                      <div className="bg-slate-50 p-4 rounded-2xl border border-dashed border-gray-300 text-center text-xs text-gray-500">
-                        未選擇特定道具，使用雙手溫柔救援...
+                      <div className="bg-slate-50 p-4 rounded-2xl border border-dashed border-gray-300 text-center text-xs text-gray-500 space-y-2">
+                        {itemActionProgress.bare_hands ? (
+                          <div className="bg-emerald-100 border border-emerald-400 p-3 rounded-xl text-emerald-900 font-bold text-xs space-y-1">
+                            <p className="text-[11px] text-emerald-700 flex items-center justify-center gap-1">
+                              <span>🗣️</span> 學習英文句型 (Learning Sentence):
+                            </p>
+                            <p className="text-emerald-800 text-sm font-extrabold italic font-mono">
+                              "I gently pick up the {currentAnimal} with my hands!"
+                            </p>
+                            <p className="text-[11px] text-emerald-600 font-normal">（我用雙手溫柔地抱起這隻小動物！）</p>
+                          </div>
+                        ) : (
+                          <p className="py-1">未選擇特定道具，使用雙手溫柔救援...</p>
+                        )}
                         <button
                           onClick={() => setItemActionProgress(prev => ({ ...prev, bare_hands: true }))}
-                          className="block mx-auto mt-2 bg-indigo-600 text-white font-bold px-4 py-2 rounded-xl text-xs"
+                          disabled={itemActionProgress.bare_hands}
+                          className={`block mx-auto font-bold px-4 py-2 rounded-xl text-xs shadow transition ${
+                            itemActionProgress.bare_hands ? 'bg-emerald-600 text-white' : 'bg-indigo-600 hover:bg-indigo-500 text-white'
+                          }`}
                         >
-                          🤲 溫柔抱起小動物 (Gentle Pick Up)
+                          {itemActionProgress.bare_hands ? '✓ Completed (已完成)' : '🤲 溫柔抱起小動物 (Gentle Pick Up)'}
                         </button>
                       </div>
                     ) : (
                       selectedToolObjs.map((item, idx) => {
                         const isDone = itemActionProgress[item.id];
+                        
+                        // 動態根據裝備類型生成對應的英語教學句型
+                        const getActionSentence = (itemObj) => {
+                          const eng = itemObj.eng.toLowerCase();
+                          if (eng.includes('carrier') || eng.includes('籠')) return `I put the ${currentAnimal} safely into the ${itemObj.eng}.`;
+                          if (eng.includes('food') || eng.includes('treat') || eng.includes('罐頭') || eng.includes('零食') || eng.includes('糧')) return `I feed the ${currentAnimal} with yummy ${itemObj.eng}.`;
+                          if (eng.includes('blanket') || eng.includes('towel') || eng.includes('毯') || eng.includes('毛巾')) return `I wrap the ${currentAnimal} with a warm ${itemObj.eng}.`;
+                          if (eng.includes('glove') || eng.includes('手套')) return `I wear ${itemObj.eng} to hold the ${currentAnimal}.`;
+                          if (eng.includes('trap') || eng.includes('誘捕')) return `I place the ${itemObj.eng} to rescue the ${currentAnimal}.`;
+                          if (eng.includes('water') || eng.includes('水')) return `I give clean ${itemObj.eng} to the ${currentAnimal}.`;
+                          if (eng.includes('leash') || eng.includes('collar') || eng.includes('牽繩') || eng.includes('項圈')) return `I attach the ${itemObj.eng} to the ${currentAnimal}.`;
+                          return `I use the ${itemObj.eng} to help rescue the ${currentAnimal}!`;
+                        };
+
                         return (
                           <div
                             key={item.id}
-                            className={`p-3.5 rounded-2xl border-2 transition-all text-left flex justify-between items-center gap-3 ${
+                            className={`p-3.5 rounded-2xl border-2 transition-all text-left flex flex-col gap-2 ${
                               isDone ? 'bg-emerald-50 border-emerald-400' : 'bg-white border-blue-200'
                             }`}
                           >
-                            <div className="flex items-center gap-3">
-                              <span className="text-2xl">{item.icon}</span>
-                              <div>
-                                <h3 className="font-extrabold text-xs sm:text-sm">Use {item.eng} ({item.chi})</h3>
-                                <p className="text-[10px] text-gray-500">使用 {item.chi} 來協助救援</p>
+                            <div className="flex justify-between items-center gap-3">
+                              <div className="flex items-center gap-3">
+                                <span className="text-2xl">{item.icon}</span>
+                                <div>
+                                  <h3 className="font-extrabold text-xs sm:text-sm">Use {item.eng} ({item.chi})</h3>
+                                  <p className="text-[10px] text-gray-500">使用 {item.chi} 來協助救援</p>
+                                </div>
                               </div>
+
+                              <button
+                                onClick={() => setItemActionProgress(prev => ({ ...prev, [item.id]: true }))}
+                                disabled={isDone}
+                                className={`px-3 py-2 rounded-xl font-bold text-xs transition ${
+                                  isDone ? 'bg-emerald-600 text-white' : 'bg-blue-600 hover:bg-blue-500 text-white'
+                                }`}
+                              >
+                                {isDone ? '✓ Completed' : 'Action'}
+                              </button>
                             </div>
 
-                            <button
-                              onClick={() => setItemActionProgress(prev => ({ ...prev, [item.id]: true }))}
-                              disabled={isDone}
-                              className={`px-3 py-2 rounded-xl font-bold text-xs ${
-                                isDone ? 'bg-emerald-600 text-white' : 'bg-blue-600 text-white'
-                              }`}
-                            >
-                              {isDone ? '✓ Completed' : 'Action'}
-                            </button>
+                            {/* 點擊 Action 後顯示的英文學習句型卡片 */}
+                            {isDone && (
+                              <div className="bg-emerald-100/90 border border-emerald-300 p-2.5 rounded-xl text-xs space-y-1">
+                                <p className="font-bold text-emerald-900 text-[11px] flex items-center gap-1">
+                                  <span>🗣️</span> 學習英文句型 (Learning Sentence):
+                                </p>
+                                <p className="font-extrabold text-emerald-800 text-xs sm:text-sm font-mono italic">
+                                  "{getActionSentence(item)}"
+                                </p>
+                              </div>
+                            )}
                           </div>
                         );
                       })
