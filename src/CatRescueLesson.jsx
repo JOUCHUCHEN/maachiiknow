@@ -4,7 +4,7 @@ import {
   Image as ImageIcon, Wand2, Tag, Key, AlertCircle, Copy, Check, Briefcase, 
   Stethoscope, CheckCircle2, ShieldCheck, Award, Gamepad2, MapPin, Play, Grid,
   RotateCcw, AlertTriangle, ChevronRight, HelpCircle, FileText, Printer, Syringe,
-  Activity, Share2, HeartHandshake
+  Activity, Share2, HeartHandshake, Maximize2, Minimize2
 } from 'lucide-react';
 
 // Custom Cat Icon component for universal rendering compatibility
@@ -112,6 +112,23 @@ const removeWhiteBackground = (dataUrl, threshold = 220) => {
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('task1'); // 'task1' | 'task2' | 'task3' | 'game'
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.().then(() => setIsFullscreen(true)).catch(err => console.log(err));
+    } else {
+      document.exitFullscreen?.().then(() => setIsFullscreen(false)).catch(err => console.log(err));
+    }
+  };
+
+  useEffect(() => {
+    const handleFSChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFSChange);
+    return () => document.removeEventListener('fullscreenchange', handleFSChange);
+  }, []);
 
   // Task 1 Vocabulary & Inputs
   const [vocabulary, setVocabulary] = useState({
@@ -643,13 +660,25 @@ export default function App() {
       <div className="max-w-7xl mx-auto space-y-6">
         
         {/* Header */}
-        <header className="text-center space-y-3">
+        <header className="text-center space-y-3 relative">
           <div className="inline-block bg-orange-100 text-orange-800 px-4 py-1 rounded-full text-sm font-bold tracking-wider mb-1 border border-orange-200 shadow-sm">
             CLASSROOM ESL x RPG ANIMAL RESCUE PROJECT
           </div>
-          <h1 className="text-3xl md:text-5xl font-extrabold text-orange-700 drop-shadow-sm flex items-center justify-center gap-3">
+          <h1 
+            onClick={toggleFullscreen}
+            title="點擊切換全螢幕 (Toggle Fullscreen)"
+            className="text-3xl md:text-5xl font-extrabold text-orange-700 drop-shadow-sm flex items-center justify-center gap-3 cursor-pointer hover:text-orange-600 transition-colors"
+          >
             <CatIcon size={42} className="text-orange-500" />
             Cat Rescue Quest: 浪浪救助三階段教案
+            <button 
+              onClick={(e) => { e.stopPropagation(); toggleFullscreen(); }}
+              className="ml-2 p-2 bg-orange-200/80 hover:bg-orange-300 text-orange-900 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+              title="全螢幕模式"
+            >
+              {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+              <span className="hidden sm:inline">{isFullscreen ? '退出全螢幕' : '開啟全螢幕'}</span>
+            </button>
           </h1>
           <p className="text-base md:text-lg text-gray-600 font-medium">從「觀察描述」到「展開救援與健康檢查」，最後完成「領養宣傳單」！</p>
         </header>
@@ -929,60 +958,62 @@ export default function App() {
             {/* LEFT COLUMN: Fixed Photo & Live Backpack */}
             <div className="lg:col-span-5 sticky top-6 space-y-6">
               
-              {/* Step 1 Photo Upload Box */}
-              <section className="bg-white p-6 rounded-3xl shadow-lg border-2 border-orange-100 flex flex-col items-center">
-                <div className="w-full flex justify-between items-center mb-4">
-                  <h2 className="text-2xl font-bold text-gray-700 flex items-center">
-                    <span className="bg-orange-500 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-lg">1</span>
-                    Look & Observe
-                  </h2>
-                  <label className="cursor-pointer bg-orange-50 hover:bg-orange-100 text-orange-600 px-3 py-1.5 rounded-xl border border-orange-200 text-sm font-bold flex items-center gap-2 transition-colors shadow-sm">
-                    <Camera size={18} />
-                    <span>上傳照片</span>
+              {/* Step 1 Photo Upload Box (Only shown in Task 1) */}
+              {activeTab === 'task1' && (
+                <section className="bg-white p-6 rounded-3xl shadow-lg border-2 border-orange-100 flex flex-col items-center">
+                  <div className="w-full flex justify-between items-center mb-4">
+                    <h2 className="text-2xl font-bold text-gray-700 flex items-center">
+                      <span className="bg-orange-500 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-lg">1</span>
+                      Look & Observe
+                    </h2>
+                    <label className="cursor-pointer bg-orange-50 hover:bg-orange-100 text-orange-600 px-3 py-1.5 rounded-xl border border-orange-200 text-sm font-bold flex items-center gap-2 transition-colors shadow-sm">
+                      <Camera size={18} />
+                      <span>上傳照片</span>
+                      <input 
+                        type="file" 
+                        accept="image/*,.heic,.heif" 
+                        onChange={handleImageUpload} 
+                        className="hidden" 
+                      />
+                    </label>
+                  </div>
+                  <p className="text-gray-500 mb-4 w-full text-left">Look at the picture. What do you see?<br/>(看看這張照片，你看到了什麼？)</p>
+                  
+                  {imageUploadError && (
+                    <div className="mb-4 w-full bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded-xl text-xs flex items-center gap-2">
+                      <AlertCircle size={16} className="shrink-0" />
+                      <span>{imageUploadError}</span>
+                    </div>
+                  )}
+
+                  <div className="relative w-full aspect-square rounded-2xl overflow-hidden shadow-inner border border-gray-200 bg-gray-100 group cursor-pointer" onClick={() => document.getElementById('cat-image-input-main').click()}>
                     <input 
+                      id="cat-image-input-main"
                       type="file" 
                       accept="image/*,.heic,.heif" 
                       onChange={handleImageUpload} 
                       className="hidden" 
                     />
-                  </label>
-                </div>
-                <p className="text-gray-500 mb-4 w-full text-left">Look at the picture. What do you see?<br/>(看看這張照片，你看到了什麼？)</p>
-                
-                {imageUploadError && (
-                  <div className="mb-4 w-full bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded-xl text-xs flex items-center gap-2">
-                    <AlertCircle size={16} className="shrink-0" />
-                    <span>{imageUploadError}</span>
-                  </div>
-                )}
-
-                <div className="relative w-full aspect-square rounded-2xl overflow-hidden shadow-inner border border-gray-200 bg-gray-100 group cursor-pointer" onClick={() => document.getElementById('cat-image-input-main').click()}>
-                  <input 
-                    id="cat-image-input-main"
-                    type="file" 
-                    accept="image/*,.heic,.heif" 
-                    onChange={handleImageUpload} 
-                    className="hidden" 
-                  />
-                  {isConvertingImage && (
-                    <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center z-20 space-y-2 p-4 text-center">
-                      <Loader2 size={36} className="animate-spin text-orange-500" />
-                      <p className="text-xs font-bold text-orange-700">正在處理與轉碼照片中...</p>
-                      <p className="text-[10px] text-gray-500">(iPhone HEIC 照片需要 1-3 秒進行即時解碼轉換)</p>
+                    {isConvertingImage && (
+                      <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center z-20 space-y-2 p-4 text-center">
+                        <Loader2 size={36} className="animate-spin text-orange-500" />
+                        <p className="text-xs font-bold text-orange-700">正在處理與轉碼照片中...</p>
+                        <p className="text-[10px] text-gray-500">(iPhone HEIC 照片需要 1-3 秒進行即時解碼轉換)</p>
+                      </div>
+                    )}
+                    <img 
+                      src={catImage || "https://placehold.co/800x800/f8fafc/f97316?text=Image+of+the+Rescued+Cat\n(Click+Here+to+Upload+Photo)"} 
+                      alt="Rescued Cat"
+                      className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-4 justify-between pointer-events-none">
+                      <span className="bg-black/40 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 mx-auto">
+                        <Camera size={14} /> 點擊更換照片 (支援 HEIC / JPG / PNG)
+                      </span>
                     </div>
-                  )}
-                  <img 
-                    src={catImage || "https://placehold.co/800x800/f8fafc/f97316?text=Image+of+the+Rescued+Cat\n(Click+Here+to+Upload+Photo)"} 
-                    alt="Rescued Cat"
-                    className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-4 justify-between pointer-events-none">
-                    <span className="bg-black/40 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 mx-auto">
-                      <Camera size={14} /> 點擊更換照片 (支援 HEIC / JPG / PNG)
-                    </span>
                   </div>
-                </div>
-              </section>
+                </section>
+              )}
 
               {/* Task 2 Live Backpack (Shown on Task 2 tab) */}
               {activeTab === 'task2' && (
