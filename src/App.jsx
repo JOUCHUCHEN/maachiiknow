@@ -9,10 +9,13 @@ import AnimalTextures from './AnimalTextures';
 import BeastCreator from './BeastCreator'; 
 import IframePage from './IframePage';
 
-// 🐾 引入我們新建立的 Cat Rescue 英語教案元件
+// 🧸 引入我們新建立的玩具英文單字遊戲元件
+import ToyVocabularyGame from './ToyVocabularyGame';
+
+// 🐾 引入 Cat Rescue 英語教案元件
 import CatRescueLesson from './CatRescueLesson';
 
-// ⚠️ 關鍵檢查點：請確認這 5 個檔案真的跟 App.jsx 放在「同一個資料夾」底下！
+// STEAM 專案元件
 import AutoGrabber from './AutoGrabber'; 
 import BowAndArrow from './BowAndArrow'; 
 import CrazyFrog from './CrazyFrog';
@@ -67,15 +70,27 @@ function Home() {
       </div>
 
       <header className="py-6 text-center">
-        <h1 className="text-3xl md:text-5xl font-black text-gray-900 mb-3 tracking-tight">Creative Resource Hub</h1>
+        <h1 className="text-3xl md:text-5xl font-black text-gray-900 mb-3 tracking-tight">MaachiiKnow Creative Resource Hub</h1>
         <p className="text-gray-500 text-base md:text-lg font-black max-w-3xl mx-auto opacity-80">Providing free, professional English and STEAM teaching resources for educators worldwide.</p>
       </header>
 
-      {/* 🐾 快速入口按鈕：讓您可以直接點擊進入 Cat Rescue 任務頁面 */}
-      <div className="mb-8 text-center">
-        <Link to="/english-cat-rescue" className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-black px-8 py-4 rounded-2xl shadow-lg hover:scale-105 transition-all text-lg">
-          <span>🐱 進入任務一：Cat Rescue Quest (AI 英語教案)</span>
+      {/* 🚀 快速入口按鈕區域 */}
+      <div className="mb-8 flex flex-wrap justify-center gap-4">
+        <Link to="/english-cat-rescue" className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-black px-6 py-3 rounded-2xl shadow-lg hover:scale-105 transition-all text-base">
+          <span>🐱 Cat Rescue Quest (AI 英語教案)</span>
         </Link>
+        <Link to="/toy-vocabulary-game" className="inline-flex items-center gap-2 bg-gradient-to-r from-sky-500 to-indigo-500 text-white font-black px-6 py-3 rounded-2xl shadow-lg hover:scale-105 transition-all text-base">
+          <span>🧸 玩具單字大挑戰 (獨立全螢幕頁面)</span>
+        </Link>
+      </div>
+
+      {/* 🌟 直接將「玩具單字大挑戰」遊戲區塊嵌入首頁中！ */}
+      <div className="my-10">
+        <div className="flex items-center mb-4 text-left">
+          <Gamepad2 className="text-orange-600 mr-3" size={28} />
+          <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight">Featured Game: Toy Vocabulary Challenge</h2>
+        </div>
+        <ToyVocabularyGame />
       </div>
 
       <div className="flex flex-col lg:flex-row gap-10">
@@ -200,7 +215,10 @@ export default function App() {
           <Route path="english_texture" element={<AnimalTextures />} />
           <Route path="beast_creator" element={<BeastCreator />} />
           
-          {/* 🐾 Cat Rescue 英語教案路由 */}
+          {/* 🧸 玩具英文單字遊戲獨立頁面路由 */}
+          <Route path="toy-vocabulary-game" element={<ToyVocabularyGame />} />
+          
+          {/* Cat Rescue 英語教案路由 */}
           <Route path="english-cat-rescue" element={<CatRescueLesson />} />
           
           {/* STEAM 專案路由 */}
