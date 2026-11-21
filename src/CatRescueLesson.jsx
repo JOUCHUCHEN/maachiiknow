@@ -297,7 +297,8 @@ export default function App() {
       id: `custom_${Date.now()}`,
       eng: (engVal || chiVal).toLowerCase(),
       chi: chiVal || engVal,
-      icon: '🎒'
+      icon: '🎒',
+      desc: '自訂救援裝備'
     };
 
     setCustomRescueItems(prev => [...prev, newItem]);
@@ -454,12 +455,13 @@ export default function App() {
     }
   };
 
+  // 預設救援裝備清單（明確標示罐頭是用來引誘小貓的）
   const rescueItems = [
-    { id: 'carrier', eng: 'carrier', chi: '外出籠', icon: '🏠' },
-    { id: 'food', eng: 'canned food', chi: '罐頭', icon: '🥫' },
-    { id: 'blanket', eng: 'warm blanket', chi: '保暖毯', icon: '🛋️' },
-    { id: 'gloves', eng: 'safety gloves', chi: '防咬手套', icon: '🧤' },
-    { id: 'trap_cage', eng: 'trap cage', chi: '誘捕籠', icon: '🪤' },
+    { id: 'carrier', eng: 'carrier', chi: '外出籠', icon: '🏠', desc: '安全裝載與運送' },
+    { id: 'food', eng: 'canned food', chi: '罐頭', icon: '🥫', desc: '引誘小貓出來' },
+    { id: 'blanket', eng: 'warm blanket', chi: '保暖毯', icon: '🛋️', desc: '保暖與安撫情緒' },
+    { id: 'gloves', eng: 'safety gloves', chi: '防咬手套', icon: '🧤', desc: '保護雙手防抓咬' },
+    { id: 'trap_cage', eng: 'trap cage', chi: '誘捕籠', icon: '🪤', desc: '安全誘捕警戒浪浪' },
   ];
 
   const toggleBackpackItem = (item) => {
@@ -1484,7 +1486,12 @@ export default function App() {
                               </div>
                               <div>
                                 <p className="font-bold text-gray-800 capitalize text-sm">{item.eng}</p>
-                                <p className="text-xs text-gray-400">{item.chi}</p>
+                                <p className="text-xs text-gray-500 font-medium">{item.chi}</p>
+                                {item.desc && (
+                                  <p className={`text-[11px] mt-1 font-semibold ${item.id === 'food' ? 'text-amber-600' : 'text-emerald-600'}`}>
+                                    • {item.desc}
+                                  </p>
+                                )}
                               </div>
                             </button>
                             {isCustom && (
@@ -1620,8 +1627,6 @@ function PawsAndPlay({
     vaccine: 'vaccinated'
   });
 
-  const [isCopiedMergedPrompt, setIsCopiedMergedPrompt] = useState(false);
-  const [isCopiedReportPrompt, setIsCopiedReportPrompt] = useState(false);
   const [itemActionProgress, setItemActionProgress] = useState({});
 
   const canvasRef = useRef(null);
@@ -1632,13 +1637,22 @@ function PawsAndPlay({
   const gameDataRef = useRef({ cats: [...gameCats], map: JSON.parse(JSON.stringify(INITIAL_MAP_DATA)) });
 
   const currentAnimal = vocabulary.animal[0] || 'cat';
+  const animalChinese = currentAnimal.includes('dog') ? '小狗' : '小貓';
   
   const selectedToolObjs = backpack.filter(i => selectedTools.includes(i.id));
   const selectedToolNames = selectedToolObjs.length 
     ? selectedToolObjs.map(i => i.eng).join(', ') 
     : 'canned food';
 
-  const missionSentence = `You should ${approachChoice === 'slow' ? 'walk slowly' : 'approach carefully'} and use ${selectedToolNames} to rescue the ${currentAnimal}!`;
+  // 若只帶罐頭/食物，句型自動強調「引誘出來 (lure ... out)」
+  const isOnlyLureFood = selectedToolObjs.length === 1 && (
+    selectedToolObjs[0].eng.toLowerCase().includes('food') ||
+    selectedToolObjs[0].eng.toLowerCase().includes('treat')
+  );
+
+  const missionSentence = isOnlyLureFood
+    ? `You should ${approachChoice === 'slow' ? 'walk slowly' : 'approach carefully'} and use ${selectedToolNames} to lure the ${currentAnimal} out!`
+    : `You should ${approachChoice === 'slow' ? 'walk slowly' : 'approach carefully'} and use ${selectedToolNames} to rescue the ${currentAnimal}!`;
 
   useEffect(() => {
     gameDataRef.current.cats = [...gameCats];
@@ -1661,20 +1675,6 @@ function PawsAndPlay({
     targetX: 7, targetY: 17, 
     moving: false, speed: 2
   });
-
-  const generateImagePrompt = (cat) => {
-    let situation = "";
-    if (cat.rescueType === 'feed') {
-      situation = `alone and cold in ${vocabulary.environment.join(', ') || 'a box in the rain'}`;
-    } else if (cat.rescueType === 'car_engine') {
-      situation = "hiding under the hood of a car, peeking out nervously";
-    } else {
-      situation = "waiting to be rescued on the street";
-    }
-
-    const itemsStr = selectedToolNames || 'canned food and blanket';
-    return `Create a heartwarming children's storybook illustration of a small rescued ${vocabulary.animal[0] || 'cat'} named ${adoptionPetName || cat.profile.name}. The cat is ${situation}. Rescued using ${itemsStr}. The style should be emotional but hopeful, with soft lighting and cute details. (Story: ${cat.profile.story})`;
-  };
 
   const startMiniGame = (cat) => {
     for (let k in keysRef.current) keysRef.current[k] = false;
@@ -1910,7 +1910,9 @@ function PawsAndPlay({
                     </div>
                     <div className="overflow-hidden flex-1">
                       <p className="font-bold text-xs text-yellow-200 capitalize truncate">{item.eng}</p>
-                      <p className="text-[10px] text-amber-400 truncate">{item.chi}</p>
+                      <p className="text-[10px] text-amber-400 truncate">
+                        {item.chi} {item.id === 'food' ? '(引誘小貓出來)' : ''}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -2041,7 +2043,7 @@ function PawsAndPlay({
                             <p className="text-emerald-800 text-sm font-extrabold italic font-mono">
                               "I gently pick up the {currentAnimal} with my hands!"
                             </p>
-                            <p className="text-[11px] text-emerald-600 font-normal">（我用雙手溫柔地抱起這隻小動物！）</p>
+                            <p className="text-[11px] text-emerald-600 font-normal">（我用雙手溫柔地抱起這隻{animalChinese}！）</p>
                           </div>
                         ) : (
                           <p className="py-1">未選擇特定道具，使用雙手溫柔救援...</p>
@@ -2057,21 +2059,69 @@ function PawsAndPlay({
                         </button>
                       </div>
                     ) : (
-                      selectedToolObjs.map((item, idx) => {
+                      selectedToolObjs.map((item) => {
                         const isDone = itemActionProgress[item.id];
                         
-                        // 動態根據裝備類型生成對應的英語教學句型
-                        const getActionSentence = (itemObj) => {
+                        // 動態根據裝備類型生成對應的英語教學句型與中文解釋（罐頭用途為引誘小貓出來）
+                        const getActionDetails = (itemObj) => {
                           const eng = itemObj.eng.toLowerCase();
-                          if (eng.includes('carrier') || eng.includes('籠')) return `I put the ${currentAnimal} safely into the ${itemObj.eng}.`;
-                          if (eng.includes('food') || eng.includes('treat') || eng.includes('罐頭') || eng.includes('零食') || eng.includes('糧')) return `I feed the ${currentAnimal} with yummy ${itemObj.eng}.`;
-                          if (eng.includes('blanket') || eng.includes('towel') || eng.includes('毯') || eng.includes('毛巾')) return `I wrap the ${currentAnimal} with a warm ${itemObj.eng}.`;
-                          if (eng.includes('glove') || eng.includes('手套')) return `I wear ${itemObj.eng} to hold the ${currentAnimal}.`;
-                          if (eng.includes('trap') || eng.includes('誘捕')) return `I place the ${itemObj.eng} to rescue the ${currentAnimal}.`;
-                          if (eng.includes('water') || eng.includes('水')) return `I give clean ${itemObj.eng} to the ${currentAnimal}.`;
-                          if (eng.includes('leash') || eng.includes('collar') || eng.includes('牽繩') || eng.includes('項圈')) return `I attach the ${itemObj.eng} to the ${currentAnimal}.`;
-                          return `I use the ${itemObj.eng} to help rescue the ${currentAnimal}!`;
+                          if (eng.includes('carrier') || eng.includes('籠')) {
+                            return {
+                              subtitle: `將${animalChinese}安全地放進${itemObj.chi}`,
+                              sentence: `I put the ${currentAnimal} safely into the ${itemObj.eng}.`,
+                              meaning: `（我把${animalChinese}安全地放進${itemObj.chi}裡。）`
+                            };
+                          }
+                          if (eng.includes('food') || eng.includes('treat') || eng.includes('罐頭') || eng.includes('零食') || eng.includes('糧')) {
+                            return {
+                              subtitle: `打開${itemObj.chi}，用香味引誘${animalChinese}出來`,
+                              sentence: `I use yummy ${itemObj.eng} to lure the ${currentAnimal} out!`,
+                              meaning: `（我用香噴噴的${itemObj.chi}引誘${animalChinese}出來！）`
+                            };
+                          }
+                          if (eng.includes('blanket') || eng.includes('towel') || eng.includes('毯') || eng.includes('毛巾')) {
+                            return {
+                              subtitle: `用溫暖的${itemObj.chi}安撫並包裹${animalChinese}`,
+                              sentence: `I wrap the ${currentAnimal} with a warm ${itemObj.eng}.`,
+                              meaning: `（我用溫暖的${itemObj.chi}把${animalChinese}包起來保暖。）`
+                            };
+                          }
+                          if (eng.includes('glove') || eng.includes('手套')) {
+                            return {
+                              subtitle: `戴上${itemObj.chi}保護雙手並抱起${animalChinese}`,
+                              sentence: `I wear ${itemObj.eng} to hold the ${currentAnimal} safely.`,
+                              meaning: `（我戴上${itemObj.chi}安全地抱起${animalChinese}。）`
+                            };
+                          }
+                          if (eng.includes('trap') || eng.includes('誘捕')) {
+                            return {
+                              subtitle: `設置${itemObj.chi}引誘警戒的${animalChinese}進入`,
+                              sentence: `I place the ${itemObj.eng} to safely lure the ${currentAnimal} inside.`,
+                              meaning: `（我放好${itemObj.chi}安全地引誘${animalChinese}進入。）`
+                            };
+                          }
+                          if (eng.includes('water') || eng.includes('水')) {
+                            return {
+                              subtitle: `提供乾淨的${itemObj.chi}補充水分`,
+                              sentence: `I give clean ${itemObj.eng} to the ${currentAnimal}.`,
+                              meaning: `（我給${animalChinese}喝乾淨的${itemObj.chi}。）`
+                            };
+                          }
+                          if (eng.includes('leash') || eng.includes('collar') || eng.includes('牽繩') || eng.includes('項圈')) {
+                            return {
+                              subtitle: `幫${animalChinese}繫上${itemObj.chi}避免走失`,
+                              sentence: `I attach the ${itemObj.eng} gently to the ${currentAnimal}.`,
+                              meaning: `（我輕輕地幫${animalChinese}繫上${itemObj.chi}。）`
+                            };
+                          }
+                          return {
+                            subtitle: `使用 ${itemObj.chi} 來協助救援`,
+                            sentence: `I use the ${itemObj.eng} to help rescue the ${currentAnimal}!`,
+                            meaning: `（我使用${itemObj.chi}來協助救援${animalChinese}！）`
+                          };
                         };
+
+                        const actionDetails = getActionDetails(item);
 
                         return (
                           <div
@@ -2085,18 +2135,18 @@ function PawsAndPlay({
                                 <span className="text-2xl">{item.icon}</span>
                                 <div>
                                   <h3 className="font-extrabold text-xs sm:text-sm">Use {item.eng} ({item.chi})</h3>
-                                  <p className="text-[10px] text-gray-500">使用 {item.chi} 來協助救援</p>
+                                  <p className="text-[11px] text-gray-500">{actionDetails.subtitle}</p>
                                 </div>
                               </div>
 
                               <button
                                 onClick={() => setItemActionProgress(prev => ({ ...prev, [item.id]: true }))}
                                 disabled={isDone}
-                                className={`px-3 py-2 rounded-xl font-bold text-xs transition ${
+                                className={`px-3 py-2 rounded-xl font-bold text-xs transition shrink-0 ${
                                   isDone ? 'bg-emerald-600 text-white' : 'bg-blue-600 hover:bg-blue-500 text-white'
                                 }`}
                               >
-                                {isDone ? '✓ Completed' : 'Action'}
+                                {isDone ? '✓ Completed' : (item.id === 'food' ? 'Lure (引誘)' : 'Action')}
                               </button>
                             </div>
 
@@ -2107,7 +2157,10 @@ function PawsAndPlay({
                                   <span>🗣️</span> 學習英文句型 (Learning Sentence):
                                 </p>
                                 <p className="font-extrabold text-emerald-800 text-xs sm:text-sm font-mono italic">
-                                  "{getActionSentence(item)}"
+                                  "{actionDetails.sentence}"
+                                </p>
+                                <p className="text-[11px] text-emerald-700 font-medium">
+                                  {actionDetails.meaning}
                                 </p>
                               </div>
                             )}
