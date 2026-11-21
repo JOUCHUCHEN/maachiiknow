@@ -487,6 +487,141 @@ export default function App() {
     );
   };
 
+  // 自動識別危險處境與地點詞彙，生成自然道地的英文處境短語
+  const getDangerPlacePhrase = (rawItem) => {
+    const lower = rawItem.trim().toLowerCase();
+
+    // 若玩家已輸入完整介系詞或處境開頭，直接保留
+    if (/^(in|on|at|under|behind|inside|near|by|into|onto|trapped|stuck|hiding|out|alone|lost|stranded|caught|chased|surrounded)\b/.test(lower)) {
+      return lower;
+    }
+
+    // 自動判斷不定冠詞 a / an
+    const withArticle = (phrase) => {
+      const clean = phrase.trim();
+      if (/^(a|an|the)\b/i.test(clean)) return clean;
+      const article = /^[aeiou]/i.test(clean) && !/^(uni|use|eu)/i.test(clean) ? 'an' : 'a';
+      return `${article} ${clean}`;
+    };
+
+    // 1. 強烈天災與極端氣候 (e.g., typhoon -> in the middle of a typhoon)
+    const disasters = [
+      'typhoon', 'hurricane', 'tornado', 'storm', 'thunderstorm',
+      'blizzard', 'sandstorm', 'snowstorm', 'earthquake', 'landslide',
+      'flood', 'wildfire', 'tsunami', 'avalanche', 'heatwave', 'lightning'
+    ];
+    if (disasters.some(w => lower.includes(w))) {
+      if (lower === 'lightning') return 'in the middle of a lightning storm';
+      return `in the middle of ${withArticle(lower)}`;
+    }
+
+    // 2. 一般天氣與溫度危險
+    if (lower.includes('rain') || lower.includes('drizzle')) {
+      return lower === 'rain' ? 'out in the heavy rain' : `out in the ${lower}`;
+    }
+    if (['snow', 'hail', 'sleet', 'cold', 'freezing', 'frost', 'ice', 'winter'].some(w => lower.includes(w))) {
+      return `out in the freezing ${lower}`;
+    }
+    if (['hot', 'heat', 'sun', 'sunlight'].some(w => lower.includes(w))) {
+      return 'under the scorching sun';
+    }
+    if (['wind', 'gale', 'breeze'].some(w => lower.includes(w))) {
+      return `in the strong ${lower}`;
+    }
+    if (['fog', 'mist', 'smog'].some(w => lower.includes(w))) {
+      return `lost in the thick ${lower}`;
+    }
+    if (['dark', 'darkness', 'night', 'midnight'].some(w => lower.includes(w))) {
+      return `alone in the ${lower}`;
+    }
+
+    // 3. 車輛與交通危險 (e.g., car -> under a car, car engine -> trapped inside a car engine)
+    if (['car engine', 'engine', 'car hood', 'hood', 'bonnet', 'exhaust', 'trunk'].some(w => lower.includes(w))) {
+      return `trapped inside ${withArticle(lower)}`;
+    }
+    if (['wheel', 'tire', 'bumper'].some(w => lower.includes(w))) {
+      return `hiding near ${withArticle(lower)}`;
+    }
+    if (['car', 'truck', 'van', 'bus', 'taxi', 'jeep', 'suv', 'vehicle', 'motorcycle', 'scooter', 'bicycle', 'bike', 'tractor'].some(w => lower === w || lower.endsWith(` ${w}`))) {
+      return `under ${withArticle(lower)}`;
+    }
+    if (lower.includes('traffic')) {
+      return 'in the middle of heavy traffic';
+    }
+    if (['highway', 'freeway', 'intersection', 'crosswalk', 'railway', 'train track', 'tracks', 'subway'].some(w => lower.includes(w))) {
+      return `near a dangerous ${lower}`;
+    }
+    if (lower === 'bridge' || lower === 'overpass') {
+      return `under ${withArticle(lower)}`;
+    }
+    if (['street', 'road', 'avenue', 'sidewalk', 'pavement'].some(w => lower.includes(w))) {
+      return `on a busy ${lower}`;
+    }
+
+    // 4. 受困與狹窄密閉空間
+    if (['drain', 'sewer', 'gutter', 'ditch', 'trench', 'culvert', 'manhole', 'pipe', 'tube', 'vent', 'chimney', 'duct', 'well', 'pit', 'hole', 'sinkhole', 'basement', 'cage', 'trap'].some(w => lower.includes(w))) {
+      return `trapped in ${withArticle(lower)}`;
+    }
+    if (['net', 'wire', 'fence', 'rope'].some(w => lower.includes(w))) {
+      return `caught in ${withArticle(lower)}`;
+    }
+    if (['box', 'cardboard', 'bag', 'trash can', 'garbage', 'bin', 'dumpster', 'bucket', 'barrel', 'crate', 'washing machine', 'dryer', 'closet'].some(w => lower.includes(w))) {
+      return `hiding inside ${withArticle(lower)}`;
+    }
+
+    // 5. 高處與墜落危險
+    if (['roof', 'rooftop', 'balcony', 'ledge', 'window', 'wall', 'stairs', 'ladder'].some(w => lower.includes(w))) {
+      return `stuck on a high ${lower}`;
+    }
+    if (['cliff', 'edge', 'mountain', 'hill'].some(w => lower.includes(w))) {
+      return `on the edge of a steep ${lower}`;
+    }
+    if (['tree', 'branch', 'pole'].some(w => lower.includes(w))) {
+      return `stuck up in ${withArticle(lower)}`;
+    }
+
+    // 6. 水域與泥濘危險
+    if (['mud', 'swamp', 'puddle', 'quicksand'].some(w => lower.includes(w))) {
+      return `stuck in the ${lower}`;
+    }
+    if (['river', 'lake', 'pond', 'pool', 'canal', 'stream', 'creek', 'sea', 'ocean', 'water', 'waterfall'].some(w => lower.includes(w))) {
+      return `stranded near a deep ${lower}`;
+    }
+
+    // 7. 火源、工地與暗巷
+    if (['fire', 'smoke', 'flames', 'burning'].some(w => lower.includes(w))) {
+      return `trapped near a dangerous ${lower}`;
+    }
+    if (['construction', 'ruins', 'factory', 'warehouse', 'abandoned'].some(w => lower.includes(w))) {
+      return `trapped in a dangerous ${lower}`;
+    }
+    if (['alley', 'corner'].some(w => lower.includes(w))) {
+      return `hiding in a dark ${lower}`;
+    }
+
+    // 8. 天敵或追趕威脅
+    if (['dog', 'snake', 'hawk', 'eagle', 'rat', 'bully'].includes(lower)) {
+      return `chased by ${withArticle(lower)}`;
+    }
+    if (['dogs', 'snakes', 'rats', 'crowd', 'strangers'].includes(lower)) {
+      return `surrounded by ${lower}`;
+    }
+
+    // 9. 常見室內外地點
+    if (['park', 'garden', 'yard', 'backyard', 'forest', 'woods', 'bush', 'grass', 'field', 'farm', 'beach', 'house', 'room', 'kitchen', 'bathroom', 'bedroom', 'classroom'].some(w => lower.includes(w))) {
+      return `alone in the ${lower}`;
+    }
+    if (['school', 'station', 'market', 'store', 'shop', 'hospital', 'temple'].some(w => lower.includes(w))) {
+      return `wandering near the ${lower}`;
+    }
+    if (['table', 'chair', 'bench', 'bed', 'sofa', 'couch', 'desk', 'shelf'].some(w => lower.includes(w))) {
+      return `hiding under the ${lower}`;
+    }
+
+    // 10. 隨機未知單字的智慧危險處境預設
+    return `trapped in a dangerous ${lower}`;
+  };
+
   const formatLocationSentence = (arr) => {
     if (!arr || arr.length === 0) {
       return (
@@ -496,21 +631,7 @@ export default function App() {
       );
     }
 
-    const formattedPlaces = arr.map(item => {
-      const lower = item.trim().toLowerCase();
-      if (/^(in|on|at|under|behind|inside|near|by)\b/.test(lower)) {
-        return lower;
-      }
-      let prep = 'in the';
-      if (['street', 'road', 'roof', 'balcony', 'top', 'wall', 'ground', 'sidewalk'].some(w => lower.includes(w))) {
-        prep = 'on the';
-      } else if (['tree', 'table', 'car hood', 'bed', 'bridge', 'bench'].some(w => lower.includes(w))) {
-        prep = 'under the';
-      } else if (['car engine', 'box', 'cardboard', 'park', 'alley', 'rain', 'drain', 'house', 'room', 'cage', 'bush', 'forest'].some(w => lower.includes(w))) {
-        prep = 'in the';
-      }
-      return `${prep} ${lower}`;
-    });
+    const formattedPlaces = arr.map(item => getDangerPlacePhrase(item));
 
     if (formattedPlaces.length === 1) {
       return (
