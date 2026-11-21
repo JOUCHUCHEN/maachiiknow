@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Camera, Plus, Trash2, ArrowRight, Sparkles, Heart, ShieldAlert, Loader2, 
-  Image as ImageIcon, Wand2, Tag, Key, AlertCircle, Copy, Check, Briefcase, 
+  Image as ImageIcon, Wand2, Tag, AlertCircle, Copy, Check, Briefcase, 
   Stethoscope, CheckCircle2, ShieldCheck, Award, Gamepad2, MapPin, Play, Grid,
-  RotateCcw, AlertTriangle, ChevronRight, HelpCircle, FileText, Printer, Syringe,
-  Activity, Share2, HeartHandshake, Maximize2, Minimize2
+  FileText, Printer, HeartHandshake, Maximize2, Minimize2, BookOpen, X, Compass
 } from 'lucide-react';
 
 // Custom Cat Icon component for universal rendering compatibility
-const CatIcon = ({ size = 24, className = "" }) => (
+const CatIcon = ({ size = 24, className = "", style = {} }) => (
   <svg 
     width={size} 
     height={size} 
@@ -19,6 +18,7 @@ const CatIcon = ({ size = 24, className = "" }) => (
     strokeLinecap="round" 
     strokeLinejoin="round" 
     className={className}
+    style={style}
   >
     <path d="M12 5c-4 0-7.5 2.5-7.5 7 0 4.5 3.5 7 7.5 7s7.5-2.5 7.5-7c0-4.5-3.5-7-7.5-7z" />
     <path d="M4.5 9.5L2 4l5 2" />
@@ -111,8 +111,12 @@ const removeWhiteBackground = (dataUrl, threshold = 220) => {
 };
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('task1'); // 'task1' | 'task2' | 'task3' | 'game'
+  // Unified Game Stage State: 'START' | 'TASK1' | 'TASK2' | 'GAME' | 'TASK3'
+  const [gameStageScreen, setGameStageScreen] = useState('START');
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Callable AI Magic Dictionary Modal State
+  const [isDictionaryOpen, setIsDictionaryOpen] = useState(false);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -167,15 +171,16 @@ export default function App() {
   // Deploying Cat to Game state
   const [deployX, setDeployX] = useState(8);
   const [deployY, setDeployY] = useState(8);
-  const [deployCatDanger, setDeployCatDanger] = useState('feed');
+  const [deployCatDanger] = useState('feed');
   const [deploySuccessMsg, setDeploySuccessMsg] = useState('');
   const [deployAvatarImage, setDeployAvatarImage] = useState(null);
   const [isProcessingAvatar, setIsProcessingAvatar] = useState(false);
+  const [hasDeployedCustomCat, setHasDeployedCustomCat] = useState(false);
 
   // Task 2 Backpack States - NO ITEM LIMIT
   const [backpack, setBackpack] = useState([]);
   
-  // Task 2C Vet Check States
+  // Vet Check States
   const [vetCheck, setVetCheck] = useState({
     ears: 'dirty',
     eyes: 'clean',
@@ -195,9 +200,6 @@ export default function App() {
   const [adoptionPetName, setAdoptionPetName] = useState('Lucky (幸運兒)');
   const [adoptionSlogan, setAdoptionSlogan] = useState('Looking for a warm & loving home!');
   const [isFlyerPromptCopied, setIsFlyerPromptCopied] = useState(false);
-
-  // Decision States
-  const [approachChoice, setApproachChoice] = useState(null);
 
   // Game Shared Cats State
   const [gameCats, setGameCats] = useState(INITIAL_CATS_DATA);
@@ -543,7 +545,7 @@ export default function App() {
     if (category === 'color') {
       return (
         <div className="w-full h-full flex items-center justify-center bg-slate-100 rounded-xl shadow-inner relative overflow-hidden">
-          <CatIcon size={80} style={{ color: w, fill: w }} className="drop-shadow-md z-10" />
+          <CatIcon size={72} style={{ color: w, fill: w }} className="drop-shadow-md z-10" />
           <div className="absolute inset-0 opacity-20" style={{ backgroundColor: w }}></div>
         </div>
       );
@@ -559,7 +561,7 @@ export default function App() {
         tired: '🥱', sleepy: '😴'
       };
       return (
-        <div className="w-full h-full flex items-center justify-center bg-red-50 rounded-xl text-6xl shadow-inner">
+        <div className="w-full h-full flex items-center justify-center bg-red-50 rounded-xl text-5xl shadow-inner">
           {emojis[w] || '🐱'}
         </div>
       );
@@ -572,7 +574,7 @@ export default function App() {
       if (['big', 'large', 'huge', 'fat', 'giant'].includes(cleanW)) sizeClass = "scale-150";
       return (
         <div className="w-full h-full flex items-center justify-center bg-blue-50 rounded-xl overflow-hidden shadow-inner">
-          <CatIcon size={60} className={`text-blue-500 transition-transform duration-500 ${sizeClass}`} />
+          <CatIcon size={54} className={`text-blue-500 transition-transform duration-500 ${sizeClass}`} />
         </div>
       );
     }
@@ -585,7 +587,7 @@ export default function App() {
     };
 
     return (
-      <div className="w-full h-full flex items-center justify-center bg-purple-50 rounded-xl text-6xl shadow-inner">
+      <div className="w-full h-full flex items-center justify-center bg-purple-50 rounded-xl text-5xl shadow-inner">
          {genericEmojis[w] || '🐾'}
       </div>
     );
@@ -631,7 +633,7 @@ export default function App() {
     reader.readAsDataURL(file);
   };
 
-  const handleDeployToMap = () => {
+  const handleDeployToMap = (proceedToTask2 = false) => {
     const animalType = vocabulary.animal.length ? vocabulary.animal[0] : 'cat';
     const colorDesc = vocabulary.color.length ? vocabulary.color.join(' and ') : 'rescued';
     const placeDesc = vocabulary.environment.length ? vocabulary.environment.join(', ') : 'street';
@@ -653,169 +655,843 @@ export default function App() {
     };
 
     setGameCats(prev => [...prev, newCatObj]);
-    setDeploySuccessMsg(`🎉 成功將待拯救小動物「${autoName}」置入 2D 遊戲地圖 (X:${deployX}, Y:${deployY})！可以切換到 [RPG 遊戲] 分頁開始尋找牠了！`);
-    setTimeout(() => setDeploySuccessMsg(''), 5000);
+    setHasDeployedCustomCat(true);
+    setDeploySuccessMsg(`🎉 成功將「${autoName}」置入 2D 地圖 (X:${deployX}, Y:${deployY})！`);
+    setTimeout(() => setDeploySuccessMsg(''), 4000);
+
+    if (proceedToTask2) {
+      setGameStageScreen('TASK2');
+    }
   };
 
-  return (
-    <div className="min-h-screen bg-amber-50 font-sans text-gray-800 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        
-        {/* Header */}
-        <header className="text-center space-y-3 relative">
-          <div className="inline-block bg-orange-100 text-orange-800 px-4 py-1 rounded-full text-sm font-bold tracking-wider mb-1 border border-orange-200 shadow-sm">
-            CLASSROOM ESL x RPG ANIMAL RESCUE PROJECT
-          </div>
-          <h1 
-            onClick={toggleFullscreen}
-            title="點擊切換全螢幕 (Toggle Fullscreen)"
-            className="text-3xl md:text-5xl font-extrabold text-orange-700 drop-shadow-sm flex items-center justify-center gap-3 cursor-pointer hover:text-orange-600 transition-colors"
-          >
-            <CatIcon size={42} className="text-orange-500" />
-            Cat Rescue Quest: 浪浪救助三階段教案
-            <button 
-              onClick={(e) => { e.stopPropagation(); toggleFullscreen(); }}
-              className="ml-2 p-2 bg-orange-200/80 hover:bg-orange-300 text-orange-900 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
-              title="全螢幕模式"
-            >
-              {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
-              <span className="hidden sm:inline">{isFullscreen ? '退出全螢幕' : '開啟全螢幕'}</span>
-            </button>
-          </h1>
-          <p className="text-base md:text-lg text-gray-600 font-medium">從「觀察描述」到「展開救援與健康檢查」，最後完成「領養宣傳單」！</p>
-        </header>
+  const questSteps = [
+    { id: 'TASK1', label: '1. 觀察與置入', short: 'Task 1' },
+    { id: 'TASK2', label: '2. 救援背包', short: 'Task 2' },
+    { id: 'GAME', label: '3. 2D RPG 關卡', short: 'RPG Map' },
+    { id: 'TASK3', label: '4. 領養與解鎖', short: 'Task 3' }
+  ];
 
-        {/* Tab Bar */}
-        <div className="flex justify-center border-b border-orange-200 pb-2">
-          <div className="bg-orange-100 p-1.5 rounded-2xl flex flex-wrap justify-center gap-2 shadow-inner">
+  return (
+    <div className="min-h-screen bg-slate-950 font-sans text-gray-800 flex flex-col justify-between selection:bg-orange-200">
+      
+      {/* ==================== UNIFIED GAME CONSOLE TOP HUD ==================== */}
+      <header className="sticky top-0 z-40 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border-b-2 border-indigo-700/80 px-4 py-2.5 shadow-xl">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+          
+          {/* Game Logo & Title */}
+          <div 
+            onClick={() => setGameStageScreen('START')}
+            className="flex items-center gap-2.5 cursor-pointer group"
+            title="回到遊戲主畫面 (Title Screen)"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-amber-600 flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform">
+              <CatIcon size={24} />
+            </div>
+            <div>
+              <h1 className="text-base sm:text-lg font-black text-yellow-300 tracking-wide flex items-center gap-1.5">
+                Cat Rescue Quest
+                <span className="hidden md:inline-block text-[10px] bg-indigo-800 text-indigo-200 px-2 py-0.5 rounded-full font-mono uppercase">
+                  ESL RPG Edition
+                </span>
+              </h1>
+              <p className="text-[11px] text-indigo-300 hidden sm:block">浪浪救助全流程互動遊戲</p>
+            </div>
+          </div>
+
+          {/* Quest Progress Stepper (Visible once Start Game is clicked) */}
+          {gameStageScreen !== 'START' && (
+            <nav className="flex items-center gap-1 sm:gap-2 bg-slate-950/80 p-1 rounded-2xl border border-indigo-800/80">
+              {questSteps.map((step, idx) => {
+                const isActive = gameStageScreen === step.id;
+                return (
+                  <React.Fragment key={step.id}>
+                    <button
+                      onClick={() => setGameStageScreen(step.id)}
+                      className={`px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 ${
+                        isActive
+                          ? 'bg-yellow-400 text-slate-950 shadow-md scale-105'
+                          : 'text-indigo-200 hover:bg-indigo-900/70'
+                      }`}
+                    >
+                      <span className="hidden sm:inline">{step.label}</span>
+                      <span className="sm:hidden">{step.short}</span>
+                    </button>
+                    {idx < questSteps.length - 1 && (
+                      <ArrowRight size={12} className="text-indigo-600 shrink-0" />
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </nav>
+          )}
+
+          {/* Right HUD Controls: Callable AI Magic Dictionary Icon + Fullscreen */}
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => setActiveTab('task1')}
-              className={`px-5 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2 ${
-                activeTab === 'task1' 
-                  ? 'bg-white text-orange-700 shadow-md scale-105' 
-                  : 'text-orange-900 hover:bg-orange-200/60'
+              onClick={() => setIsDictionaryOpen(prev => !prev)}
+              className={`px-3 py-2 rounded-xl font-extrabold text-xs flex items-center gap-1.5 transition-all shadow-md border ${
+                isDictionaryOpen
+                  ? 'bg-purple-500 text-white border-purple-300 ring-2 ring-purple-300/60'
+                  : 'bg-purple-700 hover:bg-purple-600 text-white border-purple-400/50'
               }`}
+              title="點擊呼叫 AI Magic Dictionary (魔法字典)"
             >
-              <CatIcon size={18} />
-              <span>Task 1: 觀察與描述 (Observe)</span>
+              <BookOpen size={16} className="text-yellow-300" />
+              <span>AI 魔法字典</span>
+              {flashcards.length > 0 && (
+                <span className="bg-yellow-400 text-slate-950 text-[10px] font-black px-1.5 py-0.2 rounded-full">
+                  {flashcards.length}
+                </span>
+              )}
             </button>
-            <button
-              onClick={() => setActiveTab('task2')}
-              className={`px-5 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2 ${
-                activeTab === 'task2' 
-                  ? 'bg-white text-emerald-700 shadow-md scale-105' 
-                  : 'text-orange-900 hover:bg-orange-200/60'
-              }`}
+
+            <button 
+              onClick={toggleFullscreen}
+              className="p-2 bg-slate-800 hover:bg-slate-700 text-indigo-200 rounded-xl border border-slate-700 transition-all shadow-sm flex items-center gap-1 text-xs font-bold"
+              title="切換全螢幕 (Toggle Fullscreen)"
             >
-              <ShieldCheck size={18} className="text-emerald-600" />
-              <span>Task 2: 展開救援 & 健檢 (Rescue)</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('task3')}
-              className={`px-5 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2 ${
-                activeTab === 'task3' 
-                  ? 'bg-white text-purple-700 shadow-md scale-105' 
-                  : 'text-orange-900 hover:bg-orange-200/60'
-              }`}
-            >
-              <HeartHandshake size={18} className="text-purple-600" />
-              <span>Task 3: 領養宣傳單 (Adoption Flyer)</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('game')}
-              className={`px-5 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2 ${
-                activeTab === 'game' 
-                  ? 'bg-indigo-600 text-white shadow-md scale-105 ring-2 ring-indigo-400' 
-                  : 'text-indigo-900 bg-indigo-200/60 hover:bg-indigo-300/80'
-              }`}
-            >
-              <Gamepad2 size={18} className="text-yellow-300" />
-              <span>2D RPG 遊戲 (Paws & Play)</span>
+              {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
             </button>
           </div>
         </div>
+      </header>
 
-        {/* ==================== GAME TAB ==================== */}
-        {activeTab === 'game' && (
+      {/* ==================== CALLABLE AI MAGIC DICTIONARY MODAL ==================== */}
+      {isDictionaryOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-gradient-to-br from-purple-50 via-white to-indigo-50 w-full max-w-xl rounded-3xl shadow-2xl border-4 border-purple-500 p-6 relative animate-in fade-in zoom-in-95 duration-200 max-h-[88vh] overflow-y-auto">
+            <button
+              onClick={() => setIsDictionaryOpen(false)}
+              className="absolute top-4 right-4 w-9 h-9 rounded-full bg-purple-100 hover:bg-purple-200 text-purple-800 flex items-center justify-center transition-colors"
+              title="關閉字典"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="flex items-center gap-2.5 mb-2">
+              <div className="w-10 h-10 rounded-2xl bg-purple-600 text-white flex items-center justify-center shadow">
+                <Sparkles size={22} />
+              </div>
+              <div>
+                <h2 className="text-xl font-black text-purple-950">AI Magic Dictionary (魔法字典)</h2>
+                <p className="text-xs text-purple-700">輸入中文自動轉為英文單字與圖卡，並同步收錄至單字庫！</p>
+              </div>
+            </div>
+
+            {apiError && (
+              <div className="my-3 bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded-xl flex items-center gap-2 text-xs">
+                <AlertCircle size={16} />
+                <span>{apiError}</span>
+              </div>
+            )}
+
+            <div className="mt-4 space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-purple-900 mb-1">1. 選擇單字分類 (Category):</label>
+                <select
+                  value={selectedCat}
+                  onChange={(e) => setSelectedCat(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border-2 border-purple-200 focus:outline-none focus:border-purple-500 bg-white font-bold text-sm text-gray-700"
+                >
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-purple-900 mb-1">2. 輸入中文詞彙 (Chinese Term):</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={chineseInput}
+                    onChange={(e) => setChineseInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAIGeneration()}
+                    placeholder="例如：黑白相間、引擎蓋、害怕..."
+                    className="flex-1 px-4 py-2.5 rounded-xl border-2 border-purple-200 focus:outline-none focus:border-purple-500 text-base bg-white"
+                    disabled={isGenerating}
+                    autoFocus
+                  />
+                  <button 
+                    onClick={handleAIGeneration}
+                    disabled={isGenerating || !chineseInput.trim()}
+                    className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-1.5 transition-colors shadow whitespace-nowrap text-sm"
+                  >
+                    {isGenerating ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />}
+                    {isGenerating ? '施法中...' : '變魔法!'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {flashcards.length > 0 && (
+              <div className="mt-5 pt-4 border-t border-purple-200">
+                <h3 className="text-xs font-bold text-purple-700 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                  <ImageIcon size={14} /> 已生成的魔法字卡 (Magic Word Cards)
+                </h3>
+                <div className="flex gap-3 overflow-x-auto pb-2 px-1 snap-x">
+                  {flashcards.map(card => (
+                    <div key={card.id} className="snap-center shrink-0 w-32 bg-white rounded-2xl border-2 border-purple-100 shadow-sm overflow-hidden flex flex-col">
+                      <div className="h-24 bg-gray-50 flex items-center justify-center overflow-hidden border-b border-gray-100 p-2">
+                        {renderCardVisual(card.cat, card.eng)}
+                      </div>
+                      <div className="p-2 text-center">
+                        <p className="font-black text-sm text-gray-800 capitalize truncate">{card.eng}</p>
+                        <p className="text-[11px] text-gray-500 truncate">{card.chi}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="mt-5 flex justify-end">
+              <button
+                onClick={() => setIsDictionaryOpen(false)}
+                className="bg-purple-900 hover:bg-purple-800 text-white font-bold px-5 py-2 rounded-xl text-xs transition"
+              >
+                完成並關閉字典
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== MAIN UNIFIED GAME VIEWPORT ==================== */}
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 flex flex-col justify-center">
+
+        {/* ---------- STAGE 0: START SCREEN ---------- */}
+        {gameStageScreen === 'START' && (
+          <div className="w-full max-w-4xl mx-auto bg-gradient-to-br from-indigo-900 via-slate-900 to-purple-950 rounded-3xl border-4 border-yellow-400/90 shadow-2xl p-8 md:p-12 text-center text-white space-y-8 relative overflow-hidden">
+            <div className="absolute -top-12 -left-12 w-48 h-48 bg-orange-500/20 rounded-full blur-2xl pointer-events-none"></div>
+            <div className="absolute -bottom-12 -right-12 w-56 h-56 bg-purple-500/20 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div className="space-y-3 relative z-10">
+              <div className="inline-flex items-center gap-2 bg-yellow-400/20 text-yellow-300 border border-yellow-400/40 px-4 py-1.5 rounded-full text-xs font-extrabold tracking-widest uppercase">
+                <Sparkles size={16} /> Classroom ESL × 2D RPG Adventure
+              </div>
+              <div className="flex justify-center my-2">
+                <div className="w-24 h-24 rounded-3xl bg-gradient-to-tr from-orange-500 to-amber-400 flex items-center justify-center shadow-2xl border-4 border-white/20 animate-bounce">
+                  <CatIcon size={54} className="text-white" />
+                </div>
+              </div>
+              <h2 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-orange-300 to-amber-200 drop-shadow">
+                Cat Rescue Quest
+              </h2>
+              <p className="text-lg md:text-xl font-bold text-indigo-200">
+                浪浪救助英文互動冒險遊戲
+              </p>
+            </div>
+
+            {/* Quest Roadmap Preview */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-left max-w-3xl mx-auto relative z-10">
+              <div className="bg-slate-900/80 border border-indigo-700/80 p-3.5 rounded-2xl">
+                <span className="text-xs font-black text-orange-400">STAGE 1</span>
+                <p className="font-bold text-sm text-white mt-0.5">Look & Observe</p>
+                <p className="text-[11px] text-slate-400 mt-1">上傳照片、大頭照指令、造句並置入地圖</p>
+              </div>
+              <div className="bg-slate-900/80 border border-indigo-700/80 p-3.5 rounded-2xl">
+                <span className="text-xs font-black text-emerald-400">STAGE 2</span>
+                <p className="font-bold text-sm text-white mt-0.5">Rescue Inventory</p>
+                <p className="text-[11px] text-slate-400 mt-1">挑選救援裝備放進救援後背包</p>
+              </div>
+              <div className="bg-slate-900/80 border border-indigo-700/80 p-3.5 rounded-2xl">
+                <span className="text-xs font-black text-yellow-400">STAGE 3</span>
+                <p className="font-bold text-sm text-white mt-0.5">2D RPG 現場救援</p>
+                <p className="text-[11px] text-slate-400 mt-1">探索地圖尋找浪浪、執行救援與健檢</p>
+              </div>
+              <div className="bg-slate-900/80 border border-indigo-700/80 p-3.5 rounded-2xl">
+                <span className="text-xs font-black text-purple-400">STAGE 4</span>
+                <p className="font-bold text-sm text-white mt-0.5">領養宣傳單 & 解鎖</p>
+                <p className="text-[11px] text-slate-400 mt-1">生成領養海報與 RPG 繪本角色指令</p>
+              </div>
+            </div>
+
+            <div className="pt-2 relative z-10">
+              <button
+                onClick={() => setGameStageScreen('TASK1')}
+                className="bg-gradient-to-r from-yellow-400 via-amber-400 to-orange-500 hover:from-yellow-300 hover:to-orange-400 text-slate-950 font-black text-xl md:text-2xl px-12 py-4 rounded-2xl shadow-[0_6px_0_rgb(180,83,9)] active:translate-y-1 transition-all inline-flex items-center gap-3 cursor-pointer"
+              >
+                <Play size={28} fill="currentColor" />
+                <span>Start Game</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ---------- STAGE 1: TASK 1 (OBSERVE -> WORDS -> SENTENCES -> DEPLOY) ---------- */}
+        {gameStageScreen === 'TASK1' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            {/* LEFT COLUMN: Step 1 Look & Observe + Front Portrait Avatar Prompt */}
+            <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-20">
+              <section className="bg-white p-5 md:p-6 rounded-3xl shadow-xl border-4 border-orange-300 flex flex-col items-center">
+                <div className="w-full flex justify-between items-center mb-3">
+                  <h2 className="text-xl font-black text-gray-800 flex items-center">
+                    <span className="bg-orange-500 text-white w-7 h-7 rounded-full flex items-center justify-center mr-2.5 text-sm">1</span>
+                    Look & Observe
+                  </h2>
+                  <label className="cursor-pointer bg-orange-500 hover:bg-orange-600 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors shadow">
+                    <Camera size={16} />
+                    <span>上傳照片</span>
+                    <input 
+                      type="file" 
+                      accept="image/*,.heic,.heif" 
+                      onChange={handleImageUpload} 
+                      className="hidden" 
+                    />
+                  </label>
+                </div>
+                <p className="text-gray-500 text-xs mb-3 w-full text-left">
+                  Look at the picture. What do you see? (請先上傳浪浪照片)
+                </p>
+                
+                {imageUploadError && (
+                  <div className="mb-3 w-full bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded-xl text-xs flex items-center gap-2">
+                    <AlertCircle size={16} className="shrink-0" />
+                    <span>{imageUploadError}</span>
+                  </div>
+                )}
+
+                <div 
+                  className="relative w-full aspect-square max-h-[300px] rounded-2xl overflow-hidden shadow-inner border-2 border-orange-100 bg-gray-100 group cursor-pointer" 
+                  onClick={() => document.getElementById('cat-image-input-main').click()}
+                >
+                  <input 
+                    id="cat-image-input-main"
+                    type="file" 
+                    accept="image/*,.heic,.heif" 
+                    onChange={handleImageUpload} 
+                    className="hidden" 
+                  />
+                  {isConvertingImage && (
+                    <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center z-20 space-y-2 p-4 text-center">
+                      <Loader2 size={32} className="animate-spin text-orange-500" />
+                      <p className="text-xs font-bold text-orange-700">正在處理與轉碼照片中...</p>
+                    </div>
+                  )}
+                  <img 
+                    src={catImage || "https://placehold.co/800x800/fff7ed/f97316?text=Click+Here+to+Upload+Photo\n(%E9%BB%9E%E6%93%8A%E4%B8%8A%E5%82%B3%E6%B5%AA%E6%B5%AA%E7%85%A7%E7%89%87)"} 
+                    alt="Rescued Cat"
+                    className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-3 justify-center pointer-events-none">
+                    <span className="bg-black/60 backdrop-blur-md text-white text-xs px-3 py-1 rounded-lg flex items-center gap-1.5">
+                      <Camera size={14} /> 點擊上傳/更換照片 (支援 HEIC / JPG / PNG)
+                    </span>
+                  </div>
+                </div>
+
+                {/* Front Portrait Avatar Prompt (Generated simultaneously with Look & Observe) */}
+                <div className="w-full mt-4 bg-gradient-to-br from-indigo-900 to-slate-900 p-4 rounded-2xl border-2 border-indigo-600 text-white space-y-2.5">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-xs sm:text-sm font-bold flex items-center gap-1.5 text-yellow-300">
+                      <Sparkles size={16} className="text-yellow-400" />
+                      正面大頭照生成指令 (Front Portrait Avatar Prompt)
+                    </h3>
+                    <span className="bg-indigo-800 text-indigo-200 text-[10px] px-2 py-0.5 rounded-full font-mono">Headshot</span>
+                  </div>
+                  <div className="bg-slate-950 p-3 rounded-xl border border-indigo-800/70 font-mono text-[11px] text-indigo-100 leading-relaxed">
+                    {avatarPrompt}
+                  </div>
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(avatarPrompt);
+                        setIsAvatarPromptCopied(true);
+                        setTimeout(() => setIsAvatarPromptCopied(false), 2000);
+                      }}
+                      className="bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-bold py-2 px-3.5 rounded-xl text-xs transition flex items-center gap-1.5 shadow"
+                    >
+                      {isAvatarPromptCopied ? <Check size={14} /> : <Copy size={14} />}
+                      {isAvatarPromptCopied ? '已複製指令！' : '複製大頭照 Prompt'}
+                    </button>
+                    <a
+                      href="https://gemini.google.com/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-yellow-300 hover:text-yellow-200 text-xs font-bold underline underline-offset-4"
+                    >
+                      開啟 Gemini 生成頭像 ➔
+                    </a>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            {/* RIGHT COLUMN: Collect Words -> Magic Sentences -> Deploy Cat to RPG Map */}
+            <div className="lg:col-span-7 space-y-6">
+              
+              {/* Step 2: Collect Words */}
+              <section className="bg-white p-5 md:p-6 rounded-3xl shadow-xl border-4 border-blue-200">
+                <div className="flex flex-wrap justify-between items-center gap-2 mb-3">
+                  <h2 className="text-xl font-black text-gray-800 flex items-center">
+                    <span className="bg-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center mr-2.5 text-sm">2</span>
+                    Collect Words (收集觀察單字)
+                  </h2>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setIsDictionaryOpen(true)}
+                      className="bg-purple-100 hover:bg-purple-200 text-purple-800 font-bold px-3 py-1 rounded-full text-xs flex items-center gap-1 transition"
+                    >
+                      <BookOpen size={14} /> 呼叫魔法字典
+                    </button>
+                    <span className="bg-blue-50 text-blue-700 font-bold px-3 py-1 rounded-full text-xs">
+                      {currentCatIndex + 1} / {categories.length}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="bg-slate-50 p-4 md:p-5 rounded-2xl border border-slate-200 space-y-4">
+                  <label className="flex items-center text-base md:text-lg font-extrabold text-gray-800">
+                    {categories[currentCatIndex].icon} {categories[currentCatIndex].label}
+                  </label>
+                  
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={inputs[categories[currentCatIndex].id]}
+                      onChange={(e) => handleInputChange(categories[currentCatIndex].id, e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddWord(categories[currentCatIndex].id, e)}
+                      placeholder={categories[currentCatIndex].placeholder}
+                      className="flex-1 px-4 py-3 text-base rounded-xl border-2 border-gray-300 focus:outline-none focus:border-blue-500 bg-white"
+                    />
+                    <button 
+                      onClick={(e) => handleAddWord(categories[currentCatIndex].id, e)}
+                      className="bg-orange-500 hover:bg-orange-600 text-white px-5 py-3 rounded-xl transition-colors flex items-center justify-center shadow"
+                    >
+                      <Plus size={22} />
+                    </button>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2 min-h-[36px]">
+                    {vocabulary[categories[currentCatIndex].id].map(word => (
+                      <span 
+                        key={word} 
+                        className="inline-flex items-center bg-white border-2 border-orange-300 text-orange-700 text-sm font-bold px-3.5 py-1 rounded-full shadow-xs"
+                      >
+                        {word}
+                        <button 
+                          onClick={() => handleRemoveWord(categories[currentCatIndex].id, word)}
+                          className="ml-2 text-orange-400 hover:text-red-500"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </span>
+                    ))}
+                    {vocabulary[categories[currentCatIndex].id].length === 0 && (
+                      <span className="text-gray-400 italic text-xs flex items-center">尚未輸入單字，可手動輸入或點擊右上角「AI 魔法字典」...</span>
+                    )}
+                  </div>
+
+                  <div className="flex justify-between items-center pt-3 border-t border-gray-200">
+                    <button
+                      onClick={() => setCurrentCatIndex(prev => Math.max(0, prev - 1))}
+                      disabled={currentCatIndex === 0}
+                      className="px-4 py-2 bg-gray-200 text-gray-700 font-bold rounded-xl text-xs disabled:opacity-30 hover:bg-gray-300"
+                    >
+                      ← 上一題
+                    </button>
+                    <div className="flex gap-1">
+                      {categories.map((c, i) => (
+                        <button
+                          key={c.id}
+                          onClick={() => setCurrentCatIndex(i)}
+                          className={`w-2.5 h-2.5 rounded-full transition-all ${
+                            i === currentCatIndex ? 'bg-blue-600 w-5' : vocabulary[c.id].length > 0 ? 'bg-orange-400' : 'bg-gray-300'
+                          }`}
+                          title={c.label}
+                        />
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => setCurrentCatIndex(prev => Math.min(categories.length - 1, prev + 1))}
+                      disabled={currentCatIndex === categories.length - 1}
+                      className="px-4 py-2 bg-blue-600 text-white font-bold rounded-xl text-xs disabled:opacity-30 hover:bg-blue-700"
+                    >
+                      下一題 →
+                    </button>
+                  </div>
+                </div>
+              </section>
+
+              {/* Step 3: Magic Sentences */}
+              <section className="bg-white p-5 md:p-6 rounded-3xl shadow-xl border-4 border-emerald-200">
+                <h2 className="text-xl font-black text-gray-800 flex items-center mb-4">
+                  <span className="bg-emerald-600 text-white w-7 h-7 rounded-full flex items-center justify-center mr-2.5 text-sm">3</span>
+                  Magic Sentences (魔法造句)
+                </h2>
+                
+                <div className="grid sm:grid-cols-2 gap-3 text-base text-gray-700 font-medium leading-relaxed">
+                  <div className="bg-orange-50/70 p-4 rounded-2xl border border-orange-200">
+                    <p className="mb-1 text-[11px] font-bold text-orange-500 uppercase tracking-wider">Appearance</p>
+                    <p>Look at the {formatList(vocabulary.animal)}! It's {formatList(vocabulary.color)}.</p>
+                  </div>
+                  <div className="bg-purple-50/70 p-4 rounded-2xl border border-purple-200">
+                    <p className="mb-1 text-[11px] font-bold text-purple-500 uppercase tracking-wider">Danger / Place</p>
+                    <p>{formatLocationSentence(vocabulary.environment)}</p>
+                  </div>
+                  <div className="bg-blue-50/70 p-4 rounded-2xl border border-blue-200">
+                    <p className="mb-1 text-[11px] font-bold text-blue-500 uppercase tracking-wider">Details</p>
+                    <p>
+                      {vocabulary.size.includes('small') && vocabulary.age.includes('baby') ? (
+                        <>It is a <span className="font-bold text-orange-600 border-b-2 border-orange-400 px-1">small baby</span> {formatList(vocabulary.animal)}.</>
+                      ) : (
+                        <>It is a {vocabulary.size.length ? formatList(vocabulary.size.map(s => s.endsWith('-sized') ? s : `${s}-sized`)) : <span className="text-gray-400 border-b-2 border-dashed border-gray-300 px-3">____-sized</span>}, {formatList(vocabulary.age)} {formatList(vocabulary.animal)}.</>
+                      )}
+                    </p>
+                  </div>
+                  <div className="bg-red-50/70 p-4 rounded-2xl border border-red-200">
+                    <p className="mb-1 text-[11px] font-bold text-red-500 uppercase tracking-wider">Feelings</p>
+                    <p>The poor {formatList(vocabulary.animal)} looks {formatList(vocabulary.emotion)}.</p>
+                  </div>
+                  <div className="bg-teal-50/70 p-4 rounded-2xl border border-teal-200 sm:col-span-2">
+                    <p className="mb-1 text-[11px] font-bold text-teal-600 uppercase tracking-wider">Other Features</p>
+                    <p>Special traits: {formatList(vocabulary.other)}.</p>
+                  </div>
+                </div>
+              </section>
+
+              {/* Step 4: Deploy Cat to RPG Map */}
+              <section className="bg-gradient-to-br from-slate-900 to-indigo-950 p-5 md:p-6 rounded-3xl border-4 border-indigo-500 text-white shadow-2xl space-y-4">
+                <div>
+                  <h2 className="text-xl font-black text-yellow-300 flex items-center gap-2">
+                    <MapPin size={22} className="text-indigo-400" />
+                    4. 置入貓咪角色於 2D 遊戲地圖 (Deploy Cat to RPG Map)
+                  </h2>
+                  <p className="text-xs text-indigo-200 mt-1">
+                    選擇地圖座標並可上傳去背大頭照，將角色置入 2D 遊戲地圖後進入 Task 2！
+                  </p>
+                </div>
+
+                {deploySuccessMsg && (
+                  <div className="bg-emerald-900/90 border border-emerald-400 text-emerald-200 px-4 py-2.5 rounded-xl font-bold text-xs">
+                    {deploySuccessMsg}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 items-center">
+                  {/* Mini Map Coordinate Picker */}
+                  <div>
+                    <p className="text-xs font-bold text-indigo-300 mb-2 flex items-center gap-1">
+                      <Grid size={14} /> 點擊地圖選擇座標 (X: {deployX}, Y: {deployY})
+                    </p>
+                    <div 
+                      className="grid gap-0.5 bg-slate-950 p-2 rounded-xl border border-slate-700 aspect-square max-w-[240px] mx-auto sm:mx-0"
+                      style={{ gridTemplateColumns: 'repeat(20, minmax(0, 1fr))' }}
+                    >
+                      {INITIAL_MAP_DATA.map((row, y) => 
+                        row.map((tile, x) => {
+                          const isSelected = deployX === x && deployY === y;
+                          const isWalkable = tile === 0 || tile === 1;
+                          const hasExistingCat = gameCats.some(c => c.mapX === x && c.mapY === y);
+
+                          return (
+                            <button
+                              key={`${x}_${y}`}
+                              onClick={() => {
+                                if (isWalkable) {
+                                  setDeployX(x);
+                                  setDeployY(y);
+                                }
+                              }}
+                              className={`aspect-square text-[8px] flex items-center justify-center rounded-xs transition-transform ${
+                                isSelected 
+                                  ? 'bg-yellow-400 ring-2 ring-yellow-300 scale-125 z-10' 
+                                  : hasExistingCat
+                                  ? 'bg-red-500 text-white'
+                                  : tile === 2
+                                  ? 'bg-amber-900/60 opacity-50'
+                                  : tile === 1
+                                  ? 'bg-slate-700'
+                                  : 'bg-emerald-900/50 hover:bg-emerald-700'
+                              }`}
+                              title={`X: ${x}, Y: ${y}`}
+                            >
+                              {isSelected ? '📍' : hasExistingCat ? '🐱' : ''}
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Avatar Upload & Action Buttons */}
+                  <div className="space-y-3 text-xs">
+                    <div className="p-3 bg-slate-800/90 rounded-xl border border-slate-700 space-y-1">
+                      <p><span className="text-yellow-400 font-bold">放置座標:</span> X={deployX}, Y={deployY}</p>
+                      <p><span className="text-yellow-400 font-bold">角色狀態:</span> {vocabulary.color.join('/') || '浪浪'} {currentAnimalName}</p>
+                    </div>
+
+                    <div className="p-3 bg-slate-800/90 rounded-xl border border-slate-700 space-y-2">
+                      <label className="block font-bold text-yellow-300 flex items-center justify-between">
+                        <span className="flex items-center gap-1"><Camera size={14} /> 上傳大頭照 (自動去背)</span>
+                      </label>
+                      <div className="flex items-center gap-2.5 flex-wrap">
+                        <label className="cursor-pointer bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow">
+                          <Camera size={14} />
+                          <span>選擇頭像圖片</span>
+                          <input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+                        </label>
+                        {isProcessingAvatar && (
+                          <span className="text-[11px] text-yellow-300 flex items-center gap-1">
+                            <Loader2 size={14} className="animate-spin"/> 去背中...
+                          </span>
+                        )}
+                        {deployAvatarImage && !isProcessingAvatar && (
+                          <div className="flex items-center gap-2">
+                            <div className="w-9 h-9 rounded-lg border border-indigo-400 bg-slate-950 overflow-hidden flex items-center justify-center p-0.5">
+                              <img src={deployAvatarImage} alt="Avatar" className="w-full h-full object-contain" />
+                            </div>
+                            <span className="text-[11px] text-emerald-400 font-bold">✓ 已去背</span>
+                            <button onClick={() => setDeployAvatarImage(null)} className="text-[11px] text-red-400 underline">重設</button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 pt-1">
+                      <button
+                        onClick={() => handleDeployToMap(true)}
+                        className="w-full bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-black py-3.5 px-4 rounded-xl shadow-lg transition flex items-center justify-center gap-2 text-sm cursor-pointer"
+                      >
+                        <Play size={18} fill="currentColor" />
+                        <span>置入角色並進入 Task 2 ➔</span>
+                      </button>
+                      
+                      {hasDeployedCustomCat && (
+                        <button
+                          onClick={() => setGameStageScreen('TASK2')}
+                          className="w-full bg-indigo-700 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-xl text-xs transition"
+                        >
+                          直接前往 Task 2 (救援裝備庫) ➔
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+            </div>
+          </div>
+        )}
+
+        {/* ---------- STAGE 2: TASK 2 (RESCUE INVENTORY & BACKPACK -> 2D RPG) ---------- */}
+        {gameStageScreen === 'TASK2' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            {/* LEFT COLUMN: Rescue Backpack */}
+            <div className="lg:col-span-5 lg:sticky lg:top-20 space-y-4">
+              <section className="bg-gradient-to-b from-emerald-900 to-slate-900 text-white p-6 rounded-3xl shadow-2xl border-4 border-emerald-500">
+                <div className="flex justify-between items-center mb-3 border-b border-emerald-700/80 pb-3">
+                  <h3 className="font-black text-xl flex items-center gap-2 text-emerald-300">
+                    <Briefcase size={22} /> 救援後背包 (Rescue Backpack)
+                  </h3>
+                  <span className="bg-emerald-950 text-yellow-300 font-mono text-xs font-bold px-3 py-1 rounded-full border border-emerald-500">
+                    已帶 {backpack.length} 樣
+                  </span>
+                </div>
+                <p className="text-xs text-emerald-200 mb-4">
+                  點擊右側救援裝備庫的道具，即可裝進你的救援背包中（不限數量）：
+                </p>
+                
+                {backpack.length === 0 ? (
+                  <div className="bg-emerald-950/80 border-2 border-dashed border-emerald-600/60 rounded-2xl p-8 text-center text-sm text-emerald-400 font-medium">
+                    🎒 背包目前是空的，請從右側選擇救援道具！
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-[340px] overflow-y-auto pr-1">
+                    {backpack.map((item, idx) => (
+                      <div 
+                        key={`${item.id}_${idx}`} 
+                        onClick={() => toggleBackpackItem(item)}
+                        title="點擊移出背包"
+                        className="cursor-pointer bg-emerald-950/90 hover:bg-red-950/80 border-2 border-emerald-500 hover:border-red-400 rounded-2xl p-3 text-center flex flex-col items-center justify-center transition-colors group"
+                      >
+                        <span className="text-3xl mb-1">{item.icon}</span>
+                        <span className="text-xs font-bold text-yellow-200 capitalize truncate w-full">{item.eng}</span>
+                        <span className="text-[11px] text-emerald-300 group-hover:text-red-300 truncate w-full">
+                          {item.chi}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+            </div>
+
+            {/* RIGHT COLUMN: Rescue Inventory + Enter 2D RPG CTA */}
+            <div className="lg:col-span-7 space-y-6">
+              <section className="bg-white p-6 rounded-3xl shadow-xl border-4 border-emerald-200">
+                <h2 className="text-2xl font-black text-emerald-950 flex items-center mb-1">
+                  <ShieldCheck size={26} className="mr-2 text-emerald-600" />
+                  Rescue Inventory (救援裝備庫)
+                </h2>
+                <p className="text-gray-500 text-xs mb-4">點擊裝備帶上它，準備進入現場展開救援！</p>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">
+                  {[...rescueItems, ...customRescueItems].map((item) => {
+                    const isSelected = backpack.some(i => i.id === item.id);
+                    const isCustom = item.id.startsWith('custom_');
+                    return (
+                      <div key={item.id} className="relative group">
+                        <button
+                          onClick={() => toggleBackpackItem(item)}
+                          className={`w-full h-full p-4 rounded-2xl border-2 text-left transition-all flex flex-col justify-between cursor-pointer ${
+                            isSelected 
+                              ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-400 shadow-sm' 
+                              : 'border-gray-200 bg-white hover:border-emerald-300'
+                          }`}
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <span className="text-3xl">{item.icon}</span>
+                            {isSelected && <CheckCircle2 size={20} className="text-emerald-600" />}
+                          </div>
+                          <div>
+                            <p className="font-extrabold text-gray-800 capitalize text-sm">{item.eng}</p>
+                            <p className="text-xs text-gray-500 font-medium">{item.chi}</p>
+                            {item.desc && (
+                              <p className={`text-[11px] mt-1 font-bold ${item.id === 'food' ? 'text-amber-600' : 'text-emerald-600'}`}>
+                                • {item.desc}
+                              </p>
+                            )}
+                          </div>
+                        </button>
+                        {isCustom && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveCustomRescueItem(item.id);
+                            }}
+                            className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow transition-colors"
+                            title="刪除自訂裝備"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Custom Rescue Item Generator */}
+                <div className="bg-emerald-50/90 p-4 rounded-2xl border border-emerald-200">
+                  <p className="font-bold text-emerald-900 text-sm mb-1 flex items-center gap-1.5">
+                    <Plus size={16} className="text-emerald-600" />
+                    自由新增自訂裝備 (中英文雙向自動翻譯)
+                  </p>
+                  <p className="text-xs text-emerald-700 mb-3">輸入中文會自動變英文，或輸入英文自動變中文！</p>
+
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="text"
+                      value={customItemChi}
+                      onChange={(e) => handleChiItemChange(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddCustomRescueItem(e)}
+                      placeholder="中文 (例：手電筒、牽繩)"
+                      className="flex-1 px-3 py-2 text-sm rounded-xl border border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white"
+                    />
+
+                    <div className="relative flex-1">
+                      <input
+                        type="text"
+                        value={customItemEng}
+                        onChange={(e) => handleEngItemChange(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleAddCustomRescueItem(e)}
+                        placeholder="英文 (例：flashlight, treats)"
+                        className="w-full px-3 py-2 text-sm rounded-xl border border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white"
+                      />
+                      {isTranslatingItem && (
+                        <Loader2 size={16} className="absolute right-2.5 top-2.5 animate-spin text-emerald-600" />
+                      )}
+                    </div>
+
+                    <button
+                      onClick={handleAddCustomRescueItem}
+                      disabled={!customItemEng.trim() && !customItemChi.trim()}
+                      className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors whitespace-nowrap flex items-center justify-center gap-1"
+                    >
+                      <Plus size={16} /> 新增裝備
+                    </button>
+                  </div>
+                </div>
+              </section>
+
+              {/* Direct Transition to 2D RPG Core Stage */}
+              <section className="bg-gradient-to-r from-indigo-900 via-purple-900 to-slate-900 text-white p-6 rounded-3xl shadow-2xl border-4 border-yellow-400 space-y-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-4xl animate-bounce">🎒</span>
+                  <div>
+                    <h2 className="text-xl md:text-2xl font-black text-yellow-300">
+                      裝備準備完畢！直接進入 2D RPG 核心關卡
+                    </h2>
+                    <p className="text-xs text-purple-200 mt-1">
+                      帶著你挑選的救援道具，進入 2D 地圖尋找浪浪、進行現場救援與獸醫健檢！
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-slate-950/70 p-3.5 rounded-2xl border border-indigo-700/80 text-xs text-indigo-200 flex flex-wrap justify-between items-center gap-2">
+                  <span>目前攜帶裝備：<strong className="text-yellow-300">{backpack.length ? backpack.map(i => i.eng).join(', ') : '基本徒手救援'}</strong></span>
+                  <span className="bg-indigo-800 text-yellow-300 px-3 py-1 rounded-full font-mono font-bold">{backpack.length} Items</span>
+                </div>
+
+                <button
+                  onClick={() => setGameStageScreen('GAME')}
+                  className="w-full bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-black py-4 rounded-2xl shadow-xl hover:shadow-yellow-400/50 transition-all text-base flex items-center justify-center gap-3 cursor-pointer"
+                >
+                  <Gamepad2 size={24} className="text-indigo-950" />
+                  <span>裝備準備完畢！直接進入 2D RPG 核心關卡 ➔</span>
+                </button>
+              </section>
+            </div>
+          </div>
+        )}
+
+        {/* ---------- STAGE 3: 2D RPG CORE GAME ---------- */}
+        {gameStageScreen === 'GAME' && (
           <div className="w-full flex justify-center">
             <PawsAndPlay 
               gameCats={gameCats} 
               setGameCats={setGameCats} 
               vocabulary={vocabulary}
               backpack={backpack}
-              actionChoice1={approachChoice}
               vetCheck={vetCheck}
               setVetCheck={setVetCheck}
               catImage={catImage}
               adoptionPetName={adoptionPetName}
               setAdoptionPetName={setAdoptionPetName}
-              setActiveTab={setActiveTab}
+              onProceedToTask3={() => setGameStageScreen('TASK3')}
             />
           </div>
         )}
 
-        {/* ==================== TASK 3: ADOPTION FLYER TAB ==================== */}
-        {activeTab === 'task3' && (
-          <div className="max-w-4xl mx-auto space-y-6">
-            {gameCats.length > 0 ? (
-              <section className="bg-white p-8 md:p-12 rounded-3xl shadow-xl border-4 border-purple-200 text-center space-y-6">
-                <div className="w-20 h-20 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner">
-                  🔒
-                </div>
-                <div className="space-y-2">
-                  <h2 className="text-2xl md:text-3xl font-black text-purple-900">
-                    Task 3 領養宣傳單尚未解鎖 (Adoption Flyer Locked)
-                  </h2>
-                  <p className="text-gray-600 text-sm md:text-base max-w-xl mx-auto">
-                    請先前往 <span className="font-bold text-indigo-600">[2D RPG 遊戲 (Paws & Play)]</span> 完成所有待救援動物的任務！
-                  </p>
-                </div>
-
-                <div className="bg-purple-50 p-4 rounded-2xl border border-purple-200 max-w-md mx-auto text-left text-xs space-y-2">
-                  <div className="flex items-center justify-between font-bold text-purple-900">
-                    <span>🎮 遊戲救援進度 (Game Rescue Progress):</span>
-                    <span className="text-purple-700 font-mono text-sm">{gameCats.length} 隻待救援</span>
-                  </div>
-                  <div className="w-full bg-purple-200 h-2.5 rounded-full overflow-hidden">
-                    <div 
-                      className="bg-purple-600 h-full transition-all duration-500"
-                      style={{ width: `${Math.max(0, ((INITIAL_CATS_DATA.length - gameCats.length) / INITIAL_CATS_DATA.length) * 100)}%` }}
-                    ></div>
-                  </div>
-                  <p className="text-gray-500 text-[11px]">全數完成遊戲地圖上的浪浪救援後，系統將會自動解鎖這份專業英文領養宣傳單！</p>
-                </div>
-
-                <button
-                  onClick={() => setActiveTab('game')}
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold px-8 py-3.5 rounded-2xl shadow-lg hover:shadow-indigo-300/50 transition-all text-sm inline-flex items-center gap-2 scale-105"
-                >
-                  <Gamepad2 size={20} className="text-yellow-300" />
-                  <span>前往 2D RPG 遊戲展開救援 ➔</span>
-                </button>
-              </section>
-            ) : (
-              <section className="bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900 text-white p-6 md:p-8 rounded-3xl shadow-2xl border-4 border-purple-600 space-y-6">
-              
+        {/* ---------- STAGE 4: TASK 3 (ADOPTION FLYER + RPG CHARACTER UNLOCKED) ---------- */}
+        {gameStageScreen === 'TASK3' && (
+          <div className="max-w-5xl mx-auto w-full space-y-8">
+            
+            {/* BLOCK 1: ADOPTION FLYER */}
+            <section className="bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900 text-white p-6 md:p-8 rounded-3xl shadow-2xl border-4 border-purple-500 space-y-6">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-purple-700/80 pb-4">
                 <div>
                   <div className="inline-flex items-center gap-2 bg-purple-500/30 text-purple-200 px-3 py-1 rounded-full text-xs font-bold mb-2 border border-purple-400/30">
                     <HeartHandshake size={16} className="text-pink-400" />
-                    AUTOMATIC ADOPTION FLYER GENERATOR
+                    FINAL QUEST REWARD • ADOPTION FLYER
                   </div>
-                  <h2 className="text-2xl md:text-3xl font-black text-yellow-300">Task 3: 愛心領養宣傳單 (Adoption Flyer)</h2>
-                  <p className="text-xs md:text-sm text-purple-200 mt-1">遊戲完成與救助後，為牠取個溫馨的名字，自動生成專業英文領養海報！</p>
+                  <h2 className="text-2xl md:text-3xl font-black text-yellow-300">愛心領養宣傳單 (Adoption Flyer)</h2>
+                  <p className="text-xs md:text-sm text-purple-200 mt-1">救援與健檢完成！為牠取個溫暖的名字，製作專屬英文領養海報！</p>
                 </div>
                 
                 <button
                   onClick={() => window.print()}
-                  className="bg-purple-600 hover:bg-purple-500 text-white font-bold px-4 py-2.5 rounded-xl shadow-lg transition flex items-center gap-2 text-xs"
+                  className="bg-purple-600 hover:bg-purple-500 text-white font-bold px-4 py-2.5 rounded-xl shadow-lg transition flex items-center gap-2 text-xs shrink-0"
                 >
-                  <Printer size={16} /> 列印/儲存宣傳單 (Print Flyer)
+                  <Printer size={16} /> 列印/儲存宣傳單
                 </button>
               </div>
 
               {/* Name & Slogan Input Form */}
-              <div className="bg-slate-950/70 p-5 rounded-2xl border border-purple-700/80 space-y-4">
+              <div className="bg-slate-950/70 p-5 rounded-2xl border border-purple-700/80">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-yellow-300 mb-1.5 flex items-center gap-1.5">
@@ -859,7 +1535,6 @@ export default function App() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-                  
                   {/* Photo Column */}
                   <div className="md:col-span-5 flex flex-col items-center">
                     <div className="w-full aspect-square rounded-2xl overflow-hidden border-4 border-orange-200 shadow-md bg-slate-100 relative">
@@ -876,8 +1551,6 @@ export default function App() {
 
                   {/* Info Details Column */}
                   <div className="md:col-span-7 space-y-4 text-sm">
-                    
-                    {/* Basic Traits */}
                     <div className="bg-amber-50/80 p-4 rounded-2xl border border-amber-200 space-y-2">
                       <h3 className="font-extrabold text-orange-800 border-b border-amber-200 pb-1 flex items-center gap-2">
                         <CatIcon size={18} /> Basic Information (基本資料)
@@ -890,7 +1563,6 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* Medical Check Record */}
                     <div className="bg-emerald-50/80 p-4 rounded-2xl border border-emerald-200 space-y-2">
                       <h3 className="font-extrabold text-emerald-900 border-b border-emerald-200 pb-1 flex items-center gap-2">
                         <Stethoscope size={18} className="text-emerald-600" /> Medical Record (獸醫健康報告)
@@ -903,21 +1575,19 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* Equipped Rescue Gear */}
                     <div className="bg-purple-50/80 p-3 rounded-xl border border-purple-200 text-xs text-purple-950">
                       <span className="font-bold text-purple-800">🎒 Rescue Equipment Used:</span>{' '}
                       {backpack.length ? backpack.map(i => `${i.eng} (${i.chi})`).join(', ') : 'Standard Carrier & Blanket'}
                     </div>
-
                   </div>
                 </div>
 
                 <div className="mt-6 pt-4 border-t-2 border-dashed border-gray-200 text-center text-xs text-gray-500 font-medium">
-                  💌 "Give a stray animal a second chance at life." | ESL Rescue Quest Project
+                  💌 "Give a stray animal a second chance at life." | Cat Rescue Quest Project
                 </div>
               </div>
 
-              {/* Gemini Prompt Generator for Adoption Poster */}
+              {/* Gemini Adoption Poster Prompt */}
               <div className="bg-slate-950 p-5 rounded-2xl border border-purple-700 font-mono text-xs space-y-3">
                 <p className="font-bold text-yellow-300 flex items-center gap-2">
                   <Wand2 size={16} /> Gemini 高畫質領養海報繪本生成 Prompt:
@@ -947,653 +1617,85 @@ export default function App() {
                   </a>
                 </div>
               </div>
-
             </section>
-            )}
+
+            {/* BLOCK 2: RPG CHARACTER UNLOCKED! (Placed together with Adoption Flyer at the end) */}
+            <section className="bg-slate-900 p-6 md:p-8 rounded-3xl shadow-2xl text-white relative border-4 border-yellow-500/80">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-5">
+                <h2 className="text-2xl font-black flex items-center text-yellow-400">
+                  <span className="bg-yellow-500 text-slate-950 w-8 h-8 rounded-full flex items-center justify-center mr-3 text-lg font-black">★</span>
+                  RPG Character Unlocked! (角色繪本故事卡解鎖)
+                </h2>
+                <span className="bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 px-3 py-1 rounded-full text-xs font-mono font-bold">
+                  Storybook Illustration Prompt
+                </span>
+              </div>
+              
+              <div className="flex flex-col md:flex-row gap-6 items-start bg-slate-950/70 p-6 rounded-2xl border border-slate-700">
+                <div className="w-full md:w-32 h-32 shrink-0 bg-slate-800 rounded-2xl border-4 border-slate-600 flex items-center justify-center flex-col shadow-inner">
+                   <Wand2 size={44} className="text-yellow-400 mb-2" />
+                   <span className="text-xs font-mono text-slate-300">AI Prompt</span>
+                </div>
+                
+                <div className="flex-1 space-y-4 font-mono w-full">
+                  <div className="border-b border-slate-700 pb-2">
+                    <h3 className="text-lg font-bold text-white mb-1">小貓/小狗待救援處境繪本插畫指令 (Image Prompt)</h3>
+                    <p className="text-xs text-yellow-400">將這段咒語交給 AI，還原牠等待救援的感人繪本畫面！（⚠️ 記得一併附上照片喔！）</p>
+                  </div>
+                  
+                  <div className="bg-slate-800 p-4 rounded-xl border border-slate-600 text-slate-200 text-xs md:text-sm leading-relaxed break-words">
+                    [IMPORTANT: Please strictly base the animal's appearance, colors, and markings on the uploaded photo!]<br/><br/>
+                    Create a cute, playful, and childlike children's book illustration (NOT realistic) of this rescued {vocabulary.animal.length ? vocabulary.animal.join('/') : '[cat/dog]'} waiting for help.<br/>
+                    It has {vocabulary.color.length ? vocabulary.color.join(' and ') : '[Color]'} fur.<br/>
+                    It is currently trapped or found in {vocabulary.environment.length ? vocabulary.environment.join(', ') : '[Place]'}.<br/>
+                    {vocabulary.size.includes('small') && vocabulary.age.includes('baby') ? (
+                      <>The {vocabulary.animal.length ? vocabulary.animal.join('/') : '[cat/dog]'} is a small baby.<br/></>
+                    ) : (
+                      <>The {vocabulary.animal.length ? vocabulary.animal.join('/') : '[cat/dog]'} is {vocabulary.size.length ? vocabulary.size.map(s => s.endsWith('-sized') ? s : `${s}-sized`).join(', ') : '[Size]-sized'} and {vocabulary.age.length ? vocabulary.age.join(', ') : '[Age]'}.<br/></>
+                    )}
+                    The poor {vocabulary.animal.length ? vocabulary.animal.join('/') : '[cat/dog]'} looks {vocabulary.emotion.length ? vocabulary.emotion.join(' and ') : '[Emotion]'}.<br/>
+                    Special features: {vocabulary.other.length ? vocabulary.other.join(', ') : '[Other traits]'}.<br/>
+                    The atmosphere shows its rescue situation, slightly dramatic but with a warm, comforting light of hope shining on it.
+                  </div>
+                  
+                  <div className="pt-2 flex flex-col sm:flex-row gap-4 items-center">
+                     <button 
+                       onClick={() => {
+                         const isSmallBaby = vocabulary.size.includes('small') && vocabulary.age.includes('baby');
+                         const sizeAgeStr = isSmallBaby 
+                           ? 'a small baby' 
+                           : `${vocabulary.size.length ? vocabulary.size.map(s => s.endsWith('-sized') ? s : `${s}-sized`).join(', ') : 'medium-sized'} and ${vocabulary.age.length ? vocabulary.age.join(', ') : 'unknown age'}`;
+                         const promptText = `[IMPORTANT: Please strictly base the animal's appearance, colors, and markings on the uploaded photo!] Create a cute, playful, and childlike children's book illustration (NOT realistic) of this rescued ${vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog'} waiting for help. It has ${vocabulary.color.length ? vocabulary.color.join(' and ') : 'unspecified'} fur. It is currently trapped or found in ${vocabulary.environment.length ? vocabulary.environment.join(', ') : 'an unknown place'}. The ${vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog'} is ${sizeAgeStr}. The poor ${vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog'} looks ${vocabulary.emotion.length ? vocabulary.emotion.join(' and ') : 'anxious'}. Special features: ${vocabulary.other.length ? vocabulary.other.join(', ') : 'none'}. The atmosphere shows its rescue situation, slightly dramatic but with a warm, comforting light of hope shining on it.`;
+                         navigator.clipboard.writeText(promptText);
+                         setIsCopied(true);
+                         setTimeout(() => setIsCopied(false), 2000);
+                       }}
+                       className="bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-bold py-3 px-6 rounded-xl shadow-[0_4px_0_rgb(161,98,7)] active:translate-y-1 transition-all flex items-center justify-center gap-2 w-full sm:w-auto"
+                     >
+                       {isCopied ? <Check size={20} /> : <Copy size={20} />}
+                       {isCopied ? '已複製 (Copied!)' : '複製角色 Prompt'}
+                     </button>
+
+                     <a 
+                       href="https://gemini.google.com/" 
+                       target="_blank" 
+                       rel="noopener noreferrer"
+                       className="text-yellow-400 hover:text-yellow-300 font-bold flex items-center gap-2 transition-colors underline underline-offset-4 w-full sm:w-auto justify-center sm:justify-start"
+                     >
+                       開啟 Gemini 生成角色插畫 ➔
+                     </a>
+                  </div>
+                </div>
+              </div>
+            </section>
+
           </div>
         )}
 
-        {/* ==================== TASKS TAB (2-COLUMN LAYOUT) ==================== */}
-        {activeTab !== 'game' && activeTab !== 'task3' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            
-            {/* LEFT COLUMN: Fixed Photo & Live Backpack */}
-            <div className="lg:col-span-5 sticky top-6 space-y-6">
-              
-              {/* Step 1 Photo Upload Box (Only shown in Task 1) */}
-              {activeTab === 'task1' && (
-                <section className="bg-white p-6 rounded-3xl shadow-lg border-2 border-orange-100 flex flex-col items-center">
-                  <div className="w-full flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-bold text-gray-700 flex items-center">
-                      <span className="bg-orange-500 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-lg">1</span>
-                      Look & Observe
-                    </h2>
-                    <label className="cursor-pointer bg-orange-50 hover:bg-orange-100 text-orange-600 px-3 py-1.5 rounded-xl border border-orange-200 text-sm font-bold flex items-center gap-2 transition-colors shadow-sm">
-                      <Camera size={18} />
-                      <span>上傳照片</span>
-                      <input 
-                        type="file" 
-                        accept="image/*,.heic,.heif" 
-                        onChange={handleImageUpload} 
-                        className="hidden" 
-                      />
-                    </label>
-                  </div>
-                  <p className="text-gray-500 mb-4 w-full text-left">Look at the picture. What do you see?<br/>(看看這張照片，你看到了什麼？)</p>
-                  
-                  {imageUploadError && (
-                    <div className="mb-4 w-full bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded-xl text-xs flex items-center gap-2">
-                      <AlertCircle size={16} className="shrink-0" />
-                      <span>{imageUploadError}</span>
-                    </div>
-                  )}
+      </main>
 
-                  <div className="relative w-full aspect-square rounded-2xl overflow-hidden shadow-inner border border-gray-200 bg-gray-100 group cursor-pointer" onClick={() => document.getElementById('cat-image-input-main').click()}>
-                    <input 
-                      id="cat-image-input-main"
-                      type="file" 
-                      accept="image/*,.heic,.heif" 
-                      onChange={handleImageUpload} 
-                      className="hidden" 
-                    />
-                    {isConvertingImage && (
-                      <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center z-20 space-y-2 p-4 text-center">
-                        <Loader2 size={36} className="animate-spin text-orange-500" />
-                        <p className="text-xs font-bold text-orange-700">正在處理與轉碼照片中...</p>
-                        <p className="text-[10px] text-gray-500">(iPhone HEIC 照片需要 1-3 秒進行即時解碼轉換)</p>
-                      </div>
-                    )}
-                    <img 
-                      src={catImage || "https://placehold.co/800x800/f8fafc/f97316?text=Image+of+the+Rescued+Cat\n(Click+Here+to+Upload+Photo)"} 
-                      alt="Rescued Cat"
-                      className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-4 justify-between pointer-events-none">
-                      <span className="bg-black/40 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 mx-auto">
-                        <Camera size={14} /> 點擊更換照片 (支援 HEIC / JPG / PNG)
-                      </span>
-                    </div>
-                  </div>
-                </section>
-              )}
-
-              {/* Task 2 Live Backpack (Shown on Task 2 tab) */}
-              {activeTab === 'task2' && (
-                <section className="bg-emerald-900 text-white p-5 rounded-3xl shadow-xl border-4 border-emerald-800">
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-extrabold text-lg flex items-center gap-2 text-emerald-300">
-                      <Briefcase size={20} /> 救援後背包 (Rescue Backpack)
-                    </h3>
-                    <span className="bg-emerald-950 text-yellow-300 font-mono text-xs font-bold px-2.5 py-1 rounded-full border border-emerald-600">
-                      已帶 {backpack.length} 樣 (無上限)
-                    </span>
-                  </div>
-                  <p className="text-xs text-emerald-200 mb-3">選取的裝備會放進這裡，不限數量：</p>
-                  
-                  {backpack.length === 0 ? (
-                    <div className="bg-emerald-950/70 border-2 border-dashed border-emerald-600/50 rounded-xl p-4 text-center text-xs text-emerald-500 font-mono">
-                      目前無裝備，請點擊右側道具帶上！
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-48 overflow-y-auto pr-1">
-                      {backpack.map((item, idx) => (
-                        <div key={`${item.id}_${idx}`} className="bg-emerald-950/90 border-2 border-emerald-600 rounded-xl p-2 text-center flex flex-col items-center justify-center min-h-[75px]">
-                          <span className="text-xl mb-0.5">{item.icon}</span>
-                          <span className="text-[10px] font-bold text-emerald-200 capitalize truncate w-full">{item.eng}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </section>
-              )}
-
-            </div>
-
-            {/* RIGHT COLUMN: Interactive Steps for Task 1 or Task 2 */}
-            <div className="lg:col-span-7 space-y-8">
-              
-              {/* ==================== TASK 1 CONTENT ==================== */}
-              {activeTab === 'task1' && (
-                <>
-                  {/* Step 1.5: Front Portrait Avatar Generator */}
-                  <section className="bg-gradient-to-br from-indigo-900 to-slate-900 p-6 rounded-3xl shadow-xl border-2 border-indigo-700 text-white">
-                    <div className="flex justify-between items-center mb-3">
-                      <h2 className="text-xl font-bold flex items-center gap-2 text-indigo-300">
-                        <Sparkles size={22} className="text-yellow-400" />
-                        正面大頭照生成指令 (Front Portrait Avatar Prompt)
-                      </h2>
-                      <span className="bg-indigo-800 text-indigo-200 text-xs px-2.5 py-1 rounded-full font-mono">Pet Headshot</span>
-                    </div>
-                    <p className="text-xs text-indigo-200 mb-4">擷取小朋友上傳的照片，專注於小動物臉部特徵，生成一張清晰的正面大頭照！</p>
-                    
-                    <div className="bg-slate-950 p-4 rounded-xl border border-indigo-800/60 font-mono text-xs text-indigo-100 leading-relaxed mb-4">
-                      {avatarPrompt}
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <button
-                        onClick={() => {
-                          navigator.clipboard.writeText(avatarPrompt);
-                          setIsAvatarPromptCopied(true);
-                          setTimeout(() => setIsAvatarPromptCopied(false), 2000);
-                        }}
-                        className="bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-bold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2"
-                      >
-                        {isAvatarPromptCopied ? <Check size={16} /> : <Copy size={16} />}
-                        {isAvatarPromptCopied ? '已複製大頭照 Prompt！' : '複製正面大頭照 Prompt'}
-                      </button>
-
-                      <a
-                        href="https://gemini.google.com/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-yellow-400 hover:text-yellow-300 text-sm font-bold flex items-center gap-1.5 justify-center underline underline-offset-4"
-                      >
-                        開啟 Gemini 生成正面大頭照 ➔
-                      </a>
-                    </div>
-                  </section>
-
-                  {/* Step 2: AI Magic Dictionary */}
-                  <section className="bg-gradient-to-br from-purple-50 to-indigo-50 p-6 md:p-8 rounded-3xl shadow-lg border-2 border-purple-200">
-                    <h2 className="text-2xl font-bold text-purple-900 flex items-center mb-3">
-                      <span className="bg-purple-600 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-lg">2</span>
-                      AI Magic Dictionary
-                    </h2>
-                    <p className="text-purple-700 mb-6">老師輸入小朋友說的中文，系統自動轉為英文單字與專屬圖卡！</p>
-
-                    {apiError && (
-                      <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl flex items-center gap-2">
-                        <AlertCircle size={20} />
-                        <span>{apiError}</span>
-                      </div>
-                    )}
-
-                    <div className="flex flex-col xl:flex-row gap-3">
-                      <select
-                        value={selectedCat}
-                        onChange={(e) => setSelectedCat(e.target.value)}
-                        className="px-4 py-3 rounded-xl border-2 border-purple-200 focus:outline-none focus:border-purple-400 bg-white font-bold text-gray-700 shadow-sm"
-                      >
-                        {categories.map(cat => (
-                          <option key={cat.id} value={cat.id}>{cat.label}</option>
-                        ))}
-                      </select>
-                      
-                      <div className="flex-1 flex gap-2">
-                        <input
-                          type="text"
-                          value={chineseInput}
-                          onChange={(e) => setChineseInput(e.target.value)}
-                          onKeyDown={(e) => e.key === 'Enter' && handleAIGeneration()}
-                          placeholder="輸入中文 (如：黑白相間)"
-                          className="flex-1 px-4 py-3 rounded-xl border-2 border-purple-200 focus:outline-none focus:border-purple-400 text-lg shadow-inner bg-white"
-                          disabled={isGenerating}
-                        />
-                        <button 
-                          onClick={handleAIGeneration}
-                          disabled={isGenerating || !chineseInput.trim()}
-                          className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-colors shadow-sm whitespace-nowrap"
-                        >
-                          {isGenerating ? <Loader2 className="animate-spin" size={24} /> : <Sparkles size={24} />}
-                          {isGenerating ? '施法中...' : '變魔法!'}
-                        </button>
-                      </div>
-                    </div>
-
-                    {flashcards.length > 0 && (
-                      <div className="mt-6 pt-6 border-t border-purple-200">
-                        <h3 className="text-sm font-bold text-purple-600 uppercase tracking-wider mb-4 flex items-center gap-2">
-                          <ImageIcon size={16} /> Magic Word Cards
-                        </h3>
-                        <div className="flex gap-4 overflow-x-auto pb-4 px-2 -mx-2 snap-x">
-                          {flashcards.map(card => (
-                            <div key={card.id} className="snap-center shrink-0 w-40 bg-white rounded-2xl border-2 border-purple-100 shadow-md overflow-hidden flex flex-col transition-transform hover:-translate-y-1 duration-300">
-                              <div className="h-32 bg-gray-50 flex items-center justify-center overflow-hidden border-b border-gray-100 p-2 relative">
-                                {renderCardVisual(card.cat, card.eng)}
-                              </div>
-                              <div className="p-3 text-center bg-gradient-to-b from-white to-purple-50/30">
-                                <p className="font-black text-lg text-gray-800 capitalize tracking-wide">{card.eng}</p>
-                                <p className="text-xs text-gray-500 font-medium mt-1">{card.chi}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </section>
-
-                  {/* Step 3: Collect Words */}
-                  <section className="bg-white p-6 rounded-3xl shadow-lg border-2 border-orange-100">
-                    <div className="flex justify-between items-center mb-6">
-                      <h2 className="text-2xl font-bold text-gray-700 flex items-center">
-                        <span className="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-lg">3</span>
-                        Collect Words
-                      </h2>
-                      <span className="bg-blue-50 text-blue-600 font-bold px-4 py-1.5 rounded-full text-sm">
-                        Step {currentCatIndex + 1} of {categories.length}
-                      </span>
-                    </div>
-                    <p className="text-gray-500 mb-6">Teacher, type the words students shout out!</p>
-                    
-                    <div className="bg-gray-50 p-6 md:p-8 rounded-2xl border border-gray-200 shadow-inner flex flex-col min-h-[250px] justify-between">
-                      <div>
-                        <label className="flex items-center text-xl font-bold text-gray-800 mb-4">
-                          {categories[currentCatIndex].icon} {categories[currentCatIndex].label}
-                        </label>
-                        
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            value={inputs[categories[currentCatIndex].id]}
-                            onChange={(e) => handleInputChange(categories[currentCatIndex].id, e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleAddWord(categories[currentCatIndex].id, e)}
-                            placeholder={categories[currentCatIndex].placeholder}
-                            className="flex-1 px-5 py-4 text-xl rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all bg-white"
-                          />
-                          <button 
-                            onClick={(e) => handleAddWord(categories[currentCatIndex].id, e)}
-                            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-xl transition-colors flex items-center justify-center"
-                          >
-                            <Plus size={28} />
-                          </button>
-                        </div>
-                        
-                        <div className="flex flex-wrap gap-2 mt-6 min-h-[40px]">
-                          {vocabulary[categories[currentCatIndex].id].map(word => (
-                            <span 
-                              key={word} 
-                              className="inline-flex items-center bg-white border-2 border-orange-300 text-orange-700 text-lg font-semibold px-4 py-1.5 rounded-full shadow-sm"
-                            >
-                              {word}
-                              <button 
-                                onClick={() => handleRemoveWord(categories[currentCatIndex].id, word)}
-                                className="ml-3 text-orange-400 hover:text-red-500 transition-colors focus:outline-none"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </span>
-                          ))}
-                          {vocabulary[categories[currentCatIndex].id].length === 0 && (
-                            <span className="text-gray-400 italic flex items-center h-full">No words yet...</span>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
-                        <button
-                          onClick={() => setCurrentCatIndex(prev => Math.max(0, prev - 1))}
-                          disabled={currentCatIndex === 0}
-                          className="px-5 py-2.5 bg-gray-200 text-gray-700 font-bold rounded-lg disabled:opacity-30 hover:bg-gray-300 transition-colors"
-                        >
-                          ← 上一個
-                        </button>
-                        <button
-                          onClick={() => setCurrentCatIndex(prev => Math.min(categories.length - 1, prev + 1))}
-                          disabled={currentCatIndex === categories.length - 1}
-                          className="px-5 py-2.5 bg-blue-500 text-white font-bold rounded-lg disabled:opacity-30 hover:bg-blue-600 transition-colors"
-                        >
-                          下一個 →
-                        </button>
-                      </div>
-                    </div>
-                  </section>
-
-                  {/* Step 4: Magic Sentences */}
-                  <section className="bg-white p-6 rounded-3xl shadow-lg border-2 border-orange-100 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-orange-100 rounded-bl-full -z-10 opacity-50"></div>
-                    
-                    <h2 className="text-2xl font-bold text-gray-700 flex items-center mb-6">
-                      <span className="bg-green-500 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-lg">4</span>
-                      Magic Sentences
-                    </h2>
-                    
-                    <div className="grid md:grid-cols-2 gap-6 text-xl text-gray-700 font-medium leading-relaxed">
-                      <div className="bg-orange-50/50 p-6 rounded-2xl border border-orange-200 shadow-sm">
-                        <p className="mb-2 text-sm font-bold text-orange-400 uppercase tracking-wider">Appearance</p>
-                        <p>Look at the {formatList(vocabulary.animal)}! It's {formatList(vocabulary.color)}.</p>
-                      </div>
-                      <div className="bg-purple-50/50 p-6 rounded-2xl border border-purple-200 shadow-sm">
-                        <p className="mb-2 text-sm font-bold text-purple-400 uppercase tracking-wider">Danger/Place (Background)</p>
-                        <p>{formatLocationSentence(vocabulary.environment)}</p>
-                      </div>
-                      <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-200 shadow-sm">
-                        <p className="mb-2 text-sm font-bold text-blue-400 uppercase tracking-wider">Details</p>
-                        <p>
-                          {vocabulary.size.includes('small') && vocabulary.age.includes('baby') ? (
-                            <>
-                              It is a <span className="font-bold text-orange-600 border-b-2 border-orange-400 px-1">small baby</span> {formatList(vocabulary.animal)}.
-                            </>
-                          ) : (
-                            <>
-                              It is a {vocabulary.size.length ? formatList(vocabulary.size.map(s => s.endsWith('-sized') ? s : `${s}-sized`)) : <span className="text-gray-400 border-b-2 border-dashed border-gray-300 px-4">________-sized</span>}, {formatList(vocabulary.age)} {formatList(vocabulary.animal)}.
-                            </>
-                          )}
-                        </p>
-                      </div>
-                      <div className="bg-red-50/50 p-6 rounded-2xl border border-red-200 shadow-sm">
-                        <p className="mb-2 text-sm font-bold text-red-400 uppercase tracking-wider">Feelings</p>
-                        <p>The poor {formatList(vocabulary.animal)} looks {formatList(vocabulary.emotion)}.</p>
-                      </div>
-                      <div className="bg-teal-50/50 p-6 rounded-2xl border border-teal-200 shadow-sm md:col-span-2">
-                        <p className="mb-2 text-sm font-bold text-teal-400 uppercase tracking-wider">Other Features</p>
-                        <p>Special traits: {formatList(vocabulary.other)}.</p>
-                      </div>
-                    </div>
-                  </section>
-
-                  {/* Step 5: RPG Character Unlocked */}
-                  <section className="bg-slate-800 p-6 md:p-8 rounded-3xl shadow-2xl text-white relative border-4 border-slate-700">
-                    <h2 className="text-2xl font-bold flex items-center mb-6 text-yellow-400">
-                      <span className="bg-yellow-500 text-slate-900 w-8 h-8 rounded-full flex items-center justify-center mr-3 text-lg font-black">5</span>
-                      RPG Character Unlocked!
-                    </h2>
-                    
-                    <div className="flex flex-col md:flex-row gap-6 items-start bg-slate-900/50 p-6 rounded-2xl border border-slate-700">
-                      <div className="w-full md:w-32 h-32 shrink-0 bg-slate-700 rounded-2xl border-4 border-slate-600 flex items-center justify-center flex-col shadow-inner">
-                         <Wand2 size={48} className="text-slate-400 mb-2" />
-                         <span className="text-xs font-mono text-slate-400">Prompt</span>
-                      </div>
-                      
-                      <div className="flex-1 space-y-4 font-mono w-full">
-                        <div className="border-b border-slate-700 pb-2">
-                          <h3 className="text-xl font-bold text-white mb-1">小貓/小狗待救援處境 (Image Prompt)</h3>
-                          <p className="text-sm text-yellow-500">將這段咒語交給 AI，還原救援現場！（⚠️ 記得要上傳照片喔！）</p>
-                        </div>
-                        
-                        <div className="bg-slate-800 p-4 rounded-xl border border-slate-600 text-slate-300 text-sm md:text-base leading-relaxed break-words">
-                          [IMPORTANT: Please strictly base the animal's appearance, colors, and markings on the uploaded photo!]<br/><br/>
-                          Create a cute, playful, and childlike children's book illustration (NOT realistic) of this rescued {vocabulary.animal.length ? vocabulary.animal.join('/') : '[cat/dog]'} waiting for help.<br/>
-                          It has {vocabulary.color.length ? vocabulary.color.join(' and ') : '[Color]'} fur.<br/>
-                          It is currently trapped or found in {vocabulary.environment.length ? vocabulary.environment.join(', ') : '[Place]'}.<br/>
-                          {vocabulary.size.includes('small') && vocabulary.age.includes('baby') ? (
-                            <>The {vocabulary.animal.length ? vocabulary.animal.join('/') : '[cat/dog]'} is a small baby.<br/></>
-                          ) : (
-                            <>The {vocabulary.animal.length ? vocabulary.animal.join('/') : '[cat/dog]'} is {vocabulary.size.length ? vocabulary.size.map(s => s.endsWith('-sized') ? s : `${s}-sized`).join(', ') : '[Size]-sized'} and {vocabulary.age.length ? vocabulary.age.join(', ') : '[Age]'}.<br/></>
-                          )}
-                          The poor {vocabulary.animal.length ? vocabulary.animal.join('/') : '[cat/dog]'} looks {vocabulary.emotion.length ? vocabulary.emotion.join(' and ') : '[Emotion]'}.<br/>
-                          Special features: {vocabulary.other.length ? vocabulary.other.join(', ') : '[Other traits]'}.<br/>
-                          The atmosphere shows its rescue situation, slightly dramatic but with a warm, comforting light of hope shining on it.
-                        </div>
-                        
-                        <div className="pt-4 flex flex-col sm:flex-row gap-4 items-center">
-                           <button 
-                             onClick={() => {
-                               const isSmallBaby = vocabulary.size.includes('small') && vocabulary.age.includes('baby');
-                               const sizeAgeStr = isSmallBaby 
-                                 ? 'a small baby' 
-                                 : `${vocabulary.size.length ? vocabulary.size.map(s => s.endsWith('-sized') ? s : `${s}-sized`).join(', ') : 'medium-sized'} and ${vocabulary.age.length ? vocabulary.age.join(', ') : 'unknown age'}`;
-                               const promptText = `[IMPORTANT: Please strictly base the animal's appearance, colors, and markings on the uploaded photo!] Create a cute, playful, and childlike children's book illustration (NOT realistic) of this rescued ${vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog'} waiting for help. It has ${vocabulary.color.length ? vocabulary.color.join(' and ') : 'unspecified'} fur. It is currently trapped or found in ${vocabulary.environment.length ? vocabulary.environment.join(', ') : 'an unknown place'}. The ${vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog'} is ${sizeAgeStr}. The poor ${vocabulary.animal.length ? vocabulary.animal.join('/') : 'cat/dog'} looks ${vocabulary.emotion.length ? vocabulary.emotion.join(' and ') : 'anxious'}. Special features: ${vocabulary.other.length ? vocabulary.other.join(', ') : 'none'}. The atmosphere shows its rescue situation, slightly dramatic but with a warm, comforting light of hope shining on it.`;
-                               navigator.clipboard.writeText(promptText);
-                               setIsCopied(true);
-                               setTimeout(() => setIsCopied(false), 2000);
-                             }}
-                             className="bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-bold py-3 px-6 rounded-lg shadow-[0_4px_0_rgb(161,98,7)] active:translate-y-1 transition-all flex items-center justify-center gap-2 w-full sm:w-auto"
-                           >
-                             {isCopied ? <Check size={20} /> : <Copy size={20} />}
-                             {isCopied ? '已複製 (Copied!)' : '複製prompt'}
-                           </button>
-
-                           <a 
-                             href="https://gemini.google.com/" 
-                             target="_blank" 
-                             rel="noopener noreferrer"
-                             className="text-yellow-400 hover:text-yellow-300 font-bold flex items-center gap-2 transition-colors underline underline-offset-4 w-full sm:w-auto justify-center sm:justify-start"
-                           >
-                             開啟 Gemini 生成圖片 ➔
-                           </a>
-                        </div>
-                      </div>
-                    </div>
-                  </section>
-
-                  {/* Step 6: Deploy Cat to RPG Map Panel */}
-                  <section className="bg-slate-900 p-6 rounded-3xl border-4 border-indigo-600 text-white shadow-2xl">
-                    <h2 className="text-2xl font-bold text-yellow-400 flex items-center gap-2 mb-2">
-                      <MapPin size={26} className="text-indigo-400" />
-                      置入貓咪角色於 2D 遊戲地圖 (Deploy Cat to RPG Map)
-                    </h2>
-                    <p className="text-xs text-slate-300 mb-6">小朋友完成描述後，可以在地圖上記錄點位，將自訂小貓放入 2D 遊戲中！</p>
-
-                    {deploySuccessMsg && (
-                      <div className="mb-4 bg-emerald-900/90 border border-emerald-500 text-emerald-200 px-4 py-3 rounded-xl font-bold text-sm">
-                        {deploySuccessMsg}
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                      {/* Mini Map Coordinate Picker */}
-                      <div>
-                        <p className="text-xs font-bold text-indigo-300 mb-2 flex items-center gap-1">
-                          <Grid size={14} /> 點擊地圖選擇放置位置 (X: {deployX}, Y: {deployY})
-                        </p>
-                        <div 
-                          className="grid gap-0.5 bg-slate-950 p-2 rounded-xl border border-slate-700 aspect-square max-w-[280px] mx-auto md:mx-0"
-                          style={{ gridTemplateColumns: 'repeat(20, minmax(0, 1fr))' }}
-                        >
-                          {INITIAL_MAP_DATA.map((row, y) => 
-                            row.map((tile, x) => {
-                              const isSelected = deployX === x && deployY === y;
-                              const isWalkable = tile === 0 || tile === 1;
-                              const hasExistingCat = gameCats.some(c => c.mapX === x && c.mapY === y);
-
-                              return (
-                                <button
-                                  key={`${x}_${y}`}
-                                  onClick={() => {
-                                    if (isWalkable) {
-                                      setDeployX(x);
-                                      setDeployY(y);
-                                    }
-                                  }}
-                                  className={`aspect-square text-[8px] flex items-center justify-center rounded-xs transition-transform ${
-                                    isSelected 
-                                      ? 'bg-yellow-400 ring-2 ring-yellow-300 scale-125 z-10' 
-                                      : hasExistingCat
-                                      ? 'bg-red-500 text-white'
-                                      : tile === 2
-                                      ? 'bg-amber-900/60 opacity-50'
-                                      : tile === 1
-                                      ? 'bg-slate-700'
-                                      : 'bg-emerald-900/50 hover:bg-emerald-700'
-                                  }`}
-                                  title={`X: ${x}, Y: ${y}`}
-                                >
-                                  {isSelected ? '📍' : hasExistingCat ? '🐱' : ''}
-                                </button>
-                              );
-                            })
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Deploy Options Form */}
-                      <div className="space-y-4 text-sm font-sans">
-                        <div className="p-3 bg-slate-800/80 rounded-xl border border-slate-700 text-xs text-slate-300 space-y-1">
-                          <p><span className="text-yellow-400 font-bold">目前定位:</span> X={deployX}, Y={deployY}</p>
-                          <p><span className="text-yellow-400 font-bold">特徵狀態:</span> {vocabulary.color.join('/') || '無特別指定'} / {vocabulary.emotion.join('/') || '無'}</p>
-                        </div>
-
-                        {/* Avatar Image Upload & Auto Background Removal Panel */}
-                        <div className="p-3 bg-slate-800/80 rounded-xl border border-slate-700 text-xs space-y-2">
-                          <label className="block font-bold text-yellow-300 flex items-center justify-between">
-                            <span className="flex items-center gap-1.5"><Camera size={14} /> 植入生成好的頭像 (Upload Avatar)</span>
-                            <span className="text-[10px] text-emerald-400 font-normal">✨ 自動去除白色背景</span>
-                          </label>
-                          <div className="flex items-center gap-3">
-                            <label className="cursor-pointer bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow">
-                              <Camera size={14} />
-                              <span>上傳頭像照片</span>
-                              <input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
-                            </label>
-                            {isProcessingAvatar && (
-                              <span className="text-[11px] text-yellow-300 flex items-center gap-1">
-                                <Loader2 size={14} className="animate-spin"/> 正在轉換透明背景...
-                              </span>
-                            )}
-                            {deployAvatarImage && !isProcessingAvatar && (
-                              <div className="flex items-center gap-2">
-                                <div className="w-9 h-9 rounded-lg border border-indigo-400 bg-slate-950 overflow-hidden flex items-center justify-center p-0.5 shadow-inner">
-                                  <img src={deployAvatarImage} alt="Avatar Preview" className="w-full h-full object-contain" />
-                                </div>
-                                <span className="text-[11px] text-emerald-400 font-bold">✓ 已成功去背</span>
-                                <button onClick={() => setDeployAvatarImage(null)} className="text-[11px] text-red-400 hover:text-red-300 underline ml-1">重設</button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={handleDeployToMap}
-                          className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl shadow-lg transition flex items-center justify-center gap-2"
-                        >
-                          <Play size={18} /> 🚀 置入角色至 RPG 地圖 (Deploy Cat)
-                        </button>
-                      </div>
-                    </div>
-                  </section>
-                </>
-              )}
-
-              {/* ==================== TASK 2 CONTENT ==================== */}
-              {activeTab === 'task2' && (
-                <>
-                  {/* Step 2A: Rescue Inventory */}
-                  <section className="bg-white p-6 rounded-3xl shadow-lg border-2 border-emerald-100">
-                    <h2 className="text-2xl font-bold text-emerald-900 flex items-center mb-2">
-                      <span className="bg-emerald-600 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-lg">2A</span>
-                      Rescue Inventory (救援裝備庫)
-                    </h2>
-                    <p className="text-gray-500 text-sm mb-4">點擊裝備帶上它（不限制選擇數量！）：</p>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
-                      {[...rescueItems, ...customRescueItems].map((item) => {
-                        const isSelected = backpack.some(i => i.id === item.id);
-                        const isCustom = item.id.startsWith('custom_');
-                        return (
-                          <div key={item.id} className="relative group">
-                            <button
-                              onClick={() => toggleBackpackItem(item)}
-                              className={`w-full h-full p-4 rounded-2xl border-2 text-left transition-all flex flex-col justify-between ${
-                                isSelected 
-                                  ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-400 shadow-sm' 
-                                  : 'border-gray-200 bg-white hover:border-emerald-200'
-                              }`}
-                            >
-                              <div className="flex justify-between items-start mb-2">
-                                <span className="text-3xl">{item.icon}</span>
-                                {isSelected && <CheckCircle2 size={18} className="text-emerald-600" />}
-                              </div>
-                              <div>
-                                <p className="font-bold text-gray-800 capitalize text-sm">{item.eng}</p>
-                                <p className="text-xs text-gray-500 font-medium">{item.chi}</p>
-                                {item.desc && (
-                                  <p className={`text-[11px] mt-1 font-semibold ${item.id === 'food' ? 'text-amber-600' : 'text-emerald-600'}`}>
-                                    • {item.desc}
-                                  </p>
-                                )}
-                              </div>
-                            </button>
-                            {isCustom && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleRemoveCustomRescueItem(item.id);
-                                }}
-                                className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow transition-colors"
-                                title="刪除自訂裝備"
-                              >
-                                <Trash2 size={12} />
-                              </button>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Custom Rescue Item Generator */}
-                    <div className="bg-emerald-50/80 p-4 rounded-2xl border border-emerald-200">
-                      <p className="font-bold text-emerald-900 text-sm mb-1 flex items-center gap-1.5">
-                        <Plus size={16} className="text-emerald-600" />
-                        自由新增自訂裝備 (中英文雙向自動翻譯)
-                      </p>
-                      <p className="text-xs text-emerald-700 mb-3">輸入中文會自動變英文，或輸入英文自動變中文！</p>
-
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <div className="relative flex-1">
-                          <input
-                            type="text"
-                            value={customItemChi}
-                            onChange={(e) => handleChiItemChange(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleAddCustomRescueItem(e)}
-                            placeholder="中文 (例：手電筒、牽繩)"
-                            className="w-full px-3 py-2 text-sm rounded-xl border border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white"
-                          />
-                        </div>
-
-                        <div className="relative flex-1">
-                          <input
-                            type="text"
-                            value={customItemEng}
-                            onChange={(e) => handleEngItemChange(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleAddCustomRescueItem(e)}
-                            placeholder="英文 (例：flashlight, treats)"
-                            className="w-full px-3 py-2 text-sm rounded-xl border border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white"
-                          />
-                          {isTranslatingItem && (
-                            <Loader2 size={16} className="absolute right-2.5 top-2.5 animate-spin text-emerald-600" />
-                          )}
-                        </div>
-
-                        <button
-                          onClick={handleAddCustomRescueItem}
-                          disabled={!customItemEng.trim() && !customItemChi.trim()}
-                          className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors whitespace-nowrap flex items-center justify-center gap-1"
-                        >
-                          <Plus size={16} /> 新增裝備
-                        </button>
-                      </div>
-                    </div>
-                  </section>
-
-                  {/* Direct Transition Banner */}
-                  <section className="bg-gradient-to-r from-indigo-900 via-purple-900 to-slate-900 text-white p-6 md:p-8 rounded-3xl shadow-2xl border-4 border-yellow-400 space-y-4">
-                    <div className="flex items-center gap-3">
-                      <span className="text-4xl animate-bounce">🎒</span>
-                      <div>
-                        <h2 className="text-2xl font-black text-yellow-300">
-                          裝備準備完畢！直接進入 2D RPG 核心關卡
-                        </h2>
-                        <p className="text-xs md:text-sm text-purple-200 mt-1 leading-relaxed">
-                          Task 1 與 Task 2 是素材累積與英文練習。點擊下方按鈕直接進入 2D RPG Game 展開現場救援與健檢報告！
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="bg-slate-950/70 p-4 rounded-2xl border border-indigo-700/80 text-xs text-indigo-200 flex flex-wrap justify-between items-center gap-2">
-                      <span>已選擇攜帶裝備：<strong className="text-yellow-300">{backpack.length ? backpack.map(i => i.eng).join(', ') : '基本裝備'}</strong></span>
-                      <span className="bg-indigo-800 text-yellow-300 px-3 py-1 rounded-full font-mono font-bold">{backpack.length} Items Ready</span>
-                    </div>
-
-                    <button
-                      onClick={() => setActiveTab('game')}
-                      className="w-full bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-black py-4 rounded-2xl shadow-xl hover:shadow-yellow-400/50 transition-all text-base flex items-center justify-center gap-3 active:scale-98"
-                    >
-                      <Gamepad2 size={24} className="text-indigo-950" />
-                      <span>帶著裝備，直接進入 2D RPG Game 展開救援 ➔</span>
-                    </button>
-                  </section>
-                </>
-              )}
-
-            </div>
-          </div>
-        )}
-
-      </div>
-
-      <footer className="text-center mt-12 text-gray-400 text-sm">
-        <p>© 2026 Cat & Dog Rescue RPG English Project | Project-Based Learning</p>
+      <footer className="text-center py-3 text-slate-500 text-xs border-t border-slate-900">
+        <p>© 2026 Cat Rescue Quest RPG • Classroom ESL Interactive Adventure</p>
       </footer>
     </div>
   );
@@ -1609,9 +1711,10 @@ function PawsAndPlay({
   catImage = null,
   adoptionPetName = 'Lucky',
   setAdoptionPetName = () => {},
-  setActiveTab = () => {}
+  onProceedToTask3 = () => {}
 }) {
-  const [gameState, setGameState] = useState('START');
+  // Starts directly in 'MAP' mode since the player already clicked "Start Game" and prepared in Task 1 & 2!
+  const [gameState, setGameState] = useState('MAP');
   const [activeCat, setActiveCat] = useState(null);
   const [gameStage, setGameStage] = useState('APPROACH_TOOLS');
   
@@ -1619,12 +1722,12 @@ function PawsAndPlay({
   const [approachChoice, setApproachChoice] = useState('slow');
   
   const [localVetCheck, setLocalVetCheck] = useState({
-    ears: 'dirty',
-    eyes: 'clean',
-    paws: 'cold',
-    body: 'healthy',
-    disease: 'negative',
-    vaccine: 'vaccinated'
+    ears: vetCheck.ears || 'dirty',
+    eyes: vetCheck.eyes || 'clean',
+    paws: vetCheck.paws || 'cold',
+    body: vetCheck.body || 'healthy',
+    disease: vetCheck.disease || 'negative',
+    vaccine: vetCheck.vaccine || 'vaccinated'
   });
 
   const [itemActionProgress, setItemActionProgress] = useState({});
@@ -1644,7 +1747,6 @@ function PawsAndPlay({
     ? selectedToolObjs.map(i => i.eng).join(', ') 
     : 'canned food';
 
-  // 若只帶罐頭/食物，句型自動強調「引誘出來 (lure ... out)」
   const isOnlyLureFood = selectedToolObjs.length === 1 && (
     selectedToolObjs[0].eng.toLowerCase().includes('food') ||
     selectedToolObjs[0].eng.toLowerCase().includes('treat')
@@ -1853,9 +1955,16 @@ function PawsAndPlay({
   });
 
   return (
-    <div className="relative w-full max-w-5xl aspect-[16/9] flex bg-gray-950 rounded-3xl overflow-hidden select-none font-sans border-4 border-indigo-800 shadow-2xl">
-      {/* LEFT: Canvas */}
-      <div className="relative flex-1 h-full bg-gray-900 flex items-center justify-center p-2 overflow-hidden">
+    <div className="relative w-full max-w-6xl min-h-[520px] md:aspect-[16/9] flex flex-col md:flex-row bg-gray-950 rounded-3xl overflow-hidden select-none font-sans border-4 border-indigo-700 shadow-2xl">
+      
+      {/* LEFT: 2D RPG Map Canvas */}
+      <div className="relative flex-1 min-h-[360px] bg-gray-900 flex items-center justify-center p-3 overflow-hidden">
+        {/* Top-left floating Map Radar Badge */}
+        <div className="absolute top-3 left-3 bg-slate-950/85 border border-indigo-500/60 backdrop-blur-md text-white px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 z-10 shadow">
+          <Compass size={16} className="text-yellow-400 animate-pulse" />
+          <span>待救援浪浪：{gameCats.length} 隻</span>
+        </div>
+
         <canvas 
           ref={canvasRef} 
           width={640} 
@@ -1864,28 +1973,29 @@ function PawsAndPlay({
           style={{ imageRendering: 'pixelated' }} 
         />
 
+        {/* Touch D-Pad */}
         {gameState === 'MAP' && (
-          <div className="absolute bottom-3 right-3 grid grid-cols-3 grid-rows-3 gap-1 md:hidden z-10 opacity-80">
-            <div className="col-start-2 flex justify-center items-center bg-white/30 border-2 border-white/60 text-white rounded-full w-9 h-9 text-lg active:bg-white/60 cursor-pointer backdrop-blur-sm" {...dpadProps('ArrowUp')}>▲</div>
-            <div className="col-start-1 row-start-2 flex justify-center items-center bg-white/30 border-2 border-white/60 text-white rounded-full w-9 h-9 text-lg active:bg-white/60 cursor-pointer backdrop-blur-sm" {...dpadProps('ArrowLeft')}>◀</div>
-            <div className="col-start-3 row-start-2 flex justify-center items-center bg-white/30 border-2 border-white/60 text-white rounded-full w-9 h-9 text-lg active:bg-white/60 cursor-pointer backdrop-blur-sm" {...dpadProps('ArrowRight')}>▶</div>
-            <div className="col-start-2 row-start-3 flex justify-center items-center bg-white/30 border-2 border-white/60 text-white rounded-full w-9 h-9 text-lg active:bg-white/60 cursor-pointer backdrop-blur-sm" {...dpadProps('ArrowDown')}>▼</div>
+          <div className="absolute bottom-3 right-3 grid grid-cols-3 grid-rows-3 gap-1 md:hidden z-10 opacity-85">
+            <div className="col-start-2 flex justify-center items-center bg-white/30 border-2 border-white/60 text-white rounded-full w-10 h-10 text-lg active:bg-white/60 cursor-pointer backdrop-blur-sm" {...dpadProps('ArrowUp')}>▲</div>
+            <div className="col-start-1 row-start-2 flex justify-center items-center bg-white/30 border-2 border-white/60 text-white rounded-full w-10 h-10 text-lg active:bg-white/60 cursor-pointer backdrop-blur-sm" {...dpadProps('ArrowLeft')}>◀</div>
+            <div className="col-start-3 row-start-2 flex justify-center items-center bg-white/30 border-2 border-white/60 text-white rounded-full w-10 h-10 text-lg active:bg-white/60 cursor-pointer backdrop-blur-sm" {...dpadProps('ArrowRight')}>▶</div>
+            <div className="col-start-2 row-start-3 flex justify-center items-center bg-white/30 border-2 border-white/60 text-white rounded-full w-10 h-10 text-lg active:bg-white/60 cursor-pointer backdrop-blur-sm" {...dpadProps('ArrowDown')}>▼</div>
           </div>
         )}
       </div>
 
-      {/* RIGHT: Dynamic Sidebar */}
-      <div className="w-60 sm:w-72 md:w-80 h-full bg-gradient-to-b from-amber-900 via-amber-950 to-slate-950 border-l-4 border-amber-700/80 p-3.5 sm:p-4 flex flex-col justify-between overflow-y-auto z-10 shadow-2xl shrink-0">
+      {/* RIGHT: Dynamic Rescue Bag Sidebar */}
+      <div className="w-full md:w-80 bg-gradient-to-b from-amber-900 via-amber-950 to-slate-950 border-t-4 md:border-t-0 md:border-l-4 border-amber-700/80 p-4 flex flex-col justify-between overflow-y-auto z-10 shadow-2xl shrink-0">
         <div className="space-y-3">
           <div className="flex items-center justify-between border-b-2 border-amber-700/60 pb-2">
             <div className="flex items-center gap-2">
               <span className="text-2xl drop-shadow">🎒</span>
               <div>
-                <h3 className="font-extrabold text-amber-200 text-xs sm:text-sm tracking-wider uppercase">Rescue Bag</h3>
+                <h3 className="font-extrabold text-amber-200 text-sm tracking-wider uppercase">Rescue Bag</h3>
                 <p className="text-[10px] text-amber-400 font-medium">救援後背包道具欄</p>
               </div>
             </div>
-            <span className="bg-amber-950 border border-amber-600/80 text-yellow-300 font-mono font-bold text-xs px-2 py-0.5 rounded-full">
+            <span className="bg-amber-950 border border-amber-600/80 text-yellow-300 font-mono font-bold text-xs px-2.5 py-0.5 rounded-full">
               {backpack.length} items
             </span>
           </div>
@@ -1895,11 +2005,11 @@ function PawsAndPlay({
               <span>📦</span> 已裝備道具 (Equipment)
             </p>
             {backpack.length === 0 ? (
-              <div className="p-3 bg-amber-950/40 border border-amber-800/40 text-amber-700 rounded-xl text-center text-xs italic">
-                No items equipped
+              <div className="p-3 bg-amber-950/40 border border-amber-800/40 text-amber-500 rounded-xl text-center text-xs italic">
+                尚未裝備道具 (徒手溫柔救援模式)
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-2 max-h-44 overflow-y-auto pr-1">
+              <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto pr-1">
                 {backpack.map((item, slotIdx) => (
                   <div 
                     key={`${item.id}_${slotIdx}`} 
@@ -1922,7 +2032,7 @@ function PawsAndPlay({
 
           <div className="bg-indigo-950/90 border-2 border-yellow-400/80 rounded-2xl p-2.5 text-xs text-yellow-200 space-y-1 shadow-lg">
             <p className="font-bold text-yellow-300 text-[11px] flex items-center gap-1">
-              <Gamepad2 size={14} className="text-yellow-400" /> Task 2 救援句型任務
+              <Gamepad2 size={14} className="text-yellow-400" /> 救援句型任務
             </p>
             <p className="text-[11px] font-mono text-white bg-slate-900/90 p-2 rounded-xl border border-indigo-700/60 leading-snug">
               "{missionSentence}"
@@ -1930,13 +2040,13 @@ function PawsAndPlay({
           </div>
         </div>
 
-        <div className="pt-2 border-t border-amber-800/60 text-[10px] text-amber-400 space-y-0.5">
-          <p className="font-bold text-amber-300">💡 操作提示：</p>
-          <p className="leading-tight">地圖移動尋找 🐈，遭遇小貓即可使用此後背包內的道具展開救援！</p>
+        <div className="pt-3 mt-3 border-t border-amber-800/60 text-[11px] text-amber-300 space-y-1">
+          <p className="font-bold">💡 操作提示：</p>
+          <p className="text-amber-400 leading-tight">使用方向鍵 (↑↓←→) 或 WASD 移動尋找地圖上的 🐈/🐕，靠近即可展開救援與健檢！</p>
         </div>
       </div>
 
-      {/* Victory Banner */}
+      {/* Victory Banner when all cats on map are rescued */}
       {gameState === 'MAP' && gameCats.length === 0 && (
         <div className="absolute inset-0 bg-black/80 backdrop-blur-md flex justify-center items-center z-30 p-4 text-center">
           <div className="bg-gradient-to-b from-purple-900 to-indigo-950 border-4 border-yellow-400 p-6 md:p-8 rounded-3xl max-w-md text-white shadow-2xl space-y-4">
@@ -1945,40 +2055,25 @@ function PawsAndPlay({
               ALL ANIMALS RESCUED!
             </h2>
             <p className="text-xs md:text-sm text-purple-200 leading-relaxed">
-              恭喜完成 2D RPG 遊戲！地圖上所有的浪浪都被你安全救援了！
+              太棒了！地圖上所有的浪浪都已經安全獲救並完成健檢！
             </p>
             <div className="bg-purple-900/60 p-3 rounded-xl border border-purple-500 text-xs text-yellow-200 font-bold">
-              ✨ Task 3 愛心領養宣傳單 (Adoption Flyer) 已成功解鎖！
+              ✨ 最終獎勵「愛心領養宣傳單 & RPG 角色故事卡」已解鎖！
             </div>
             <button
-              onClick={() => setActiveTab('task3')}
-              className="w-full bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-black py-3 px-6 rounded-xl shadow-lg transition flex items-center justify-center gap-2 text-sm"
+              onClick={onProceedToTask3}
+              className="w-full bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-black py-3.5 px-6 rounded-xl shadow-lg transition flex items-center justify-center gap-2 text-sm cursor-pointer"
             >
-              <HeartHandshake size={20} /> 前往 Task 3 製作領養宣傳單 ➔
+              <HeartHandshake size={20} /> 前往製作領養宣傳單 & 查看角色解鎖 ➔
             </button>
           </div>
         </div>
       )}
 
-      {/* MODALS */}
+      {/* RESCUE MINI-GAME & PROFILE MODALS */}
       {gameState !== 'MAP' && (
-        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-20 overflow-y-auto p-4">
+        <div className="absolute inset-0 bg-black/75 backdrop-blur-sm flex justify-center items-center z-20 overflow-y-auto p-4">
           
-          {gameState === 'START' && (
-            <div className="bg-white p-6 rounded-2xl w-full max-w-sm text-center shadow-2xl border-4 border-indigo-500">
-              <h1 className="text-3xl font-black text-indigo-600 mb-1">Paws & Play</h1>
-              <p className="text-gray-600 font-bold mb-4 text-xs">Street Cat Heroes 2D RPG</p>
-              
-              <div className="mb-4 bg-indigo-50 p-3 rounded-xl border border-indigo-200 text-left text-xs space-y-1">
-                <p className="font-bold text-indigo-900">🔗 Task Integration Active:</p>
-                <p className="text-indigo-700">• Target: <span className="font-bold">{vocabulary.color.join(' ') || 'Rescued'} {vocabulary.animal[0] || 'cat'}</span></p>
-                <p className="text-indigo-700">• Items: <span className="font-bold">{backpack.map(i => i.eng).join(', ') || 'Standard Kit'}</span></p>
-              </div>
-
-              <button onClick={() => setGameState('MAP')} className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition">Start Game 🚀</button>
-            </div>
-          )}
-
           {gameState === 'MINIGAME' && activeCat && (
             <div className="bg-white p-6 rounded-3xl w-full max-w-lg text-center shadow-2xl border-4 border-indigo-500 relative max-h-[90vh] overflow-y-auto">
               
@@ -2007,7 +2102,7 @@ function PawsAndPlay({
                         onClick={() => setApproachChoice('fast')}
                         className={`p-3 rounded-xl font-bold border-2 transition ${approachChoice === 'fast' ? 'border-indigo-600 bg-indigo-50 text-indigo-900' : 'border-gray-200'}`}
                       >
-                        🏃‍♂️ 迅速衝上前 (Approach carefully)
+                        🏃‍♂️ 謹慎觀察靠近 (Approach carefully)
                       </button>
                     </div>
                   </div>
@@ -2062,7 +2157,6 @@ function PawsAndPlay({
                       selectedToolObjs.map((item) => {
                         const isDone = itemActionProgress[item.id];
                         
-                        // 動態根據裝備類型生成對應的英語教學句型與中文解釋（罐頭用途為引誘小貓出來）
                         const getActionDetails = (itemObj) => {
                           const eng = itemObj.eng.toLowerCase();
                           if (eng.includes('carrier') || eng.includes('籠')) {
@@ -2150,7 +2244,6 @@ function PawsAndPlay({
                               </button>
                             </div>
 
-                            {/* 點擊 Action 後顯示的英文學習句型卡片 */}
                             {isDone && (
                               <div className="bg-emerald-100/90 border border-emerald-300 p-2.5 rounded-xl text-xs space-y-1">
                                 <p className="font-bold text-emerald-900 text-[11px] flex items-center gap-1">
@@ -2201,10 +2294,10 @@ function PawsAndPlay({
                     </h2>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="grid grid-cols-2 gap-2.5 text-xs">
                     <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
                       <p className="font-bold text-slate-700 mb-1">Ears (耳朵):</p>
-                      <div className="flex gap-1">
+                      <div className="flex flex-wrap gap-1">
                         {['dirty', 'clean', 'injured'].map(opt => (
                           <button
                             key={opt}
@@ -2218,8 +2311,23 @@ function PawsAndPlay({
                     </div>
 
                     <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                      <p className="font-bold text-slate-700 mb-1">Eyes (眼睛):</p>
+                      <div className="flex flex-wrap gap-1">
+                        {['clean', 'watery', 'bright'].map(opt => (
+                          <button
+                            key={opt}
+                            onClick={() => setLocalVetCheck({ ...localVetCheck, eyes: opt })}
+                            className={`px-2 py-1 rounded-lg font-bold capitalize ${localVetCheck.eyes === opt ? 'bg-emerald-600 text-white' : 'bg-white border'}`}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
                       <p className="font-bold text-slate-700 mb-1">Body (身體):</p>
-                      <div className="flex gap-1">
+                      <div className="flex flex-wrap gap-1">
                         {['healthy', 'thin', 'soft'].map(opt => (
                           <button
                             key={opt}
@@ -2227,6 +2335,25 @@ function PawsAndPlay({
                             className={`px-2 py-1 rounded-lg font-bold capitalize ${localVetCheck.body === opt ? 'bg-emerald-600 text-white' : 'bg-white border'}`}
                           >
                             {opt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                      <p className="font-bold text-slate-700 mb-1">Vaccine (疫苗):</p>
+                      <div className="flex flex-wrap gap-1">
+                        {[
+                          { id: 'vaccinated', label: 'Done' },
+                          { id: '1st_dose', label: '1st Dose' },
+                          { id: 'pending', label: 'Pending' }
+                        ].map(opt => (
+                          <button
+                            key={opt.id}
+                            onClick={() => setLocalVetCheck({ ...localVetCheck, vaccine: opt.id })}
+                            className={`px-2 py-1 rounded-lg font-bold ${localVetCheck.vaccine === opt.id ? 'bg-emerald-600 text-white' : 'bg-white border'}`}
+                          >
+                            {opt.label}
                           </button>
                         ))}
                       </div>
@@ -2262,18 +2389,18 @@ function PawsAndPlay({
                     </p>
                     <p>• Animal: <span className="text-yellow-200 capitalize">{vocabulary.color.join('/') || 'Rescued'} {currentAnimal}</span></p>
                     <p>• Tools Used: <span className="text-yellow-300">{selectedToolNames}</span></p>
-                    <p>• Condition: Ears are <span className="text-emerald-300">{localVetCheck.ears}</span>, Body is <span className="text-emerald-300">{localVetCheck.body}</span>!</p>
+                    <p>• Condition: Ears are <span className="text-emerald-300">{localVetCheck.ears}</span>, Eyes are <span className="text-emerald-300">{localVetCheck.eyes}</span>, Body is <span className="text-emerald-300">{localVetCheck.body}</span>!</p>
                   </div>
 
                   <div className="flex flex-col sm:flex-row gap-2 pt-1">
                     <button
                       onClick={() => {
                         finishMiniGame();
-                        setActiveTab('task3');
+                        onProceedToTask3();
                       }}
                       className="flex-1 bg-purple-600 hover:bg-purple-500 text-white font-bold py-2.5 px-3 rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow"
                     >
-                      <HeartHandshake size={16} /> 前往 Task 3 製作領養宣傳單 ➔
+                      <HeartHandshake size={16} /> 前往領養宣傳單 & 角色解鎖 ➔
                     </button>
                     <button
                       onClick={finishMiniGame}
@@ -2291,7 +2418,7 @@ function PawsAndPlay({
           {gameState === 'PROFILE' && activeCat && (
             <div className="bg-white p-6 rounded-2xl w-full max-w-sm text-center shadow-2xl border-4 border-indigo-500 relative max-h-[85vh] overflow-y-auto">
               <div className="bg-indigo-100 text-indigo-800 text-xs font-black px-3 py-1 rounded-full inline-block mb-2">
-                🎉 RPG Character Rescued!
+                🎉 Animal Safely Rescued!
               </div>
 
               {catImage && (
@@ -2312,9 +2439,9 @@ function PawsAndPlay({
 
               <button 
                 onClick={() => { setActiveCat(null); setGameState('MAP'); }} 
-                className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2.5 px-4 rounded-xl text-xs transition"
+                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition shadow"
               >
-                Back to Map (回到地圖冒險)
+                回到 2D 地圖 (Back to Map)
               </button>
             </div>
           )}
