@@ -74,29 +74,40 @@ function Home() {
         <p className="text-gray-500 text-base md:text-lg font-black max-w-3xl mx-auto opacity-80">Providing free, professional English and STEAM teaching resources for educators worldwide.</p>
       </header>
 
-      {/* 🚀 快速入口按鈕區域 */}
-      <div className="mb-8 flex flex-wrap justify-center gap-4">
-        <Link to="/english-cat-rescue" className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-black px-6 py-3 rounded-2xl shadow-lg hover:scale-105 transition-all text-base">
-          <span>🐱 Cat Rescue Quest (AI 英語教案)</span>
-        </Link>
-        <Link to="/toy-vocabulary-game" className="inline-flex items-center gap-2 bg-gradient-to-r from-sky-500 to-indigo-500 text-white font-black px-6 py-3 rounded-2xl shadow-lg hover:scale-105 transition-all text-base">
-          <span>🧸 玩具單字大挑戰 (獨立全螢幕頁面)</span>
-        </Link>
-      </div>
-
-      {/* 🌟 直接將「玩具單字大挑戰」遊戲區塊嵌入首頁中！ */}
-      <div className="my-10">
-        <div className="flex items-center mb-4 text-left">
-          <Gamepad2 className="text-orange-600 mr-3" size={28} />
-          <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight">Featured Game: Toy Vocabulary Challenge</h2>
-        </div>
-        <ToyVocabularyGame />
-      </div>
-
       <div className="flex flex-col lg:flex-row gap-10">
         <div className="lg:w-4/5 w-full">
+
+          {/* 1. ENGLISH GAME ZONE Section */}
+          <section id="game-zone" className="mb-14 pt-10">
+            <div className="flex items-center mb-6 text-left">
+              <Gamepad2 className="text-orange-600 mr-4" size={28} />
+              <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight">English Game Zone</h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <Link to="/english-cat-rescue" className="bg-gradient-to-br from-orange-500 to-amber-500 rounded-[2rem] p-6 text-white cursor-pointer hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex flex-col justify-center min-h-[11rem] shadow-md hover:shadow-xl group w-full text-left">
+                <div className="absolute -right-2 -bottom-4 opacity-[0.15] group-hover:scale-110 transition-transform duration-700">
+                  <span className="text-[9rem] leading-none">🐱</span>
+                </div>
+                <div className="relative z-10 text-left">
+                  <h3 className="text-2xl font-black mb-1 drop-shadow-md">🐾 Pawsecue Hero</h3>
+                  <p className="text-orange-50 text-sm font-bold opacity-95">Interactive English adventure & rescue quest</p>
+                </div>
+              </Link>
+
+              <Link to="/toy-vocabulary-game" className="bg-gradient-to-br from-sky-500 to-indigo-600 rounded-[2rem] p-6 text-white cursor-pointer hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex flex-col justify-center min-h-[11rem] shadow-md hover:shadow-xl group w-full text-left">
+                <div className="absolute -right-2 -bottom-4 opacity-[0.15] group-hover:scale-110 transition-transform duration-700">
+                  <span className="text-[9rem] leading-none">🧸</span>
+                </div>
+                <div className="relative z-10 text-left">
+                  <h3 className="text-2xl font-black mb-1 drop-shadow-md">🧸 Toy Vocabulary Challenge</h3>
+                  <p className="text-sky-50 text-sm font-bold opacity-95">Fun listening & spelling game for toy words</p>
+                </div>
+              </Link>
+            </div>
+          </section>
           
-          {/* ENGLISH Section */}
+          {/* 2. ELEMENTARY ENGLISH Section */}
           <section id="elementary" className="mb-14 pt-10">
             <div className="flex items-center mb-6 text-left">
               <LayoutGrid className="text-orange-600 mr-4" size={28} />
@@ -160,7 +171,7 @@ function Home() {
             </div>
           </section>
 
-          {/* Bricks Section */}
+          {/* 3. BRICKS & ROBOTICS Section */}
           <section id="steam" className="mb-14 pt-10">
             <div className="flex items-center mb-6 text-left">
               <Rocket className="text-orange-600 mr-4" size={28} />
@@ -169,7 +180,7 @@ function Home() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"><StemProjectsGrid /></div>
           </section>
 
-          {/* Scratch Section */}
+          {/* 4. SCRATCH INTERACTIVE Section */}
           <section id="scratch" className="mb-14 pt-10 pb-20">
             <div className="flex items-center mb-6 text-left">
               <Gamepad2 className="text-orange-600 mr-4" size={28} />
