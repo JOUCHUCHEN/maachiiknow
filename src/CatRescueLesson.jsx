@@ -114,6 +114,7 @@ export default function App() {
   // Unified Game Stage State: 'START' | 'TASK1' | 'TASK2' | 'GAME' | 'TASK3'
   const [gameStageScreen, setGameStageScreen] = useState('START');
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [catLongPicError, setCatLongPicError] = useState(false);
 
   // Callable AI Magic Dictionary Modal State
   const [isDictionaryOpen, setIsDictionaryOpen] = useState(false);
@@ -980,9 +981,19 @@ export default function App() {
                 <Sparkles size={16} /> Classroom ESL × 2D RPG Adventure
               </div>
               <div className="flex justify-center my-2">
-                <div className="w-24 h-24 rounded-3xl bg-gradient-to-tr from-orange-500 to-amber-400 flex items-center justify-center shadow-2xl border-4 border-white/20 animate-bounce">
-                  <CatIcon size={54} className="text-white" />
-                </div>
+                {!catLongPicError ? (
+                  <img
+                    src="./assets/cat-long.png"
+                    alt="Cat Long"
+                    onError={() => setCatLongPicError(true)}
+                    className="max-h-28 w-auto object-contain rounded-3xl shadow-2xl border-4 border-white/20 animate-bounce bg-white/10 p-1"
+                  />
+                ) : (
+                  <div className="w-28 h-24 rounded-3xl bg-slate-800/90 border-2 border-dashed border-yellow-400/70 flex flex-col items-center justify-center text-yellow-300 font-mono text-xs font-bold shadow-xl">
+                    <ImageIcon size={20} className="mb-1 text-yellow-400" />
+                    <span>no pic</span>
+                  </div>
+                )}
               </div>
               <h2 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-orange-300 to-amber-200 drop-shadow">
                 Cat Rescue Quest
