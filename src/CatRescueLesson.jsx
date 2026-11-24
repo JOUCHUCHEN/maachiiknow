@@ -491,12 +491,10 @@ export default function App() {
   const getDangerPlacePhrase = (rawItem) => {
     const lower = rawItem.trim().toLowerCase();
 
-    // 若玩家已輸入完整介系詞或處境開頭，直接保留
     if (/^(in|on|at|under|behind|inside|near|by|into|onto|trapped|stuck|hiding|out|alone|lost|stranded|caught|chased|surrounded)\b/.test(lower)) {
       return lower;
     }
 
-    // 自動判斷不定冠詞 a / an
     const withArticle = (phrase) => {
       const clean = phrase.trim();
       if (/^(a|an|the)\b/i.test(clean)) return clean;
@@ -504,7 +502,6 @@ export default function App() {
       return `${article} ${clean}`;
     };
 
-    // 1. 強烈天災與極端氣候 (e.g., typhoon -> in the middle of a typhoon)
     const disasters = [
       'typhoon', 'hurricane', 'tornado', 'storm', 'thunderstorm',
       'blizzard', 'sandstorm', 'snowstorm', 'earthquake', 'landslide',
@@ -515,7 +512,6 @@ export default function App() {
       return `in the middle of ${withArticle(lower)}`;
     }
 
-    // 2. 一般天氣與溫度危險
     if (lower.includes('rain') || lower.includes('drizzle')) {
       return lower === 'rain' ? 'out in the heavy rain' : `out in the ${lower}`;
     }
@@ -535,7 +531,6 @@ export default function App() {
       return `alone in the ${lower}`;
     }
 
-    // 3. 車輛與交通危險 (e.g., car -> under a car, car engine -> trapped inside a car engine)
     if (['car engine', 'engine', 'car hood', 'hood', 'bonnet', 'exhaust', 'trunk'].some(w => lower.includes(w))) {
       return `trapped inside ${withArticle(lower)}`;
     }
@@ -558,7 +553,6 @@ export default function App() {
       return `on a busy ${lower}`;
     }
 
-    // 4. 受困與狹窄密閉空間
     if (['drain', 'sewer', 'gutter', 'ditch', 'trench', 'culvert', 'manhole', 'pipe', 'tube', 'vent', 'chimney', 'duct', 'well', 'pit', 'hole', 'sinkhole', 'basement', 'cage', 'trap'].some(w => lower.includes(w))) {
       return `trapped in ${withArticle(lower)}`;
     }
@@ -569,7 +563,6 @@ export default function App() {
       return `hiding inside ${withArticle(lower)}`;
     }
 
-    // 5. 高處與墜落危險
     if (['roof', 'rooftop', 'balcony', 'ledge', 'window', 'wall', 'stairs', 'ladder'].some(w => lower.includes(w))) {
       return `stuck on a high ${lower}`;
     }
@@ -580,7 +573,6 @@ export default function App() {
       return `stuck up in ${withArticle(lower)}`;
     }
 
-    // 6. 水域與泥濘危險
     if (['mud', 'swamp', 'puddle', 'quicksand'].some(w => lower.includes(w))) {
       return `stuck in the ${lower}`;
     }
@@ -588,7 +580,6 @@ export default function App() {
       return `stranded near a deep ${lower}`;
     }
 
-    // 7. 火源、工地與暗巷
     if (['fire', 'smoke', 'flames', 'burning'].some(w => lower.includes(w))) {
       return `trapped near a dangerous ${lower}`;
     }
@@ -599,7 +590,6 @@ export default function App() {
       return `hiding in a dark ${lower}`;
     }
 
-    // 8. 天敵或追趕威脅
     if (['dog', 'snake', 'hawk', 'eagle', 'rat', 'bully'].includes(lower)) {
       return `chased by ${withArticle(lower)}`;
     }
@@ -607,7 +597,6 @@ export default function App() {
       return `surrounded by ${lower}`;
     }
 
-    // 9. 常見室內外地點
     if (['park', 'garden', 'yard', 'backyard', 'forest', 'woods', 'bush', 'grass', 'field', 'farm', 'beach', 'house', 'room', 'kitchen', 'bathroom', 'bedroom', 'classroom'].some(w => lower.includes(w))) {
       return `alone in the ${lower}`;
     }
@@ -618,7 +607,6 @@ export default function App() {
       return `hiding under the ${lower}`;
     }
 
-    // 10. 隨機未知單字的智慧危險處境預設
     return `trapped in a dangerous ${lower}`;
   };
 
