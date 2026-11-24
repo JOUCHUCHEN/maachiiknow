@@ -2570,4 +2570,4 @@ function PawsAndPlay({
       )}
     </div>
   );
-}g
+}
