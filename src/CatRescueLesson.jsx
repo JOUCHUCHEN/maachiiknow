@@ -992,20 +992,43 @@ export default function App() {
               <div className="inline-flex items-center gap-2 bg-yellow-400/20 text-yellow-300 border border-yellow-400/40 px-4 py-1.5 rounded-full text-xs font-extrabold tracking-widest uppercase">
                 <Sparkles size={16} /> Classroom ESL × 2D RPG Adventure
               </div>
-              <div className="flex justify-center my-2">
-                {resolvedCatLogo && !catLogoError ? (
-                  <img
-                    src={resolvedCatLogo}
-                    alt="Cat Logo"
-                    onError={() => setCatLogoError(true)}
-                    className="max-h-28 w-auto object-contain rounded-3xl shadow-2xl border-4 border-white/20 animate-bounce bg-white/10 p-1"
-                  />
-                ) : (
-                  <div className="w-28 h-24 rounded-3xl bg-slate-800/90 border-2 border-dashed border-yellow-400/70 flex flex-col items-center justify-center text-yellow-300 font-mono text-xs font-bold shadow-xl">
-                    <ImageIcon size={20} className="mb-1 text-yellow-400" />
-                    <span>no pic</span>
-                  </div>
-                )}
+              <style>{`
+                @keyframes gentleCatFloat {
+                  0%, 100% {
+                    transform: translateY(-6px);
+                  }
+                  50% {
+                    transform: translateY(6px);
+                  }
+                }
+                .cat-head-float-odd {
+                  animation: gentleCatFloat 3.4s ease-in-out infinite;
+                }
+                .cat-head-float-even {
+                  animation: gentleCatFloat 3.4s ease-in-out -1.7s infinite;
+                }
+              `}</style>
+              <div className="flex justify-center items-center gap-4 sm:gap-7 my-3 py-2">
+                {[0, 1, 2].map((idx) => {
+                  const floatClass = idx % 2 === 0 ? 'cat-head-float-odd' : 'cat-head-float-even';
+                  return resolvedCatLogo && !catLogoError ? (
+                    <img
+                      key={idx}
+                      src={resolvedCatLogo}
+                      alt={`Cat Logo ${idx + 1}`}
+                      onError={() => setCatLogoError(true)}
+                      className={`max-h-24 sm:max-h-28 w-auto object-contain drop-shadow-xl select-none ${floatClass}`}
+                    />
+                  ) : (
+                    <div
+                      key={idx}
+                      className={`w-24 h-20 sm:w-28 sm:h-24 rounded-2xl bg-slate-800/70 flex flex-col items-center justify-center text-yellow-300 font-mono text-xs font-bold ${floatClass}`}
+                    >
+                      <ImageIcon size={20} className="mb-1 text-yellow-400" />
+                      <span>no pic</span>
+                    </div>
+                  );
+                })}
               </div>
               <h2 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-orange-300 to-amber-200 drop-shadow">
                 Cat Rescue Quest
