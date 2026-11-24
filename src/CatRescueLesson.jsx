@@ -5,7 +5,35 @@ import {
   Stethoscope, CheckCircle2, ShieldCheck, Award, Gamepad2, MapPin, Play, Grid,
   FileText, Printer, HeartHandshake, Maximize2, Minimize2, BookOpen, X, Compass
 } from 'lucide-react';
-import catLogoImg from 'src/assets/cat-logo.png';
+
+// Safely resolve cat-logo image without breaking the build if the file is missing
+let resolvedCatLogo = '';
+try {
+  const logoModules = import.meta.glob(
+    './assets/cat-logo.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,svg,SVG}',
+    { eager: true, import: 'default' }
+  );
+  const firstMatch = Object.values(logoModules)[0];
+  if (typeof firstMatch === 'string') {
+    resolvedCatLogo = firstMatch;
+  }
+} catch {
+  // Fallback when not running in Vite
+}
+
+if (!resolvedCatLogo) {
+  try {
+    resolvedCatLogo = new URL('./assets/cat-logo.png', import.meta.url).href;
+  } catch {
+    resolvedCatLogo = '/assets/cat-logo.png';
+  }
+}
+
+const CAT_LOGO_CANDIDATES = [
+  resolvedCatLogo,
+  '/assets/cat-logo.png',
+  './assets/cat-logo.png'
+].filter((src, index, arr) => Boolean(src) && arr.indexOf(src) === index);
 
 // Custom Cat Icon component for universal rendering compatibility
 const CatIcon = ({ size = 24, className = "", style = {} }) => (
@@ -115,7 +143,8 @@ export default function App() {
   // Unified Game Stage State: 'START' | 'TASK1' | 'TASK2' | 'GAME' | 'TASK3'
   const [gameStageScreen, setGameStageScreen] = useState('START');
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [catLogoPicError, setCatLogoPicError] = useState(false);
+  const [catLogoIdx, setCatLogoIdx] = useState(0);
+  const currentCatLogoSrc = CAT_LOGO_CANDIDATES[catLogoIdx] || '';
 
   // Callable AI Magic Dictionary Modal State
   const [isDictionaryOpen, setIsDictionaryOpen] = useState(false);
@@ -982,11 +1011,11 @@ export default function App() {
                 <Sparkles size={16} /> Classroom ESL × 2D RPG Adventure
               </div>
               <div className="flex justify-center my-2">
-                {!catLogoPicError ? (
+                {currentCatLogoSrc ? (
                   <img
-                    src="src/assets/cat-logo.png"
+                    src={currentCatLogoSrc}
                     alt="Cat Logo"
-                    onError={() => setCatLogoPicError(true)}
+                    onError={() => setCatLogoIdx(prev => prev + 1)}
                     className="max-h-28 w-auto object-contain rounded-3xl shadow-2xl border-4 border-white/20 animate-bounce bg-white/10 p-1"
                   />
                 ) : (
@@ -1473,7 +1502,7 @@ export default function App() {
                             <p className="text-xs text-gray-500 font-medium">{item.chi}</p>
                             {item.desc && (
                               <p className={`text-[11px] mt-1 font-bold ${item.id === 'food' ? 'text-amber-600' : 'text-emerald-600'}`}>
-                                • {item.desc}
+                                - {item.desc}
                               </p>
                             )}
                           </div>
