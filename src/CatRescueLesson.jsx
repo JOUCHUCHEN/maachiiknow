@@ -5,6 +5,7 @@ import {
   Stethoscope, CheckCircle2, ShieldCheck, Award, Gamepad2, MapPin, Play, Grid,
   FileText, Printer, HeartHandshake, Maximize2, Minimize2, BookOpen, X, Compass
 } from 'lucide-react';
+import catLogoImg from './assets/cat-logo.png';
 
 // Custom Cat Icon component for universal rendering compatibility
 const CatIcon = ({ size = 24, className = "", style = {} }) => (
