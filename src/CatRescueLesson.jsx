@@ -6,34 +6,17 @@ import {
   FileText, Printer, HeartHandshake, Maximize2, Minimize2, BookOpen, X, Compass
 } from 'lucide-react';
 
-// Safely resolve cat-logo image without breaking the build if the file is missing
+// Dynamically resolve src/assets/cat-logo.png (works in Vite dev, GitHub Pages build, and preview)
 let resolvedCatLogo = '';
 try {
-  const logoModules = import.meta.glob(
-    './assets/cat-logo.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,svg,SVG}',
-    { eager: true, import: 'default' }
-  );
+  const logoModules = import.meta.glob('./assets/cat-logo.*', { eager: true, import: 'default' });
   const firstMatch = Object.values(logoModules)[0];
   if (typeof firstMatch === 'string') {
     resolvedCatLogo = firstMatch;
   }
 } catch {
-  // Fallback when not running in Vite
+  // Fallback if not in Vite
 }
-
-if (!resolvedCatLogo) {
-  try {
-    resolvedCatLogo = new URL('./assets/cat-logo.png', import.meta.url).href;
-  } catch {
-    resolvedCatLogo = '/assets/cat-logo.png';
-  }
-}
-
-const CAT_LOGO_CANDIDATES = [
-  resolvedCatLogo,
-  '/assets/cat-logo.png',
-  './assets/cat-logo.png'
-].filter((src, index, arr) => Boolean(src) && arr.indexOf(src) === index);
 
 // Custom Cat Icon component for universal rendering compatibility
 const CatIcon = ({ size = 24, className = "", style = {} }) => (
@@ -143,8 +126,7 @@ export default function App() {
   // Unified Game Stage State: 'START' | 'TASK1' | 'TASK2' | 'GAME' | 'TASK3'
   const [gameStageScreen, setGameStageScreen] = useState('START');
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [catLogoIdx, setCatLogoIdx] = useState(0);
-  const currentCatLogoSrc = CAT_LOGO_CANDIDATES[catLogoIdx] || '';
+  const [catLogoError, setCatLogoError] = useState(false);
 
   // Callable AI Magic Dictionary Modal State
   const [isDictionaryOpen, setIsDictionaryOpen] = useState(false);
@@ -1011,11 +993,11 @@ export default function App() {
                 <Sparkles size={16} /> Classroom ESL × 2D RPG Adventure
               </div>
               <div className="flex justify-center my-2">
-                {currentCatLogoSrc ? (
+                {resolvedCatLogo && !catLogoError ? (
                   <img
-                    src={currentCatLogoSrc}
+                    src={resolvedCatLogo}
                     alt="Cat Logo"
-                    onError={() => setCatLogoIdx(prev => prev + 1)}
+                    onError={() => setCatLogoError(true)}
                     className="max-h-28 w-auto object-contain rounded-3xl shadow-2xl border-4 border-white/20 animate-bounce bg-white/10 p-1"
                   />
                 ) : (
