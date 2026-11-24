@@ -114,7 +114,7 @@ export default function App() {
   // Unified Game Stage State: 'START' | 'TASK1' | 'TASK2' | 'GAME' | 'TASK3'
   const [gameStageScreen, setGameStageScreen] = useState('START');
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [catLongPicError, setCatLongPicError] = useState(false);
+  const [catLogoPicError, setCatLogoPicError] = useState(false);
 
   // Callable AI Magic Dictionary Modal State
   const [isDictionaryOpen, setIsDictionaryOpen] = useState(false);
@@ -981,11 +981,11 @@ export default function App() {
                 <Sparkles size={16} /> Classroom ESL × 2D RPG Adventure
               </div>
               <div className="flex justify-center my-2">
-                {!catLongPicError ? (
+                {!catLogoPicError ? (
                   <img
-                    src="./assets/cat-long.png"
-                    alt="Cat Long"
-                    onError={() => setCatLongPicError(true)}
+                    src="./assets/cat-logo.png"
+                    alt="Cat Logo"
+                    onError={() => setCatLogoPicError(true)}
                     className="max-h-28 w-auto object-contain rounded-3xl shadow-2xl border-4 border-white/20 animate-bounce bg-white/10 p-1"
                   />
                 ) : (
@@ -2570,4 +2570,4 @@ function PawsAndPlay({
       )}
     </div>
   );
-}
+}g
