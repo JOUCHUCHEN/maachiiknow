@@ -12,7 +12,7 @@ import IframePage from './IframePage';
 // 🧸 引入我們新建立的玩具英文單字遊戲元件
 import ToyVocabularyGame from './ToyVocabularyGame';
 
-// 🐾 引入 Cat Rescue 英語教案元件（內部已套用選項 B 的 PNG 主畫面圖示）
+// 🐾 引入 Cat Rescue 英語教案元件
 import CatRescueLesson from './CatRescueLesson';
 
 // STEAM 專案元件
