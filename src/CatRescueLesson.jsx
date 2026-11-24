@@ -5,7 +5,7 @@ import {
   Stethoscope, CheckCircle2, ShieldCheck, Award, Gamepad2, MapPin, Play, Grid,
   FileText, Printer, HeartHandshake, Maximize2, Minimize2, BookOpen, X, Compass
 } from 'lucide-react';
-import catLogoImg from './assets/cat-logo.png';
+import catLogoImg from 'src/assets/cat-logo.png';
 
 // Custom Cat Icon component for universal rendering compatibility
 const CatIcon = ({ size = 24, className = "", style = {} }) => (
@@ -984,7 +984,7 @@ export default function App() {
               <div className="flex justify-center my-2">
                 {!catLogoPicError ? (
                   <img
-                    src="./assets/cat-logo.png"
+                    src="src/assets/cat-logo.png"
                     alt="Cat Logo"
                     onError={() => setCatLogoPicError(true)}
                     className="max-h-28 w-auto object-contain rounded-3xl shadow-2xl border-4 border-white/20 animate-bounce bg-white/10 p-1"
