@@ -137,7 +137,7 @@ const TOYS = [
 export default function ToyExplorer() {
   const [mode, setMode] = useState('explore'); // 'explore' | 'quiz' | 'builder' | 'drag'
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [speechRate, setSpeechRate] = useState(1.0);
+  const [speechRate, setSpeechRate] = useState(0.5); // 預設語速放慢一半 (0.5x)
   const [stars, setStars] = useState(0);
   const [streak, setStreak] = useState(0);
   const [maxStreak, setMaxStreak] = useState(0);
@@ -331,7 +331,7 @@ export default function ToyExplorer() {
 
   const toggleSpeed = () => {
     playTone('click');
-    const nextRate = speechRate >= 0.9 ? 0.75 : 1.0;
+    const nextRate = speechRate < 0.8 ? 1.0 : 0.5;
     setSpeechRate(nextRate);
     const target =
       mode === 'explore'
@@ -417,7 +417,7 @@ export default function ToyExplorer() {
         } else {
           generateQuizQuestion(quizQuestionIndex + 1);
         }
-      }, 2100);
+      }, 2600);
     } else {
       setStreak(0);
       playTone('wrong');
@@ -546,7 +546,7 @@ export default function ToyExplorer() {
         } else {
           generateBuilderQuestion(builderQuestionIndex + 1);
         }
-      }, 2300);
+      }, 2800);
     } else {
       setStreak(0);
       playTone('wrong');
@@ -629,7 +629,7 @@ export default function ToyExplorer() {
         } else {
           generateDragQuestion(dragQuestionIndex + 1);
         }
-      }, 2100);
+      }, 2600);
     } else {
       setStreak(0);
       playTone('wrong');
@@ -656,7 +656,6 @@ export default function ToyExplorer() {
     }
   };
 
-  // 全域 Pointer 拖曳監聽（支援滑鼠、觸控與電子白板）
   useEffect(() => {
     if (!draggingToy) return;
 
@@ -739,7 +738,6 @@ export default function ToyExplorer() {
     }
   };
 
-  // 目前舞台要呈現的距離與玩具
   const activeStage =
     mode === 'explore'
       ? { distance: exploreDistance, toy: exploreToy }
@@ -749,7 +747,6 @@ export default function ToyExplorer() {
       ? builderTarget
       : dragTarget;
 
-  // 在拖曳模式中，未完成答題前舞台暫不劇透答案，完成後或拖曳懸停時顯示對應方向
   const stagePointDirection =
     mode === 'drag' && !dragSolved ? hoverZone || 'near' : activeStage.distance;
 
@@ -909,8 +906,8 @@ export default function ToyExplorer() {
               title="切換朗讀語速"
               className="px-2 py-1 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 font-bold text-xs flex items-center gap-1 transition"
             >
-              <span>{speechRate >= 0.9 ? '🐇' : '🐢'}</span>
-              <span className="hidden sm:inline">{speechRate >= 0.9 ? '1.0x' : '0.75x'}</span>
+              <span>{speechRate < 0.8 ? '🐢' : '🐇'}</span>
+              <span className="hidden sm:inline">{speechRate < 0.8 ? '0.5x' : '1.0x'}</span>
             </button>
 
             <button
@@ -1541,7 +1538,6 @@ export default function ToyExplorer() {
             {/* 模式四：拖曳挑戰 (this -> 手的前方, that -> 手的遠方) */}
             {mode === 'drag' && (
               <section className="h-full min-h-0 bg-white rounded-2xl sm:rounded-3xl p-3 sm:p-4 border-4 border-teal-200 shadow-md flex flex-col justify-between gap-2">
-                {/* 進度列與聽力切換 */}
                 <div className="shrink-0">
                   <div className="flex justify-between items-center text-xs sm:text-sm font-extrabold text-slate-600 mb-1">
                     <div className="flex items-center gap-1.5">
@@ -1570,7 +1566,6 @@ export default function ToyExplorer() {
                   </div>
                 </div>
 
-                {/* 題目指令卡 */}
                 <div className="shrink-0 bg-gradient-to-r from-teal-50 via-emerald-50 to-amber-50 rounded-2xl p-2.5 border-2 border-teal-200 flex items-center justify-between gap-2">
                   <div className="min-w-0">
                     <div className="text-[11px] font-extrabold text-teal-700">
@@ -1607,7 +1602,6 @@ export default function ToyExplorer() {
                   </button>
                 </div>
 
-                {/* 可拖曳玩具庫 (3x2) */}
                 <div className="flex-1 min-h-0 flex flex-col">
                   <div className="text-[11px] font-extrabold text-slate-400 mb-1 shrink-0">
                     🧸 按住玩具拖曳到左邊「手的前方 (this)」或「手的遠方 (that)」：
@@ -1643,7 +1637,6 @@ export default function ToyExplorer() {
                   </div>
                 </div>
 
-                {/* 即時回饋列 */}
                 <div
                   className={`shrink-0 min-h-[40px] rounded-xl px-3 py-1.5 flex items-center justify-center text-center font-bold text-xs sm:text-sm border ${dragFeedback.style}`}
                 >
