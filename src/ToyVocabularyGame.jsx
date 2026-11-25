@@ -103,8 +103,14 @@ const VOCAB_WORDS = [
     }
 ];
 
+const KEYBOARD_ROWS = [
+    ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
+    ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
+    ['z', 'x', 'c', 'v', 'b', 'n', 'm']
+];
+
 export default function ToyVocabularyGame() {
-    const [mode, setMode] = useState('listening'); // 'listening' | 'spelling'
+    const [mode, setMode] = useState('listening'); // 'listening' | 'spelling' | 'typing'
     const [queue, setQueue] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [score, setScore] = useState(0);
@@ -113,17 +119,25 @@ export default function ToyVocabularyGame() {
     const [roundCorrectCount, setRoundCorrectCount] = useState(0);
     const [hadMistake, setHadMistake] = useState(false);
     const [isLocked, setIsLocked] = useState(false);
-    
+
     // UI states
     const [showStudy, setShowStudy] = useState(false);
     const [hideText, setHideText] = useState(false);
-    const [feedback, setFeedback] = useState({ text: '🎧 點擊喇叭聽發音，選出或拼出正確的玩具單字！', type: 'bg-slate-50 text-slate-500 border-slate-200' });
+    const [feedback, setFeedback] = useState({
+        text: '🎧 點擊喇叭聽發音，選出或拼出正確的玩具單字！',
+        type: 'bg-slate-50 text-slate-500 border-slate-200'
+    });
     const [showSummary, setShowSummary] = useState(false);
 
     // Listening choices & Spelling slots
     const [listeningChoices, setListeningChoices] = useState([]);
     const [spellingSlots, setSpellingSlots] = useState([]);
     const [spellingTiles, setSpellingTiles] = useState([]);
+
+    // Typing mode states
+    const [typedLetters, setTypedLetters] = useState(''); // stores letters only (excluding hyphens)
+    const [showVirtualKeyboard, setShowVirtualKeyboard] = useState(false);
+    const typingInputRef = useRef(null);
 
     const audioCtxRef = useRef(null);
 
@@ -230,19 +244,41 @@ export default function ToyVocabularyGame() {
         const target = qList[idx];
         setHadMistake(false);
         setIsLocked(false);
+        setTypedLetters('');
+
+        const modePrompts = {
+            listening: '🎧 點擊喇叭聽發音，選出正確的玩具卡片！',
+            spelling: '🔤 看圖聽發音，依序點擊字母拼出單字！',
+            typing: '⌨️ 看圖聽發音，用鍵盤拼打出正確的英文單字！'
+        };
+
         setFeedback({
-            text: currentMode === 'listening' 
-                ? '🎧 點擊喇叭聽發音，選出正確的玩具卡片！' 
-                : '🔤 看圖聽發音，依序點擊字母拼出單字！',
+            text: modePrompts[currentMode],
             type: 'bg-slate-50 text-slate-500 border-slate-200'
         });
 
         if (currentMode === 'listening') {
             setListeningChoices(shuffle(VOCAB_WORDS));
-        } else {
+        } else if (currentMode === 'spelling') {
             const chars = target.word.split('');
-            setSpellingSlots(chars.map(ch => ({ expected: ch, char: ch === '-' ? '-' : '', isHyphen: ch === '-', tileIndex: null, locked: ch === '-' })));
-            setSpellingTiles(shuffle(chars.filter(ch => ch !== '-')).map((ch, i) => ({ id: i, char: ch, used: false })));
+            setSpellingSlots(
+                chars.map((ch) => ({
+                    expected: ch,
+                    char: ch === '-' ? '-' : '',
+                    isHyphen: ch === '-',
+                    tileIndex: null,
+                    locked: ch === '-'
+                }))
+            );
+            setSpellingTiles(
+                shuffle(chars.filter((ch) => ch !== '-')).map((ch, i) => ({
+                    id: i,
+                    char: ch,
+                    used: false
+                }))
+            );
+        } else if (currentMode === 'typing') {
+            setTimeout(() => typingInputRef.current?.focus(), 100);
         }
 
         setTimeout(() => speakWord(target.word, 0.48), 250);
@@ -257,29 +293,34 @@ export default function ToyVocabularyGame() {
         startRound(newMode);
     };
 
-    // Listening match handler
+    // Shared success handler
+    const handleQuestionSuccess = (target, customMsg) => {
+        setIsLocked(true);
+        playTone('correct');
+        speakWord(target.word, 0.5);
+
+        const earned = hadMistake ? 5 : 10;
+        setScore((s) => s + earned);
+        setRoundScore((rs) => rs + earned);
+        if (!hadMistake) setRoundCorrectCount((rc) => rc + 1);
+        setStreak((st) => st + 1);
+
+        setFeedback({
+            text: `${customMsg} <strong>${target.word}</strong> (${target.zh}) +${earned} 分`,
+            type: 'bg-emerald-100 text-emerald-800 border-emerald-300'
+        });
+        confetti({ particleCount: 40, spread: 55, origin: { y: 0.7 } });
+
+        setTimeout(() => proceedNext(), 1400);
+    };
+
+    // Mode 1: Listening match handler
     const handleListeningClick = (item) => {
         if (isLocked || queue.length === 0) return;
         const target = queue[currentIndex];
 
         if (item.id === target.id) {
-            setIsLocked(true);
-            playTone('correct');
-            speakWord(target.word, 0.5);
-
-            const earned = hadMistake ? 5 : 10;
-            setScore(s => s + earned);
-            setRoundScore(rs => rs + earned);
-            if (!hadMistake) setRoundCorrectCount(rc => rc + 1);
-            setStreak(st => st + 1);
-
-            setFeedback({
-                text: `🎉 答對了！這就是 <strong>${target.word}</strong> (${target.zh})！ +${earned} 分`,
-                type: 'bg-emerald-100 text-emerald-800 border-emerald-300'
-            });
-            confetti({ particleCount: 35, spread: 50, origin: { y: 0.7 } });
-
-            setTimeout(() => proceedNext(), 1300);
+            handleQuestionSuccess(target, '🎉 答對了！這就是');
         } else {
             playTone('wrong');
             setHadMistake(true);
@@ -291,13 +332,13 @@ export default function ToyVocabularyGame() {
         }
     };
 
-    // Spelling handlers
+    // Mode 2: Spelling handlers
     const selectTile = (tileIdx) => {
         if (isLocked) return;
         const tile = spellingTiles[tileIdx];
         if (!tile || tile.used) return;
 
-        const emptyIdx = spellingSlots.findIndex(s => !s.isHyphen && s.char === '');
+        const emptyIdx = spellingSlots.findIndex((s) => !s.isHyphen && s.char === '');
         if (emptyIdx === -1) return;
 
         playTone('pop');
@@ -330,28 +371,12 @@ export default function ToyVocabularyGame() {
     };
 
     const checkSpelling = (currentSlots) => {
-        if (!currentSlots.every(s => s.char !== '')) return;
+        if (!currentSlots.every((s) => s.char !== '')) return;
         const target = queue[currentIndex];
-        const attempt = currentSlots.map(s => s.char).join('');
+        const attempt = currentSlots.map((s) => s.char).join('');
 
         if (attempt === target.word) {
-            setIsLocked(true);
-            playTone('correct');
-            speakWord(target.word, 0.5);
-
-            const earned = hadMistake ? 5 : 10;
-            setScore(s => s + earned);
-            setRoundScore(rs => rs + earned);
-            if (!hadMistake) setRoundCorrectCount(rc => rc + 1);
-            setStreak(st => st + 1);
-
-            setFeedback({
-                text: `🌟 拼字完全正確！<strong>${target.word}</strong> (${target.zh}) +${earned} 分`,
-                type: 'bg-emerald-100 text-emerald-800 border-emerald-300'
-            });
-            confetti({ particleCount: 40, spread: 55, origin: { y: 0.7 } });
-
-            setTimeout(() => proceedNext(), 1400);
+            handleQuestionSuccess(target, '🌟 拼字完全正確！');
         } else {
             playTone('wrong');
             setHadMistake(true);
@@ -360,6 +385,78 @@ export default function ToyVocabularyGame() {
                 text: `🤔 拼法不太對喔！點擊字母可以退回重試！`,
                 type: 'bg-rose-100 text-rose-800 border-rose-300'
             });
+        }
+    };
+
+    // Mode 3: Typing handlers
+    const cleanExpectedLetters = (word) => word.replace(/[^a-zA-Z]/g, '').toLowerCase();
+
+    const updateTypedInput = (rawValue) => {
+        if (isLocked || queue.length === 0) return;
+        const target = queue[currentIndex];
+        const expectedClean = cleanExpectedLetters(target.word);
+        const sanitized = rawValue.replace(/[^a-zA-Z]/g, '').toLowerCase().slice(0, expectedClean.length);
+
+        if (sanitized.length > typedLetters.length) {
+            playTone('pop');
+        }
+        setTypedLetters(sanitized);
+
+        // Auto-verify once all letter slots are filled
+        if (sanitized.length === expectedClean.length) {
+            if (sanitized === expectedClean) {
+                handleQuestionSuccess(target, '⌨️ 拼打完全正確！');
+            } else {
+                playTone('wrong');
+                setHadMistake(true);
+                setStreak(0);
+                setFeedback({
+                    text: `🤔 拼法有點小錯誤喔！按退格鍵 (Backspace) 修改再試一次！`,
+                    type: 'bg-rose-100 text-rose-800 border-rose-300'
+                });
+            }
+        }
+    };
+
+    const handleTypingKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (isLocked) return;
+            const target = queue[currentIndex];
+            const expectedClean = cleanExpectedLetters(target.word);
+            if (typedLetters === expectedClean) {
+                handleQuestionSuccess(target, '⌨️ 拼打完全正確！');
+            } else {
+                playTone('wrong');
+                setHadMistake(true);
+                setStreak(0);
+                setFeedback({
+                    text:
+                        typedLetters.length < expectedClean.length
+                            ? `✍️ 還沒拼完喔！這個單字共有 ${expectedClean.length} 個字母！`
+                            : `🤔 拼法不太對喔！再聽一次發音檢查字母！`,
+                    type: 'bg-rose-100 text-rose-800 border-rose-300'
+                });
+            }
+        }
+    };
+
+    const handleTypingHint = () => {
+        if (isLocked || queue.length === 0) return;
+        const target = queue[currentIndex];
+        const expectedClean = cleanExpectedLetters(target.word);
+
+        // Find the first index where typedLetters differs or is empty
+        let matchLen = 0;
+        while (matchLen < typedLetters.length && typedLetters[matchLen] === expectedClean[matchLen]) {
+            matchLen++;
+        }
+
+        if (matchLen < expectedClean.length) {
+            setHadMistake(true);
+            const nextStr = expectedClean.slice(0, matchLen + 1);
+            updateTypedInput(nextStr);
+            typingInputRef.current?.focus();
         }
     };
 
@@ -378,42 +475,96 @@ export default function ToyVocabularyGame() {
     if (queue.length === 0) return null;
     const currentWord = queue[currentIndex];
 
+    // Helper to map typedLetters onto visual slots (preserving '-')
+    const renderTypingSlots = () => {
+        let letterPointer = 0;
+        return currentWord.word.split('').map((ch, idx) => {
+            if (ch === '-') {
+                return (
+                    <span key={idx} className="text-2xl font-black text-slate-400 px-0.5">
+                        -
+                    </span>
+                );
+            }
+            const userChar = typedLetters[letterPointer] || '';
+            const isCurrentCursor = letterPointer === typedLetters.length && !isLocked;
+            letterPointer++;
+
+            return (
+                <div
+                    key={idx}
+                    onClick={() => typingInputRef.current?.focus()}
+                    className={`w-11 h-14 sm:w-12 sm:h-14 rounded-2xl border-2 text-2xl font-black flex items-center justify-center shadow-sm transition cursor-text select-none
+                        ${
+                            userChar
+                                ? isLocked
+                                    ? 'bg-emerald-100 border-emerald-500 text-emerald-900'
+                                    : 'bg-teal-50 border-teal-500 text-teal-900'
+                                : isCurrentCursor
+                                ? 'bg-white border-teal-400 ring-4 ring-teal-100 text-slate-300'
+                                : 'bg-slate-100 border-dashed border-slate-300 text-transparent'
+                        }`}
+                >
+                    {userChar || (isCurrentCursor ? '|' : '_')}
+                </div>
+            );
+        });
+    };
+
     return (
-        <section className="w-full max-w-4xl mx-auto my-6 bg-gradient-to-br from-yellow-50 via-sky-50 to-pink-50 rounded-3xl p-4 sm:p-6 shadow-xl border-4 border-white flex flex-col gap-3 relative font-sans">
-            
+        <section className="w-full max-w-4xl mx-auto my-4 bg-gradient-to-br from-yellow-50 via-sky-50 to-pink-50 rounded-3xl p-4 sm:p-5 shadow-xl border-4 border-white flex flex-col gap-3 relative font-sans">
             {/* Top Bar */}
-            <div className="bg-white/95 backdrop-blur-md rounded-2xl px-4 py-2.5 shadow-md border-2 border-white flex items-center justify-between gap-2">
+            <div className="bg-white/95 backdrop-blur-md rounded-2xl px-3.5 py-2 shadow-md border-2 border-white flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                     <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-400 to-orange-500 flex items-center justify-center text-lg text-white shadow">
                         🧸
                     </div>
                     <div>
-                        <h2 className="text-sm sm:text-lg font-black text-slate-800 leading-tight">玩具英文單字大挑戰</h2>
-                        <p className="text-[11px] font-bold text-slate-400">Toy Vocabulary Game</p>
+                        <h2 className="text-sm sm:text-base font-black text-slate-800 leading-tight">玩具英文單字大挑戰</h2>
+                        <p className="text-[10px] font-bold text-slate-400">Toy Vocabulary Game</p>
                     </div>
                 </div>
 
-                {/* Mode Switcher Tabs */}
+                {/* Mode Switcher Tabs (3 Modes) */}
                 <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
-                    <button onClick={() => handleSwitchMode('listening')} 
-                            className={`px-3 py-1.5 rounded-lg font-black text-xs sm:text-sm transition ${mode === 'listening' ? 'bg-sky-500 text-white shadow' : 'text-slate-600 hover:bg-slate-200'}`}>
-                        🎧 聽力挑戰
+                    <button
+                        onClick={() => handleSwitchMode('listening')}
+                        className={`px-2.5 py-1.5 rounded-lg font-black text-xs transition ${
+                            mode === 'listening' ? 'bg-sky-500 text-white shadow' : 'text-slate-600 hover:bg-slate-200'
+                        }`}
+                    >
+                        🎧 聽力
                     </button>
-                    <button onClick={() => handleSwitchMode('spelling')} 
-                            className={`px-3 py-1.5 rounded-lg font-black text-xs sm:text-sm transition ${mode === 'spelling' ? 'bg-purple-500 text-white shadow' : 'text-slate-600 hover:bg-slate-200'}`}>
-                        🔤 拼字挑戰
+                    <button
+                        onClick={() => handleSwitchMode('spelling')}
+                        className={`px-2.5 py-1.5 rounded-lg font-black text-xs transition ${
+                            mode === 'spelling' ? 'bg-purple-500 text-white shadow' : 'text-slate-600 hover:bg-slate-200'
+                        }`}
+                    >
+                        🔤 拼字
+                    </button>
+                    <button
+                        onClick={() => handleSwitchMode('typing')}
+                        className={`px-2.5 py-1.5 rounded-lg font-black text-xs transition ${
+                            mode === 'typing' ? 'bg-teal-500 text-white shadow' : 'text-slate-600 hover:bg-slate-200'
+                        }`}
+                    >
+                        ⌨️ 拼打
                     </button>
                 </div>
 
                 {/* Status Score & Streak */}
-                <div className="flex items-center gap-2">
-                    <button onClick={() => setShowStudy(!showStudy)} className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-2 border-indigo-200 px-2.5 py-1.5 rounded-xl font-black text-xs">
+                <div className="flex items-center gap-1.5">
+                    <button
+                        onClick={() => setShowStudy(!showStudy)}
+                        className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-2 border-indigo-200 px-2.5 py-1 rounded-xl font-black text-xs"
+                    >
                         📖 單字卡
                     </button>
-                    <div className="bg-amber-100 border border-amber-300 px-2.5 py-1 rounded-xl flex items-center gap-1 text-xs font-black text-amber-900">
+                    <div className="bg-amber-100 border border-amber-300 px-2 py-1 rounded-xl flex items-center gap-1 text-xs font-black text-amber-900">
                         <span>⭐</span> {score}
                     </div>
-                    <div className="bg-rose-100 border border-rose-300 px-2.5 py-1 rounded-xl flex items-center gap-1 text-xs font-black text-rose-900">
+                    <div className="bg-rose-100 border border-rose-300 px-2 py-1 rounded-xl flex items-center gap-1 text-xs font-black text-rose-900">
                         <span>🔥</span> {streak}
                     </div>
                 </div>
@@ -423,13 +574,18 @@ export default function ToyVocabularyGame() {
             {showStudy && (
                 <div className="bg-white/95 backdrop-blur-lg rounded-2xl p-3 shadow-xl border-2 border-indigo-200 z-30">
                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-black text-indigo-700">🔊 點擊卡片聆聽發音</span>
-                        <button onClick={() => setShowStudy(false)} className="text-xs font-black text-slate-400 hover:text-slate-700">✕ 關閉</button>
+                        <span className="text-xs font-black text-indigo-700">🔊 點擊卡片聆聽發音（拼打前可先複習喔！）</span>
+                        <button onClick={() => setShowStudy(false)} className="text-xs font-black text-slate-400 hover:text-slate-700">
+                            ✕ 關閉
+                        </button>
                     </div>
                     <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                        {VOCAB_WORDS.map(item => (
-                            <button key={item.id} onClick={() => speakWord(item.word, 0.48)} 
-                                    className="bg-white hover:bg-indigo-50 border-2 border-slate-200 rounded-xl p-2 flex flex-col items-center justify-center transition">
+                        {VOCAB_WORDS.map((item) => (
+                            <button
+                                key={item.id}
+                                onClick={() => speakWord(item.word, 0.48)}
+                                className="bg-white hover:bg-indigo-50 border-2 border-slate-200 rounded-xl p-2 flex flex-col items-center justify-center transition"
+                            >
                                 <span className="text-2xl">{item.emoji}</span>
                                 <span className="text-xs font-black text-slate-800">{item.word}</span>
                                 <span className="text-[10px] text-slate-400">{item.zh}</span>
@@ -440,50 +596,65 @@ export default function ToyVocabularyGame() {
             )}
 
             {/* Main Game Card */}
-            <div className="bg-white/95 rounded-3xl p-4 sm:p-6 shadow-xl border-4 border-white flex flex-col gap-4 relative">
-                
+            <div className="bg-white/95 rounded-3xl p-4 sm:p-5 shadow-xl border-4 border-white flex flex-col gap-3.5 relative">
                 {/* Progress & Feedback */}
                 <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between gap-3">
                         <div className="flex-1 bg-slate-100 h-2.5 rounded-full overflow-hidden border border-slate-200 p-0.5">
-                            <div className="bg-gradient-to-r from-emerald-400 to-teal-500 h-full rounded-full transition-all duration-500" 
-                                 style={{ width: `${((currentIndex + 1) / queue.length) * 100}%` }}></div>
+                            <div
+                                className="bg-gradient-to-r from-emerald-400 to-teal-500 h-full rounded-full transition-all duration-500"
+                                style={{ width: `${((currentIndex + 1) / queue.length) * 100}%` }}
+                            ></div>
                         </div>
                         <span className="text-xs font-black text-slate-600 bg-slate-100 px-3 py-0.5 rounded-full">
                             第 {currentIndex + 1} / {queue.length} 題
                         </span>
                     </div>
 
-                    <div className={`w-full py-2 px-3 rounded-xl text-center font-black text-xs sm:text-sm border transition-all ${feedback.type}`}
-                         dangerouslySetInnerHTML={{ __html: feedback.text }}></div>
+                    <div
+                        className={`w-full py-2 px-3 rounded-xl text-center font-black text-xs sm:text-sm border transition-all ${feedback.type}`}
+                        dangerouslySetInnerHTML={{ __html: feedback.text }}
+                    ></div>
                 </div>
 
                 {/* Mode 1: Listening View */}
                 {mode === 'listening' && (
-                    <div className="flex flex-col gap-4">
-                        <div className="flex items-center justify-center gap-3">
-                            <button onClick={() => speakWord(currentWord.word, 0.5)} 
-                                    className="bg-sky-500 hover:bg-sky-600 text-white border-b-4 border-sky-700 px-6 py-2.5 rounded-2xl font-black text-sm sm:text-base flex items-center gap-2 shadow transition active:translate-y-1">
-                                <span className="text-xl">🔊</span> 播放發音 (Listen)
+                    <div className="flex flex-col gap-3.5">
+                        <div className="flex flex-wrap items-center justify-center gap-2.5">
+                            <button
+                                onClick={() => speakWord(currentWord.word, 0.5)}
+                                className="bg-sky-500 hover:bg-sky-600 text-white border-b-4 border-sky-700 px-5 py-2 rounded-2xl font-black text-sm flex items-center gap-2 shadow transition active:translate-y-1"
+                            >
+                                <span className="text-lg">🔊</span> 播放發音 (Listen)
                             </button>
-                            <button onClick={() => speakWord(currentWord.word, 0.32)} 
-                                    className="bg-amber-400 hover:bg-amber-500 text-amber-950 border-b-4 border-amber-600 px-4 py-2.5 rounded-2xl font-extrabold text-xs sm:text-sm shadow transition active:translate-y-1">
+                            <button
+                                onClick={() => speakWord(currentWord.word, 0.32)}
+                                className="bg-amber-400 hover:bg-amber-500 text-amber-950 border-b-4 border-amber-600 px-3.5 py-2 rounded-2xl font-extrabold text-xs sm:text-sm shadow transition active:translate-y-1"
+                            >
                                 🐢 慢速
                             </button>
                             <label className="flex items-center gap-1.5 cursor-pointer bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-2xl border">
-                                <input type="checkbox" checked={hideText} onChange={(e) => setHideText(e.target.checked)} className="w-4 h-4 accent-sky-500 rounded cursor-pointer" />
-                                <span className="text-xs sm:text-sm font-extrabold text-slate-700">🙈 純聽力模式</span>
+                                <input
+                                    type="checkbox"
+                                    checked={hideText}
+                                    onChange={(e) => setHideText(e.target.checked)}
+                                    className="w-4 h-4 accent-sky-500 rounded cursor-pointer"
+                                />
+                                <span className="text-xs font-extrabold text-slate-700">🙈 純聽力模式</span>
                             </label>
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            {listeningChoices.map(item => (
-                                <button key={item.id} onClick={() => handleListeningClick(item)}
-                                        className="bg-white hover:bg-sky-50 border-2 border-slate-200 hover:border-sky-300 rounded-3xl p-3 flex flex-col items-center justify-center gap-2 shadow-sm transition active:scale-95">
-                                    <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center" dangerouslySetInnerHTML={{ __html: item.svg }} />
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                            {listeningChoices.map((item) => (
+                                <button
+                                    key={item.id}
+                                    onClick={() => handleListeningClick(item)}
+                                    className="bg-white hover:bg-sky-50 border-2 border-slate-200 hover:border-sky-300 rounded-3xl p-2.5 flex flex-col items-center justify-center gap-1.5 shadow-sm transition active:scale-95"
+                                >
+                                    <div className="w-16 h-16 flex items-center justify-center" dangerouslySetInnerHTML={{ __html: item.svg }} />
                                     {!hideText ? (
                                         <div className="text-center">
-                                            <div className="text-base sm:text-lg font-black text-slate-800">{item.word}</div>
+                                            <div className="text-base font-black text-slate-800">{item.word}</div>
                                             <div className="text-xs font-bold text-slate-400">{item.zh}</div>
                                         </div>
                                     ) : (
@@ -495,19 +666,29 @@ export default function ToyVocabularyGame() {
                     </div>
                 )}
 
-                {/* Mode 2: Spelling View */}
+                {/* Mode 2: Spelling (Tile Selection) View */}
                 {mode === 'spelling' && (
                     <div className="flex flex-col items-center gap-4">
-                        <div className="flex items-center gap-6 bg-purple-50 px-6 py-3 rounded-3xl border-2 border-purple-100 w-full max-w-md justify-center">
-                            <div className="w-20 h-20 bg-white rounded-2xl shadow-sm border-2 border-purple-200 flex items-center justify-center p-2"
-                                 dangerouslySetInnerHTML={{ __html: currentWord.svg }} />
-                            <div className="flex flex-col items-start gap-1">
-                                <div className="text-xl font-black text-slate-800">{currentWord.emoji} {currentWord.zh}</div>
+                        <div className="flex items-center gap-5 bg-purple-50 px-6 py-3 rounded-3xl border-2 border-purple-100 w-full max-w-md justify-center">
+                            <div
+                                className="w-20 h-20 bg-white rounded-2xl shadow-sm border-2 border-purple-200 flex items-center justify-center p-2"
+                                dangerouslySetInnerHTML={{ __html: currentWord.svg }}
+                            />
+                            <div className="flex flex-col items-start gap-1.5">
+                                <div className="text-xl font-black text-slate-800">
+                                    {currentWord.emoji} {currentWord.zh}
+                                </div>
                                 <div className="flex gap-2">
-                                    <button onClick={() => speakWord(currentWord.word, 0.5)} className="bg-purple-500 text-white px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 shadow">
+                                    <button
+                                        onClick={() => speakWord(currentWord.word, 0.5)}
+                                        className="bg-purple-500 text-white px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 shadow"
+                                    >
                                         🔊 發音
                                     </button>
-                                    <button onClick={() => speakWord(currentWord.word, 0.32)} className="bg-amber-400 text-amber-950 px-2.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 shadow">
+                                    <button
+                                        onClick={() => speakWord(currentWord.word, 0.32)}
+                                        className="bg-amber-400 text-amber-950 px-2.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 shadow"
+                                    >
                                         🐢 慢速
                                     </button>
                                 </div>
@@ -516,29 +697,169 @@ export default function ToyVocabularyGame() {
 
                         {/* Letter Slots */}
                         <div className="flex flex-wrap items-center justify-center gap-2">
-                            {spellingSlots.map((slot, idx) => slot.isHyphen ? (
-                                <span key={idx} className="text-2xl font-black text-slate-400">-</span>
-                            ) : (
-                                <button key={idx} onClick={() => removeSlotLetter(idx)} disabled={!slot.char}
-                                        className={`w-12 h-14 rounded-2xl border-2 text-2xl font-black flex items-center justify-center shadow-sm transition ${slot.char ? 'bg-purple-100 border-purple-500 text-purple-900 cursor-pointer' : 'bg-slate-100 border-dashed border-slate-300 text-transparent'}`}>
-                                    {slot.char || '_'}
-                                </button>
-                            ))}
+                            {spellingSlots.map((slot, idx) =>
+                                slot.isHyphen ? (
+                                    <span key={idx} className="text-2xl font-black text-slate-400">
+                                        -
+                                    </span>
+                                ) : (
+                                    <button
+                                        key={idx}
+                                        onClick={() => removeSlotLetter(idx)}
+                                        disabled={!slot.char}
+                                        className={`w-12 h-14 rounded-2xl border-2 text-2xl font-black flex items-center justify-center shadow-sm transition ${
+                                            slot.char
+                                                ? 'bg-purple-100 border-purple-500 text-purple-900 cursor-pointer'
+                                                : 'bg-slate-100 border-dashed border-slate-300 text-transparent'
+                                        }`}
+                                    >
+                                        {slot.char || '_'}
+                                    </button>
+                                )
+                            )}
                         </div>
 
                         {/* Letter Tiles */}
                         <div className="flex flex-wrap items-center justify-center gap-2 max-w-md">
                             {spellingTiles.map((tile, idx) => (
-                                <button key={idx} onClick={() => selectTile(idx)} disabled={tile.used}
-                                        className={`w-12 h-14 rounded-2xl bg-amber-300 border-b-4 border-amber-600 text-slate-900 text-2xl font-black flex items-center justify-center shadow transition active:translate-y-1 ${tile.used ? 'opacity-30 cursor-not-allowed' : 'hover:bg-amber-400'}`}>
+                                <button
+                                    key={idx}
+                                    onClick={() => selectTile(idx)}
+                                    disabled={tile.used}
+                                    className={`w-12 h-14 rounded-2xl bg-amber-300 border-b-4 border-amber-600 text-slate-900 text-2xl font-black flex items-center justify-center shadow transition active:translate-y-1 ${
+                                        tile.used ? 'opacity-30 cursor-not-allowed' : 'hover:bg-amber-400'
+                                    }`}
+                                >
                                     {tile.char}
                                 </button>
                             ))}
                         </div>
 
-                        <button onClick={() => setupQuestion(queue, currentIndex, 'spelling')} className="bg-slate-200 text-slate-700 px-4 py-1.5 rounded-xl font-bold text-xs hover:bg-slate-300">
+                        <button
+                            onClick={() => setupQuestion(queue, currentIndex, 'spelling')}
+                            className="bg-slate-200 text-slate-700 px-4 py-1.5 rounded-xl font-bold text-xs hover:bg-slate-300"
+                        >
                             🔄 清除重拼
                         </button>
+                    </div>
+                )}
+
+                {/* Mode 3: Typing (Active Recall Spelling) View */}
+                {mode === 'typing' && (
+                    <div className="flex flex-col items-center gap-3.5">
+                        {/* Visual + Audio Prompt Card */}
+                        <div className="flex items-center gap-5 bg-teal-50 px-6 py-3 rounded-3xl border-2 border-teal-100 w-full max-w-md justify-center">
+                            <div
+                                className="w-20 h-20 bg-white rounded-2xl shadow-sm border-2 border-teal-200 flex items-center justify-center p-2"
+                                dangerouslySetInnerHTML={{ __html: currentWord.svg }}
+                            />
+                            <div className="flex flex-col items-start gap-1.5">
+                                <div className="text-xl font-black text-slate-800">
+                                    {currentWord.emoji} {currentWord.zh}
+                                </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => {
+                                            speakWord(currentWord.word, 0.5);
+                                            typingInputRef.current?.focus();
+                                        }}
+                                        className="bg-teal-500 hover:bg-teal-600 text-white px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 shadow"
+                                    >
+                                        🔊 發音
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            speakWord(currentWord.word, 0.32);
+                                            typingInputRef.current?.focus();
+                                        }}
+                                        className="bg-amber-400 hover:bg-amber-500 text-amber-950 px-2.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 shadow"
+                                    >
+                                        🐢 慢速
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Hidden Accessible Input linked to Visual Letter Boxes */}
+                        <div className="relative flex flex-col items-center gap-2">
+                            <input
+                                ref={typingInputRef}
+                                type="text"
+                                value={typedLetters}
+                                onChange={(e) => updateTypedInput(e.target.value)}
+                                onKeyDown={handleTypingKeyDown}
+                                autoComplete="off"
+                                autoCorrect="off"
+                                autoCapitalize="none"
+                                spellCheck="false"
+                                aria-label="請輸入英文單字"
+                                className="opacity-0 absolute inset-0 w-full h-full cursor-text"
+                            />
+                            <div className="flex flex-wrap items-center justify-center gap-2 z-10">{renderTypingSlots()}</div>
+                            <span className="text-[11px] font-bold text-slate-400">
+                                直接用鍵盤輸入英文字母（共 {cleanExpectedLetters(currentWord.word).length} 個字母）
+                            </span>
+                        </div>
+
+                        {/* Helper Action Buttons */}
+                        <div className="flex flex-wrap items-center justify-center gap-2">
+                            <button
+                                onClick={handleTypingHint}
+                                disabled={isLocked}
+                                className="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 px-3.5 py-1.5 rounded-xl font-black text-xs transition"
+                            >
+                                💡 提示一字
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setTypedLetters('');
+                                    typingInputRef.current?.focus();
+                                }}
+                                disabled={isLocked}
+                                className="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3.5 py-1.5 rounded-xl font-bold text-xs transition"
+                            >
+                                🔄 清除重打
+                            </button>
+                            <button
+                                onClick={() => setShowVirtualKeyboard(!showVirtualKeyboard)}
+                                className={`px-3.5 py-1.5 rounded-xl font-bold text-xs border transition ${
+                                    showVirtualKeyboard
+                                        ? 'bg-teal-600 text-white border-teal-700'
+                                        : 'bg-slate-100 text-slate-600 border-slate-300 hover:bg-slate-200'
+                                }`}
+                            >
+                                ⌨️ {showVirtualKeyboard ? '隱藏螢幕鍵盤' : '螢幕鍵盤'}
+                            </button>
+                        </div>
+
+                        {/* Optional On-Screen Keyboard for Tablets/Touchscreens */}
+                        {showVirtualKeyboard && (
+                            <div className="w-full max-w-lg bg-slate-100 p-2 rounded-2xl border border-slate-200 flex flex-col gap-1.5 select-none">
+                                {KEYBOARD_ROWS.map((row, rIdx) => (
+                                    <div key={rIdx} className="flex justify-center gap-1">
+                                        {row.map((keyChar) => (
+                                            <button
+                                                key={keyChar}
+                                                type="button"
+                                                onClick={() => updateTypedInput(typedLetters + keyChar)}
+                                                className="w-8 h-9 sm:w-10 sm:h-10 bg-white hover:bg-teal-50 active:bg-teal-200 rounded-lg border-b-2 border-slate-300 font-black text-sm sm:text-base text-slate-800 shadow-sm"
+                                            >
+                                                {keyChar}
+                                            </button>
+                                        ))}
+                                        {rIdx === 2 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setTypedLetters((prev) => prev.slice(0, -1))}
+                                                className="px-2.5 h-9 sm:h-10 bg-rose-100 hover:bg-rose-200 text-rose-800 rounded-lg border-b-2 border-rose-300 font-black text-xs shadow-sm"
+                                            >
+                                                ⌫ 退格
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
@@ -562,12 +883,22 @@ export default function ToyVocabularyGame() {
                             </div>
                         </div>
 
-                        <div className="flex w-full gap-3">
-                            <button onClick={() => startRound(mode)} className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-2xl font-black shadow transition">
+                        <div className="flex w-full gap-2">
+                            <button
+                                onClick={() => startRound(mode)}
+                                className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-2xl font-black text-sm shadow transition"
+                            >
                                 🔁 再玩一次
                             </button>
-                            <button onClick={() => handleSwitchMode(mode === 'listening' ? 'spelling' : 'listening')} className="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white py-3 rounded-2xl font-black shadow transition">
-                                🚀 切換模式
+                            <button
+                                onClick={() => {
+                                    const nextMode =
+                                        mode === 'listening' ? 'spelling' : mode === 'spelling' ? 'typing' : 'listening';
+                                    handleSwitchMode(nextMode);
+                                }}
+                                className="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white py-3 rounded-2xl font-black text-sm shadow transition"
+                            >
+                                🚀 下一種模式
                             </button>
                         </div>
                     </div>
