@@ -750,8 +750,6 @@ export default function ToyExplorer() {
   const stagePointDirection =
     mode === 'drag' && !dragSolved ? hoverZone || 'near' : activeStage.distance;
 
-  const exploreOtherFarToy = TOYS[(TOYS.findIndex((t) => t.id === exploreToy.id) + 2) % TOYS.length];
-  const exploreOtherNearToy = TOYS[(TOYS.findIndex((t) => t.id === exploreToy.id) + 1) % TOYS.length];
   const usedBuilderIds = new Set([...builderSelectedQ, ...builderSelectedA]);
 
   return (
@@ -1048,11 +1046,7 @@ export default function ToyExplorer() {
                     </>
                   )}
                   <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-22 lg:h-22 transform group-hover:scale-110 transition-transform drop-shadow-md">
-                    {activeStage.distance === 'far'
-                      ? activeStage.toy.svg
-                      : mode === 'explore' && (
-                          <div className="opacity-50 hover:opacity-100 transition">{exploreOtherFarToy.svg}</div>
-                        )}
+                    {activeStage.distance === 'far' ? activeStage.toy.svg : null}
                   </div>
                 </>
               )}
@@ -1104,11 +1098,7 @@ export default function ToyExplorer() {
                     </>
                   )}
                   <div className="w-26 h-26 sm:w-34 sm:h-34 lg:w-38 lg:h-38 transform group-hover:scale-105 transition-transform drop-shadow-xl">
-                    {activeStage.distance === 'near'
-                      ? activeStage.toy.svg
-                      : mode === 'explore' && (
-                          <div className="opacity-50 hover:opacity-100 transition">{exploreOtherNearToy.svg}</div>
-                        )}
+                    {activeStage.distance === 'near' ? activeStage.toy.svg : null}
                   </div>
                 </>
               )}
