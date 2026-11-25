@@ -140,6 +140,7 @@ export default function ToyVocabularyGame() {
     const typingInputRef = useRef(null);
 
     const audioCtxRef = useRef(null);
+    const wordAudioRef = useRef(null);
 
     // Audio helpers
     const playTone = (type) => {
@@ -211,8 +212,27 @@ export default function ToyVocabularyGame() {
 
     const speakWord = (text, rate = 0.48) => {
         if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+        }
+        if (wordAudioRef.current) {
+            wordAudioRef.current.pause();
+            wordAudioRef.current.currentTime = 0;
+        }
+
+        if (text === 'robot') {
             try {
-                window.speechSynthesis.cancel();
+                const audio = new Audio('178-robot.mp3');
+                audio.playbackRate = rate < 0.4 ? 0.75 : 1.0;
+                wordAudioRef.current = audio;
+                audio.play().catch(() => playTone('pop'));
+            } catch (e) {
+                playTone('pop');
+            }
+            return;
+        }
+
+        if ('speechSynthesis' in window) {
+            try {
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = 'en-US';
                 utterance.rate = rate;
