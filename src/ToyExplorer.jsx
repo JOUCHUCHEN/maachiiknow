@@ -135,7 +135,7 @@ const TOYS = [
 ];
 
 export default function ToyExplorer() {
-  const [mode, setMode] = useState('explore'); // 'explore' | 'quiz' | 'builder'
+  const [mode, setMode] = useState('explore'); // 'explore' | 'quiz' | 'builder' | 'drag'
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [speechRate, setSpeechRate] = useState(1.0);
   const [stars, setStars] = useState(0);
@@ -172,12 +172,29 @@ export default function ToyExplorer() {
     style: 'text-slate-500',
   });
 
+  // 模式四：拖曳挑戰 (this -> 手的前方, that -> 手的遠方)
+  const [dragQuestionIndex, setDragQuestionIndex] = useState(1);
+  const [dragScore, setDragScore] = useState(0);
+  const [dragTarget, setDragTarget] = useState({ distance: 'near', toy: TOYS[0] });
+  const [dragSolved, setDragSolved] = useState(false);
+  const [dragShowText, setDragShowText] = useState(true);
+  const [selectedDragToy, setSelectedDragToy] = useState(null);
+  const [draggingToy, setDraggingToy] = useState(null);
+  const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
+  const [hoverZone, setHoverZone] = useState(null); // 'near' | 'far' | null
+  const [dragFeedback, setDragFeedback] = useState({
+    text: '🖐️ 拖曳玩具到「手的前方 (this)」或「手的遠方 (that)」！',
+    style: 'bg-slate-50 text-slate-600 border-slate-200',
+  });
+
   // 彩紙與結算彈窗
   const [confettiList, setConfettiList] = useState([]);
   const [roundModal, setRoundModal] = useState({ open: false, score: 0 });
 
   const audioCtxRef = useRef(null);
   const timerRef = useRef(null);
+  const nearZoneRef = useRef(null);
+  const farZoneRef = useRef(null);
 
   useEffect(() => {
     return () => {
@@ -296,10 +313,16 @@ export default function ToyExplorer() {
     if (mode === 'explore') target = { distance: exploreDistance, toy: exploreToy };
     if (mode === 'quiz') target = quizTarget;
     if (mode === 'builder') target = builderTarget;
+    if (mode === 'drag') target = dragTarget;
     if (!target) return;
 
     const qWord = target.distance === 'near' ? "What's this?" : "What's that?";
-    if (mode === 'explore' || (mode === 'quiz' && quizAnswered) || (mode === 'builder' && builderSolved)) {
+    if (
+      mode === 'explore' ||
+      mode === 'drag' ||
+      (mode === 'quiz' && quizAnswered) ||
+      (mode === 'builder' && builderSolved)
+    ) {
       speakEnglish(`${qWord} It's ${target.toy.article} ${target.toy.word}.`);
     } else {
       speakEnglish(qWord);
@@ -310,9 +333,19 @@ export default function ToyExplorer() {
     playTone('click');
     const nextRate = speechRate >= 0.9 ? 0.75 : 1.0;
     setSpeechRate(nextRate);
-    const target = mode === 'explore' ? { distance: exploreDistance, toy: exploreToy } : mode === 'quiz' ? quizTarget : builderTarget;
+    const target =
+      mode === 'explore'
+        ? { distance: exploreDistance, toy: exploreToy }
+        : mode === 'quiz'
+        ? quizTarget
+        : mode === 'builder'
+        ? builderTarget
+        : dragTarget;
     const qWord = target.distance === 'near' ? "What's this?" : "What's that?";
-    speakEnglish(mode === 'explore' ? `${qWord} It's ${target.toy.article} ${target.toy.word}.` : qWord, nextRate);
+    speakEnglish(
+      mode === 'explore' || mode === 'drag' ? `${qWord} It's ${target.toy.article} ${target.toy.word}.` : qWord,
+      nextRate
+    );
   };
 
   // =========================================================================
@@ -531,8 +564,167 @@ export default function ToyExplorer() {
     }
   };
 
+  // =========================================================================
+  // 模式四：Drag & Drop 拖曳挑戰邏輯
+  // =========================================================================
+  const generateDragQuestion = (nextIdx) => {
+    setDragQuestionIndex(nextIdx);
+    setDragSolved(false);
+    setSelectedDragToy(null);
+    setDraggingToy(null);
+    setHoverZone(null);
+    setDragFeedback({
+      text: '🖐️ 把正確玩具拖曳到「手的前方 (this)」或「手的遠方 (that)」！',
+      style: 'bg-slate-50 text-slate-600 border-slate-200',
+    });
+
+    const distance = Math.random() < 0.5 ? 'near' : 'far';
+    const toy = TOYS[Math.floor(Math.random() * TOYS.length)];
+    setDragTarget({ distance, toy });
+
+    const pronoun = distance === 'near' ? 'this' : 'that';
+    setTimeout(() => {
+      speakEnglish(`What's ${pronoun}? It's ${toy.article} ${toy.word}.`);
+    }, 240);
+  };
+
+  const startDragRound = () => {
+    setDragScore(0);
+    setStreak(0);
+    generateDragQuestion(1);
+  };
+
+  const evaluateDragDrop = (toyObj, zone) => {
+    if (dragSolved || !toyObj || !zone) return;
+
+    const isToyRight = toyObj.id === dragTarget.toy.id;
+    const isZoneRight = zone === dragTarget.distance;
+
+    if (isToyRight && isZoneRight) {
+      setDragSolved(true);
+      setSelectedDragToy(null);
+      const nextScore = dragScore + 1;
+      setDragScore(nextScore);
+      const nextStreak = streak + 1;
+      setStreak(nextStreak);
+      if (nextStreak > maxStreak) setMaxStreak(nextStreak);
+      setStars((s) => s + 1);
+      playTone('correct');
+      spawnConfetti();
+
+      const pronoun = dragTarget.distance === 'near' ? 'this' : 'that';
+      const placeZh = dragTarget.distance === 'near' ? '手的前方（近處）' : '手的遠方（遠處）';
+      setDragFeedback({
+        text: `🎉 太棒了！What's ${pronoun}? 放在${placeZh}完全正確！(+1 ⭐)`,
+        style: 'bg-emerald-100 text-emerald-800 border-emerald-300 animate-bounce-in',
+      });
+      speakEnglish(`Great job! What's ${pronoun}? It's ${toyObj.article} ${toyObj.word}.`);
+
+      timerRef.current = setTimeout(() => {
+        if (dragQuestionIndex >= 10) {
+          playTone('fanfare');
+          spawnConfetti();
+          speakEnglish('Congratulations! You did a great job!');
+          setRoundModal({ open: true, score: nextScore });
+        } else {
+          generateDragQuestion(dragQuestionIndex + 1);
+        }
+      }, 2100);
+    } else {
+      setStreak(0);
+      playTone('wrong');
+      if (isToyRight && !isZoneRight) {
+        const hint =
+          dragTarget.distance === 'near'
+            ? '💡 玩具選對了！但題目是 "this"，要拖曳到「手的前方（近處）」喔！'
+            : '💡 玩具選對了！但題目是 "that"，要拖曳到「手的遠方（遠處）」喔！';
+        setDragFeedback({
+          text: hint,
+          style: 'bg-amber-100 text-amber-800 border-amber-300',
+        });
+      } else if (!isToyRight && isZoneRight) {
+        setDragFeedback({
+          text: `💡 位置對了！但這不是 ${toyObj.word}，再聽聽看是哪一個玩具喔！`,
+          style: 'bg-rose-100 text-rose-800 border-rose-300',
+        });
+      } else {
+        setDragFeedback({
+          text: '💡 再聽一次題目，注意是 this（前方）還是 that（遠方）以及玩具名稱喔！',
+          style: 'bg-rose-100 text-rose-800 border-rose-300',
+        });
+      }
+    }
+  };
+
+  // 全域 Pointer 拖曳監聽（支援滑鼠、觸控與電子白板）
+  useEffect(() => {
+    if (!draggingToy) return;
+
+    const checkHover = (x, y) => {
+      const pad = 24;
+      const nearRect = nearZoneRef.current?.getBoundingClientRect();
+      const farRect = farZoneRef.current?.getBoundingClientRect();
+
+      if (
+        nearRect &&
+        x >= nearRect.left - pad &&
+        x <= nearRect.right + pad &&
+        y >= nearRect.top - pad &&
+        y <= nearRect.bottom + pad
+      ) {
+        return 'near';
+      }
+      if (
+        farRect &&
+        x >= farRect.left - pad &&
+        x <= farRect.right + pad &&
+        y >= farRect.top - pad &&
+        y <= farRect.bottom + pad
+      ) {
+        return 'far';
+      }
+      return null;
+    };
+
+    const handlePointerMove = (e) => {
+      e.preventDefault();
+      setDragPos({ x: e.clientX, y: e.clientY });
+      setHoverZone(checkHover(e.clientX, e.clientY));
+    };
+
+    const handlePointerUp = (e) => {
+      const droppedZone = checkHover(e.clientX, e.clientY);
+      const toyToEval = draggingToy;
+      setDraggingToy(null);
+      setHoverZone(null);
+      if (droppedZone) {
+        evaluateDragDrop(toyToEval, droppedZone);
+      }
+    };
+
+    window.addEventListener('pointermove', handlePointerMove, { passive: false });
+    window.addEventListener('pointerup', handlePointerUp);
+    window.addEventListener('pointercancel', handlePointerUp);
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('pointercancel', handlePointerUp);
+    };
+  });
+
+  const handleToyPointerDown = (e, toy) => {
+    if (dragSolved) return;
+    e.preventDefault();
+    playTone('click');
+    setSelectedDragToy(toy);
+    setDraggingToy(toy);
+    setDragPos({ x: e.clientX, y: e.clientY });
+  };
+
   const handleSwitchMode = (newMode) => {
     if (timerRef.current) clearTimeout(timerRef.current);
+    setDraggingToy(null);
+    setHoverZone(null);
     playTone('click');
     setMode(newMode);
     if (newMode === 'explore') {
@@ -542,6 +734,8 @@ export default function ToyExplorer() {
       startQuizRound();
     } else if (newMode === 'builder') {
       startBuilderRound();
+    } else if (newMode === 'drag') {
+      startDragRound();
     }
   };
 
@@ -551,7 +745,13 @@ export default function ToyExplorer() {
       ? { distance: exploreDistance, toy: exploreToy }
       : mode === 'quiz'
       ? quizTarget
-      : builderTarget;
+      : mode === 'builder'
+      ? builderTarget
+      : dragTarget;
+
+  // 在拖曳模式中，未完成答題前舞台暫不劇透答案，完成後或拖曳懸停時顯示對應方向
+  const stagePointDirection =
+    mode === 'drag' && !dragSolved ? hoverZone || 'near' : activeStage.distance;
 
   const exploreOtherFarToy = TOYS[(TOYS.findIndex((t) => t.id === exploreToy.id) + 2) % TOYS.length];
   const exploreOtherNearToy = TOYS[(TOYS.findIndex((t) => t.id === exploreToy.id) + 1) % TOYS.length];
@@ -632,6 +832,21 @@ export default function ToyExplorer() {
         }
       `}</style>
 
+      {/* 拖曳跟隨幽靈卡片 */}
+      {draggingToy && (
+        <div
+          className="fixed z-50 pointer-events-none -translate-x-1/2 -translate-y-1/2"
+          style={{ left: `${dragPos.x}px`, top: `${dragPos.y}px` }}
+        >
+          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white/95 border-4 border-teal-400 shadow-2xl p-2 flex flex-col items-center justify-center scale-110 rotate-3">
+            <div className="w-14 h-14">{draggingToy.svg}</div>
+            {dragShowText && (
+              <span className="font-kids font-bold text-xs text-slate-800 leading-none">{draggingToy.word}</span>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="te-root flex-1 min-h-0 flex flex-col bg-amber-50 rounded-3xl border-4 border-amber-200/80 shadow-xl overflow-hidden">
         {/* 頂部精簡導覽列 */}
         <header className="h-12 sm:h-14 shrink-0 bg-white/95 backdrop-blur-md border-b-2 border-amber-200 px-2.5 sm:px-5 flex items-center justify-between gap-2 z-20">
@@ -643,35 +858,43 @@ export default function ToyExplorer() {
             </div>
             <div className="truncate">
               <h1 className="font-kids text-sm sm:text-base md:text-lg font-bold text-slate-800 leading-none truncate">
-                Toy Explorer <span className="text-orange-500 hidden lg:inline">: What&apos;s this? &amp; What&apos;s that?</span>
+                Toy Explorer <span className="text-orange-500 hidden xl:inline">: What&apos;s this? &amp; What&apos;s that?</span>
               </h1>
             </div>
           </div>
 
-          <nav className="flex items-center bg-slate-100 p-0.5 sm:p-1 rounded-xl border border-slate-200 shrink-0">
+          <nav className="flex items-center bg-slate-100 p-0.5 sm:p-1 rounded-xl border border-slate-200 shrink-0 gap-0.5">
             <button
               onClick={() => handleSwitchMode('explore')}
-              className={`px-2 sm:px-3 py-1 rounded-lg font-bold text-xs sm:text-sm transition-all ${
+              className={`px-2 sm:px-2.5 py-1 rounded-lg font-bold text-[11px] sm:text-xs md:text-sm transition-all ${
                 mode === 'explore' ? 'bg-sky-500 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              1. 探索學習 <span className="hidden md:inline text-[11px] opacity-90">Explore</span>
+              1. 探索 <span className="hidden lg:inline text-[11px] opacity-90">Explore</span>
             </button>
             <button
               onClick={() => handleSwitchMode('quiz')}
-              className={`px-2 sm:px-3 py-1 rounded-lg font-bold text-xs sm:text-sm transition-all ${
+              className={`px-2 sm:px-2.5 py-1 rounded-lg font-bold text-[11px] sm:text-xs md:text-sm transition-all ${
                 mode === 'quiz' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              2. 句型配對 <span className="hidden md:inline text-[11px] opacity-90">Quiz</span>
+              2. 配對 <span className="hidden lg:inline text-[11px] opacity-90">Quiz</span>
             </button>
             <button
               onClick={() => handleSwitchMode('builder')}
-              className={`px-2 sm:px-3 py-1 rounded-lg font-bold text-xs sm:text-sm transition-all ${
+              className={`px-2 sm:px-2.5 py-1 rounded-lg font-bold text-[11px] sm:text-xs md:text-sm transition-all ${
                 mode === 'builder' ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              3. 組句大師 <span className="hidden md:inline text-[11px] opacity-90">Builder</span>
+              3. 組句 <span className="hidden lg:inline text-[11px] opacity-90">Builder</span>
+            </button>
+            <button
+              onClick={() => handleSwitchMode('drag')}
+              className={`px-2 sm:px-2.5 py-1 rounded-lg font-bold text-[11px] sm:text-xs md:text-sm transition-all ${
+                mode === 'drag' ? 'bg-teal-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              4. 拖曳 <span className="hidden lg:inline text-[11px] opacity-90">Drag</span>
             </button>
           </nav>
 
@@ -753,16 +976,16 @@ export default function ToyExplorer() {
             <div className="relative z-10 m-2.5 sm:m-3.5 bg-white/90 backdrop-blur-xs px-2.5 py-1.5 rounded-xl border border-sky-200 shadow-xs w-fit pointer-events-none">
               <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-extrabold text-emerald-700">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
-                <span>Near (近處手邊) ➔ <b>this</b></span>
+                <span>Near (手的前方) ➔ <b>this</b></span>
               </div>
               <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-extrabold text-amber-700 mt-0.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
-                <span>Far (遠處架上) ➔ <b>that</b></span>
+                <span>Far (手的遠方) ➔ <b>that</b></span>
               </div>
             </div>
 
             {/* SVG 動態虛線箭頭（指向遠方 That 時顯示） */}
-            {activeStage.distance === 'far' && (
+            {(stagePointDirection === 'far' || (mode === 'drag' && !dragSolved)) && (
               <svg className="absolute inset-0 w-full h-full pointer-events-none z-10" viewBox="0 0 600 450" preserveAspectRatio="none">
                 <defs>
                   <marker id="arrowhead-far" markerWidth="10" markerHeight="7" refX="8" refY="3.5" orient="auto">
@@ -775,72 +998,123 @@ export default function ToyExplorer() {
                   stroke="#F59E0B"
                   strokeWidth="5"
                   strokeLinecap="round"
+                  opacity={mode === 'drag' && !dragSolved && hoverZone !== 'far' ? 0.35 : 1}
                   className="animated-dash"
                   markerEnd="url(#arrowhead-far)"
                 />
               </svg>
             )}
 
-            {/* 遠距離玩具展示區 */}
+            {/* 遠距離玩具展示 / 拖曳放置區 (手的遠方 Far • That) */}
             <div
+              ref={farZoneRef}
               onClick={(e) => {
                 e.stopPropagation();
                 if (mode === 'explore') {
                   playTone('click');
                   setExploreDistance('far');
                   speakEnglish(`What's that? It's ${exploreToy.article} ${exploreToy.word}.`);
+                } else if (mode === 'drag' && !dragSolved && selectedDragToy) {
+                  evaluateDragDrop(selectedDragToy, 'far');
                 } else {
                   speakCurrentSentence();
                 }
               }}
-              className="absolute top-[22px] sm:top-[34px] lg:top-[42px] right-10 sm:right-14 lg:right-20 w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 rounded-full flex flex-col items-center justify-center transition-all duration-300 z-20 group"
+              className={`absolute top-[22px] sm:top-[34px] lg:top-[42px] right-10 sm:right-14 lg:right-20 w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 rounded-full flex flex-col items-center justify-center transition-all duration-200 z-20 group ${
+                mode === 'drag' && hoverZone === 'far' ? 'scale-115' : ''
+              }`}
             >
-              {activeStage.distance === 'far' && (
+              {mode === 'drag' && !dragSolved ? (
                 <>
-                  <div className="absolute inset-0 rounded-full bg-amber-300/35 border-3 border-dashed border-amber-500 far-ring" />
-                  <span className="-top-2.5 absolute bg-amber-500 text-white text-[10px] sm:text-xs font-black px-2 py-0.5 rounded-full shadow tracking-wider whitespace-nowrap">
-                    FAR • THAT
+                  <div
+                    className={`absolute inset-0 rounded-full border-3 border-dashed transition-all ${
+                      hoverZone === 'far'
+                        ? 'bg-amber-300/70 border-amber-600 shadow-lg'
+                        : 'bg-amber-200/45 border-amber-500 far-ring'
+                    }`}
+                  />
+                  <span className="-top-3 absolute bg-amber-600 text-white text-[10px] sm:text-xs font-black px-2 py-0.5 rounded-full shadow tracking-wider whitespace-nowrap">
+                    👉 手的遠方 (that)
+                  </span>
+                  <span className="text-center text-[11px] sm:text-xs font-black text-amber-900 px-2 leading-tight pointer-events-none">
+                    放這裡
                   </span>
                 </>
+              ) : (
+                <>
+                  {activeStage.distance === 'far' && (
+                    <>
+                      <div className="absolute inset-0 rounded-full bg-amber-300/35 border-3 border-dashed border-amber-500 far-ring" />
+                      <span className="-top-2.5 absolute bg-amber-500 text-white text-[10px] sm:text-xs font-black px-2 py-0.5 rounded-full shadow tracking-wider whitespace-nowrap">
+                        FAR • THAT
+                      </span>
+                    </>
+                  )}
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-22 lg:h-22 transform group-hover:scale-110 transition-transform drop-shadow-md">
+                    {activeStage.distance === 'far'
+                      ? activeStage.toy.svg
+                      : mode === 'explore' && (
+                          <div className="opacity-50 hover:opacity-100 transition">{exploreOtherFarToy.svg}</div>
+                        )}
+                  </div>
+                </>
               )}
-              <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-22 lg:h-22 transform group-hover:scale-110 transition-transform drop-shadow-md">
-                {activeStage.distance === 'far'
-                  ? activeStage.toy.svg
-                  : mode === 'explore' && (
-                      <div className="opacity-50 hover:opacity-100 transition">{exploreOtherFarToy.svg}</div>
-                    )}
-              </div>
             </div>
 
-            {/* 近距離玩具展示區 */}
+            {/* 近距離玩具展示 / 拖曳放置區 (手的前方 Near • This) */}
             <div
+              ref={nearZoneRef}
               onClick={(e) => {
                 e.stopPropagation();
                 if (mode === 'explore') {
                   playTone('click');
                   setExploreDistance('near');
                   speakEnglish(`What's this? It's ${exploreToy.article} ${exploreToy.word}.`);
+                } else if (mode === 'drag' && !dragSolved && selectedDragToy) {
+                  evaluateDragDrop(selectedDragToy, 'near');
                 } else {
                   speakCurrentSentence();
                 }
               }}
-              className="absolute bottom-4 sm:bottom-6 left-16 sm:left-24 lg:left-28 w-32 h-32 sm:w-40 sm:h-40 lg:w-44 lg:h-44 rounded-full flex flex-col items-center justify-center transition-all duration-300 z-20 group"
+              className={`absolute bottom-4 sm:bottom-6 left-16 sm:left-24 lg:left-28 w-32 h-32 sm:w-40 sm:h-40 lg:w-44 lg:h-44 rounded-full flex flex-col items-center justify-center transition-all duration-200 z-20 group ${
+                mode === 'drag' && hoverZone === 'near' ? 'scale-110' : ''
+              }`}
             >
-              {activeStage.distance === 'near' && (
+              {mode === 'drag' && !dragSolved ? (
                 <>
-                  <div className="absolute inset-0 rounded-full bg-emerald-300/35 border-4 border-emerald-500 near-ring" />
-                  <span className="-top-2.5 absolute bg-emerald-600 text-white text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full shadow tracking-wider whitespace-nowrap">
-                    NEAR • THIS
+                  <div
+                    className={`absolute inset-0 rounded-full border-4 border-dashed transition-all ${
+                      hoverZone === 'near'
+                        ? 'bg-emerald-300/70 border-emerald-600 shadow-lg'
+                        : 'bg-emerald-200/45 border-emerald-500 near-ring'
+                    }`}
+                  />
+                  <span className="-top-3 absolute bg-emerald-600 text-white text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full shadow tracking-wider whitespace-nowrap">
+                    👇 手的前方 (this)
+                  </span>
+                  <span className="text-center text-xs sm:text-sm font-black text-emerald-900 px-2 leading-tight pointer-events-none">
+                    拖曳到此處
                   </span>
                 </>
+              ) : (
+                <>
+                  {activeStage.distance === 'near' && (
+                    <>
+                      <div className="absolute inset-0 rounded-full bg-emerald-300/35 border-4 border-emerald-500 near-ring" />
+                      <span className="-top-2.5 absolute bg-emerald-600 text-white text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full shadow tracking-wider whitespace-nowrap">
+                        NEAR • THIS
+                      </span>
+                    </>
+                  )}
+                  <div className="w-26 h-26 sm:w-34 sm:h-34 lg:w-38 lg:h-38 transform group-hover:scale-105 transition-transform drop-shadow-xl">
+                    {activeStage.distance === 'near'
+                      ? activeStage.toy.svg
+                      : mode === 'explore' && (
+                          <div className="opacity-50 hover:opacity-100 transition">{exploreOtherNearToy.svg}</div>
+                        )}
+                  </div>
+                </>
               )}
-              <div className="w-26 h-26 sm:w-34 sm:h-34 lg:w-38 lg:h-38 transform group-hover:scale-105 transition-transform drop-shadow-xl">
-                {activeStage.distance === 'near'
-                  ? activeStage.toy.svg
-                  : mode === 'explore' && (
-                      <div className="opacity-50 hover:opacity-100 transition">{exploreOtherNearToy.svg}</div>
-                    )}
-              </div>
             </div>
 
             {/* 可愛小熊與動態手指 */}
@@ -865,7 +1139,7 @@ export default function ToyExplorer() {
 
                 <div
                   className={`w-12 h-12 sm:w-14 sm:h-14 transition-all duration-300 ${
-                    activeStage.distance === 'near'
+                    stagePointDirection === 'near'
                       ? 'absolute -right-6 top-6 sm:-right-8 sm:top-7 animate-point-near'
                       : 'absolute -right-5 -top-2 sm:-right-6 sm:-top-3 animate-point-far'
                   }`}
@@ -916,7 +1190,7 @@ export default function ToyExplorer() {
             </button>
           </section>
 
-          {/* 右欄：三模式互動控制區 */}
+          {/* 右欄：四模式互動控制區 */}
           <div className="md:col-span-6 h-full min-h-0 flex flex-col">
             {/* 模式一：探索學習 */}
             {mode === 'explore' && (
@@ -1263,6 +1537,120 @@ export default function ToyExplorer() {
                 </div>
               </section>
             )}
+
+            {/* 模式四：拖曳挑戰 (this -> 手的前方, that -> 手的遠方) */}
+            {mode === 'drag' && (
+              <section className="h-full min-h-0 bg-white rounded-2xl sm:rounded-3xl p-3 sm:p-4 border-4 border-teal-200 shadow-md flex flex-col justify-between gap-2">
+                {/* 進度列與聽力切換 */}
+                <div className="shrink-0">
+                  <div className="flex justify-between items-center text-xs sm:text-sm font-extrabold text-slate-600 mb-1">
+                    <div className="flex items-center gap-1.5">
+                      <span>
+                        拖曳進度：<span className="text-teal-600">{dragQuestionIndex}</span> / 10
+                      </span>
+                      <span className="text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200 text-xs">
+                        🔥 連勝：{streak}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        playTone('click');
+                        setDragShowText((v) => !v);
+                      }}
+                      className="px-2.5 py-0.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition"
+                    >
+                      {dragShowText ? '👁️ 顯示文字' : '🙈 純聽力中'}
+                    </button>
+                  </div>
+                  <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                    <div
+                      className="h-full bg-gradient-to-r from-teal-400 to-emerald-500 transition-all duration-300"
+                      style={{ width: `${dragQuestionIndex * 10}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* 題目指令卡 */}
+                <div className="shrink-0 bg-gradient-to-r from-teal-50 via-emerald-50 to-amber-50 rounded-2xl p-2.5 border-2 border-teal-200 flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="text-[11px] font-extrabold text-teal-700">
+                      🎯 任務：把玩具拖曳到左側舞台的正確位置！
+                    </div>
+                    {dragShowText ? (
+                      <div className="font-kids text-base sm:text-xl font-bold text-slate-800 truncate">
+                        What&apos;s{' '}
+                        <span
+                          className={`${
+                            dragTarget.distance === 'near' ? 'text-emerald-600' : 'text-amber-600'
+                          } underline decoration-wavy`}
+                        >
+                          {dragTarget.distance === 'near' ? 'this' : 'that'}
+                        </span>
+                        ? It&apos;s {dragTarget.toy.article}{' '}
+                        <span className="text-rose-600">{dragTarget.toy.word}</span>.
+                      </div>
+                    ) : (
+                      <div className="font-kids text-base sm:text-lg font-bold text-slate-500 italic">
+                        🔊 請點擊右側喇叭聽題目...
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => {
+                      playTone('click');
+                      const pronoun = dragTarget.distance === 'near' ? 'this' : 'that';
+                      speakEnglish(`What's ${pronoun}? It's ${dragTarget.toy.article} ${dragTarget.toy.word}.`);
+                    }}
+                    className="btn-3d shrink-0 px-3 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs sm:text-sm flex items-center gap-1"
+                  >
+                    <span>🔊 聽題目</span>
+                  </button>
+                </div>
+
+                {/* 可拖曳玩具庫 (3x2) */}
+                <div className="flex-1 min-h-0 flex flex-col">
+                  <div className="text-[11px] font-extrabold text-slate-400 mb-1 shrink-0">
+                    🧸 按住玩具拖曳到左邊「手的前方 (this)」或「手的遠方 (that)」：
+                  </div>
+                  <div className="flex-1 min-h-0 grid grid-cols-3 grid-rows-2 gap-2">
+                    {TOYS.map((toy) => {
+                      const isBeingDragged = draggingToy?.id === toy.id;
+                      const isSelected = selectedDragToy?.id === toy.id;
+                      return (
+                        <div
+                          key={toy.id}
+                          onPointerDown={(e) => handleToyPointerDown(e, toy)}
+                          style={{ touchAction: 'none' }}
+                          className={`btn-3d h-full min-h-0 rounded-xl sm:rounded-2xl p-1.5 border-2 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing transition-all ${
+                            isBeingDragged
+                              ? 'opacity-35 scale-95 border-teal-400 bg-teal-50'
+                              : isSelected
+                              ? 'ring-3 ring-teal-400 bg-teal-50 border-teal-400'
+                              : 'bg-slate-50 hover:bg-teal-50/70 border-slate-200'
+                          }`}
+                        >
+                          <div className="w-9 h-9 sm:w-12 sm:h-12 md:w-14 md:h-14 shrink-0 pointer-events-none">
+                            {toy.svg}
+                          </div>
+                          {dragShowText && (
+                            <span className="font-kids font-bold text-xs sm:text-sm md:text-base text-slate-800 leading-tight mt-0.5 pointer-events-none">
+                              {toy.word}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 即時回饋列 */}
+                <div
+                  className={`shrink-0 min-h-[40px] rounded-xl px-3 py-1.5 flex items-center justify-center text-center font-bold text-xs sm:text-sm border ${dragFeedback.style}`}
+                >
+                  {dragFeedback.text}
+                </div>
+              </section>
+            )}
           </div>
         </main>
       </div>
@@ -1295,6 +1683,7 @@ export default function ToyExplorer() {
                 setRoundModal({ open: false, score: 0 });
                 if (mode === 'quiz') startQuizRound();
                 if (mode === 'builder') startBuilderRound();
+                if (mode === 'drag') startDragRound();
               }}
               className="btn-3d w-full py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold text-base"
             >
