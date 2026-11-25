@@ -11,6 +11,7 @@ import IframePage from './IframePage';
 
 // 🧸 引入我們新建立的玩具英文單字遊戲元件
 import ToyVocabularyGame from './ToyVocabularyGame';
+import ToyExplorer from './ToyExplorer';
 
 // 🐾 引入 Cat Rescue 英語教案元件
 import CatRescueLesson from './CatRescueLesson';
@@ -84,7 +85,7 @@ function Home() {
               <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight">English Game Zone</h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               <Link to="/english-cat-rescue" className="bg-gradient-to-br from-orange-500 to-amber-500 rounded-[2rem] p-6 text-white cursor-pointer hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex flex-col justify-center min-h-[11rem] shadow-md hover:shadow-xl group w-full text-left">
                 <div className="absolute -right-2 -bottom-4 opacity-[0.15] group-hover:scale-110 transition-transform duration-700">
                   <span className="text-[9rem] leading-none">🐱</span>
@@ -102,6 +103,16 @@ function Home() {
                 <div className="relative z-10 text-left">
                   <h3 className="text-2xl font-black mb-1 drop-shadow-md">🧸 Toy Vocabulary Challenge</h3>
                   <p className="text-sky-50 text-sm font-bold opacity-95">Fun listening & spelling game for toy words</p>
+                </div>
+              </Link>
+
+              <Link to="/toy-explorer" className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-[2rem] p-6 text-white cursor-pointer hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex flex-col justify-center min-h-[11rem] shadow-md hover:shadow-xl group w-full text-left">
+                <div className="absolute -right-2 -bottom-4 opacity-[0.15] group-hover:scale-110 transition-transform duration-700">
+                  <span className="text-[9rem] leading-none">🤖</span>
+                </div>
+                <div className="relative z-10 text-left">
+                  <h3 className="text-2xl font-black mb-1 drop-shadow-md">🔭 Toy Explorer</h3>
+                  <p className="text-emerald-50 text-sm font-bold opacity-95">Learn What&apos;s this? &amp; What&apos;s that? with toys</p>
                 </div>
               </Link>
             </div>
@@ -228,6 +239,7 @@ export default function App() {
           
           {/* 🧸 玩具英文單字遊戲獨立頁面路由 */}
           <Route path="toy-vocabulary-game" element={<ToyVocabularyGame />} />
+          <Route path="toy-explorer" element={<ToyExplorer />} />
           
           {/* Cat Rescue 英語教案路由 */}
           <Route path="english-cat-rescue" element={<CatRescueLesson />} />
