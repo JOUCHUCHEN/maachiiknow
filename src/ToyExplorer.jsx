@@ -137,7 +137,7 @@ const TOYS = [
 export default function ToyExplorer() {
   const [mode, setMode] = useState('explore'); // 'explore' | 'quiz' | 'builder' | 'drag'
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [speechRate, setSpeechRate] = useState(0.5); // 預設語速放慢一半 (0.5x)
+  const [speechRate, setSpeechRate] = useState(0.8); // 預設語速 0.8x
   const [stars, setStars] = useState(0);
   const [streak, setStreak] = useState(0);
   const [maxStreak, setMaxStreak] = useState(0);
@@ -331,7 +331,7 @@ export default function ToyExplorer() {
 
   const toggleSpeed = () => {
     playTone('click');
-    const nextRate = speechRate < 0.8 ? 1.0 : 0.5;
+    const nextRate = speechRate < 0.9 ? 1.0 : 0.8;
     setSpeechRate(nextRate);
     const target =
       mode === 'explore'
@@ -417,7 +417,7 @@ export default function ToyExplorer() {
         } else {
           generateQuizQuestion(quizQuestionIndex + 1);
         }
-      }, 2600);
+      }, 2200);
     } else {
       setStreak(0);
       playTone('wrong');
@@ -546,7 +546,7 @@ export default function ToyExplorer() {
         } else {
           generateBuilderQuestion(builderQuestionIndex + 1);
         }
-      }, 2800);
+      }, 2400);
     } else {
       setStreak(0);
       playTone('wrong');
@@ -629,7 +629,7 @@ export default function ToyExplorer() {
         } else {
           generateDragQuestion(dragQuestionIndex + 1);
         }
-      }, 2600);
+      }, 2200);
     } else {
       setStreak(0);
       playTone('wrong');
@@ -906,8 +906,8 @@ export default function ToyExplorer() {
               title="切換朗讀語速"
               className="px-2 py-1 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 font-bold text-xs flex items-center gap-1 transition"
             >
-              <span>{speechRate < 0.8 ? '🐢' : '🐇'}</span>
-              <span className="hidden sm:inline">{speechRate < 0.8 ? '0.5x' : '1.0x'}</span>
+              <span>{speechRate < 0.9 ? '🐢' : '🐇'}</span>
+              <span className="hidden sm:inline">{speechRate < 0.9 ? '0.8x' : '1.0x'}</span>
             </button>
 
             <button
